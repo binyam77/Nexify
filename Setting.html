@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Nexify</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <nav>
+            <a href="Home.html">Home</a>
+            <a href="Profile.html">Profile</a>
+            <a href="Settings.html">Settings</a>
+            <a href="Logout.html">Logout</a>
+        </nav>
+    </header>
+    <main>
+        <section class="info-btn">
+            <h2>Account Info</h2>
+          <form>
+            <label>Edit username</label>
+            <input type="text" placeholder="username">
+            <label>change email</label>
+            <input type="email" placeholder="email">
+            <label>change password</label>
+            <input type="password"  placeholder="password">
+            <button>Save</button>
+          </form>
+        </section>
+        <section class="Edit-box">
+            <h2>Profile</h2>
+                <label>Profile Picture</label>
+                 <br>
+                <img src="image.jpg" alt="image">
+                <input type="file" accept="image/*">  
+                <br>
+                <label>About You</label>  
+                <br>
+                <textarea rows="5" cols="50" placeholder="Bio..."></textarea><br>
+                <button>Update Profile</button>
+        </section>
+          <section class="id-btn">
+            <h2>Privacy</h2>
+            <form>
+              <fieldset>
+               <legend>Who can see my profile?</legend>
+            <input type="radio" id="public" name="privacy">
+            <label>Public (Everyone)</label><br>
+             <input type="radio" id="private" name="privacy">
+             <label>Private (Only Followers/Members)</label><br>
+             <button>Save</button>    
+                       </fieldset>
+            </form>
+          </section>
+          <section class="box-btn">
+            <h2>Notifications</h2>
+            <form>
+                <fieldset>
+                    <legend>Manage Notifications</legend>
+                <label>Like</label>
+                <input type="checkbox" id="likes" name="like_alrets">
+                <label>Comments</label>
+                <input type="checkbox" id="comment" name="comment_alrets">
+                <label>New Follows</label>
+                <input type="checkbox" id="follows" name="follows_alrets"><br>
+                <button>Save Preferences</button>
+                </fieldset>
+            </form>
+          </section>
+            <section class="security-box">
+                <h2>Security</h2>
+                <form>
+                    <fieldset>
+                        <label>Change Your Password</label>
+                    <label>New password</label>
+                    <br>
+                    <input type="password" id="new-password" minlength="8"  placeholder="New password" required>
+                    <br>
+                    <label>Confirm password</label>
+                    <br>
+                    <input type="password" id="confirm-password" minlength="8" placeholder="confirm password" required>
+                    <br>
+                    <button>Save</button>
+                    </fieldset>
+                </form>
+            </section>
+            <section class="out-box">
+                <h2>Account Action</h2>
+              <a href="Logout.html" onclick="return confirm('Are you sure?')">Logout</a>
+                <button onclick="return confirm ('Are you sure you want to delete it?')">Delete Account</button>
+            </section>
+    </main>
+    <footer>
+        <ul>
+           <li>&copy; Nexify</li>
+            <li>Privacy</li>
+            <li>Terms</li>
+            <li>Contact</li>
+        </uL>
+           </footer>
+</body>
+</html>
