@@ -1,0 +1,246 @@
+h1{    font-family: 'Segoe UI',sans-serif;
+    font-size: 2rem ;
+    font-weight: bold;
+    text-align: left;
+    color: #ffffff;
+    line-height: 1.5;
+    align-items: center;
+    position: absolute;
+    margin-top: 20px;
+    letter-spacing: 0.5px;
+}
+
+
+    body{
+     background-color: #0a1152;
+     color: #b0b3b8;
+     font-family: sans-serif;
+     height: 100%;
+     margin: 0;
+     padding: 0;
+}
+
+.click-btn{
+    position: absolute;
+    top: 5px;
+    margin-top: 500px;
+    display: flex;
+    flex-wrap: wrap;
+}
+.a-btn a{
+    background-color: #9d4edd;
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 20px;
+    display: inline-block;
+    width: 130px;
+    height: 40px;
+    border-radius: 20px;
+    margin-right:  20px;
+    box-sizing: border-box;
+    margin: 20px ;
+    padding: 5px 10px;
+    top: 20px;
+    left: 20px;
+     text-align: center;
+}
+a{
+    color: #9d4edd;
+    text-decoration: none;
+    transition: 0.3s;
+}
+a:hover{
+    
+    text-shadow: 0 0 8px #c77dff;
+}
+
+.a-btn{
+    position: absolute;
+    top: 20px;
+    right: 50px;
+    margin-bottom: 100px;
+    border-radius: 20px;
+    box-shadow: 0 0 10px #8a2be2;
+    display: flexbox;
+    place-items: center;
+}
+.left-sidebar a{
+    text-decoration: none;
+    border-right: 1px solid;
+    display: block;
+    width: 70px;
+    font-size: 20px;
+    height: 10px;
+    line-height: 1.5;  
+    padding: 30px;
+    font-weight: bold;
+
+}
+.left-sidebar{
+    position: absolute;
+    top: 20px;
+    padding-top: 20px;
+    margin-top: 80px;
+    color: #03081a;
+    margin-right: 20px;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 10px rgba(255, 255, 255, .2);
+    border-radius: 10px;
+
+}
+
+   
+.left-sidebar a:hover{
+    background-color: #e1e5e9;
+    color: #080606;
+}
+.a-btn a:hover{
+    background-color: #f9fafc;
+    color: #000102;
+}
+.main-content video{
+    width: 400px;
+    height: 99vh;
+    margin-left: 500px;
+    border-radius: 20px;
+    margin-top: 2px;
+}
+*{
+    color: #f4f7fa;
+}
+.trend-btn a {
+    color: #f4f7fa;
+    text-decoration: none;
+    display: block;
+    width: 120px;
+    height: 20px;
+    line-height: 1.5;
+  
+ 
+}
+.trend-btn li{
+    list-style-type: square;
+    text-decoration: none;
+    color: #9d4edd;
+    
+}
+ul{
+    list-style-type: none;
+
+
+}
+.trend-btn{
+    position: absolute;
+    top: 20px;
+    right: 50px;
+    padding-top: 50px;
+    margin-top: 40px;   
+
+}
+
+.like{
+    position: relative;
+    width: 100px;
+    height: 90px;
+    margin-left: 5px;
+    
+    
+}
+.like::before,
+.like::after{
+    content: "";
+    position: absolute;
+    top: 0;
+    width: 50px;
+    height: 80px;
+    border-radius: 50px 50px 0 0;
+    background: red;
+}
+.like::after{
+    left: 0;
+    transform: rotate(45deg);
+    transform-origin: 100% 100%;
+}
+.like::before{
+    left: 50px;
+    transform: rotate(-45deg);
+    transform-origin: 0 100%;
+}
+.comment{
+    position: relative;
+    width: 50px;
+    height: 40px;
+    background-color: #ccc;
+    border-radius: 10px;
+}
+.comment::after{
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: 10px;
+    width: 0;
+    height: 0;
+    border-right: 10px solid transparent;
+    border-top: 10px solid #ccc;
+
+}
+.name-user{ 
+       position: absolute;    right: 20px;  
+       top: 20px; 
+       margin-top: 340px;}
+.name-user li{   
+      color: #c0c0c0;  
+      font-size: 14px;    
+}
+.name-user button{  
+    background-color: #9d4edd;
+
+    border: none;
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 0 10px #8a2be2;
+}
+
+.click-btn{
+    margin-left:500px ;
+}
+.foter{
+    position: absolute;
+    top: 2px;
+    margin-top: 500px;
+    margin-left: 30px;
+    word-spacing: 5px;
+    font-weight: bold;
+    }
+    .foter a:hover{
+        color: #c77dff;
+    }
+#head{
+    position: absolute;
+    top: 2px;
+    margin-top: 600px;
+    margin-left: 30px;
+    font-weight: bold;
+    letter-spacing: 0.5px;
+}
+.foter a{
+    text-decoration: none;
+    color: #ffffff
+}
+ .trend-btn a:hover{
+    color: #c77dff;
+    
+}
+h2{
+    backdrop-filter: blur(20px);
+    border-radius: 5px;
+    color: #ffffff;
+   }
+ body {
+    counter-reset: section-count;
+}
+h2{
+    counter-increment: secton-count;
+}
