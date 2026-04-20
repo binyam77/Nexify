@@ -1,0 +1,88 @@
+body{
+     background-color: #0a1152;
+     color: #ffffff;
+     font-family: 'Segoe Ui', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+     height: 100%;
+     margin: 0;
+     padding: 0;
+
+}
+
+
+.click-btn{
+text-align: center;
+background-color: #0a1152;
+border: 2px solid rgba(255, 255, 255, .2);
+width: 420px;
+align-items: center;
+min-height: 70vh;
+justify-self: center;
+border-style: solid;
+border-radius: 10px;
+backdrop-filter: blur(20px);
+background: transparent;
+box-shadow: 0 0 10px #8a2be2;
+background-color: #0a1152;
+}
+.btn{
+    
+    color: #ffffff;
+    width: 350px;
+    height: 40px;
+    font-size: 16px;
+    border-radius: 20px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin: 30px 0;
+    background-color: #9d4edd;
+    border-color: #9d4edd;
+    border: none;
+ 
+}
+::placeholder{
+    color: #ffffff;
+}
+
+a:hover{
+    background-color: #9d4edd;
+    color: white;
+}
+
+.ema-box input{
+    font-size: 16px;
+    width: 350px;
+    height: 40px;
+    border-radius: 20px;
+    margin: 30px 0;
+    box-sizing: border-box;
+    padding: 20px;
+    backdrop-filter: blur(20px);
+    background: transparent;
+    border-color: #8a2be2;
+    box-shadow: 0 0 10px #8a2be2;
+    color: #ffffff;
+}
+
+.rememer-forgot  {
+    color: #ffffff;
+    text-decoration: none;
+    text-align:left;
+    justify-content: space-between;
+    display: flex;
+
+}
+.rememer-forgot a{
+    color: #ffffff;
+}
+.ema-box label{
+    font-size: 25px;
+    text-align: right;
+    letter-spacing:  2px;
+     color: #ffffff;
+     box-sizing: border-box;
+    padding: 20px;
+    backdrop-filter: blur(20px);
+    background: transparent;
+    box-shadow: 0 0 10px #8a2be2;
+
+}
