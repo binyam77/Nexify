@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <title>Nexify</title>
-    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="settings.css">
 </head>
 <body>
     <header>
-        <nav>
+        <h1>Nexify</h1>
+        <nav class="nav">
             <a href="Home.html">Home</a>
             <a href="Profile.html">Profile</a>
             <a href="Settings.html">Settings</a>
             <a href="Logout.html">Logout</a>
         </nav>
     </header>
-    <main>
+    <main class="main">
         <section class="info-btn">
             <h2>Account Info</h2>
           <form>
@@ -31,12 +32,17 @@
             <h2>Profile</h2>
                 <label>Profile Picture</label>
                  <br>
-                <img src="image.jpg" alt="image">
-                <input type="file" accept="image/*">  
+                
+                <img src="binja.jpg" alt="image">
+                 <div class="file">
+                 <input type="file" accept="image/*">
+                </div>  
                 <br>
-                <label>About You</label>  
+                <div class="bio">
+                <label id="me">About You</label>  
                 <br>
                 <textarea rows="5" cols="50" placeholder="Bio..."></textarea><br>
+                </div>
                 <button>Update Profile</button>
         </section>
           <section class="id-btn">
@@ -44,10 +50,13 @@
             <form>
               <fieldset>
                <legend>Who can see my profile?</legend>
+          
             <input type="radio" id="public" name="privacy">
             <label>Public (Everyone)</label><br>
+     <div class="raw">
              <input type="radio" id="private" name="privacy">
              <label>Private (Only Followers/Members)</label><br>
+             </div>
              <button>Save</button>    
                        </fieldset>
             </form>
@@ -57,12 +66,14 @@
             <form>
                 <fieldset>
                     <legend>Manage Notifications</legend>
+                    <div class="lib">
                 <label>Like</label>
                 <input type="checkbox" id="likes" name="like_alrets">
                 <label>Comments</label>
                 <input type="checkbox" id="comment" name="comment_alrets">
                 <label>New Follows</label>
                 <input type="checkbox" id="follows" name="follows_alrets"><br>
+                </div>
                 <button>Save Preferences</button>
                 </fieldset>
             </form>
@@ -71,7 +82,8 @@
                 <h2>Security</h2>
                 <form>
                     <fieldset>
-                        <label>Change Your Password</label>
+                        <legend>Change Your Password</legend><br>
+                        <div class="change">
                     <label>New password</label>
                     <br>
                     <input type="password" id="new-password" minlength="8"  placeholder="New password" required>
@@ -80,6 +92,7 @@
                     <br>
                     <input type="password" id="confirm-password" minlength="8" placeholder="confirm password" required>
                     <br>
+                    </div>
                     <button>Save</button>
                     </fieldset>
                 </form>
@@ -90,13 +103,17 @@
                 <button onclick="return confirm ('Are you sure you want to delete it?')">Delete Account</button>
             </section>
     </main>
-    <footer>
-        <ul>
-           <li>&copy; Nexify</li>
-            <li>Privacy</li>
-            <li>Terms</li>
-            <li>Contact</li>
-        </uL>
+    <footer class="foter">
+         <div class="hed">
+           &copy; Nexify
+           </div>
+           <div class="leg">
+            <a href="About.html">About</a>
+            <a href="Privacy.html">Privacy</a>
+            <a href="Terms.html">Terms</a>
+            <a href="Content.html">Contact</a> 
+            </div>
+
            </footer>
 </body>
 </html>

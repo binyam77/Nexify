@@ -1,0 +1,213 @@
+body{
+    background-color: #0a1152;
+    color: #9d4edd;
+}
+*{
+    color: #ffffff;
+    font-family: sans-serif;
+}
+.main{
+    position: absolute;
+    right: 0;
+    margin-right: 600px;
+}
+.nav{
+    width: 200px;
+    height:250px;
+    margin: 30px;
+    background-color: #d3d3d3;
+    position: absolute;
+    margin-top: 100px;
+    position: fixed;
+    border-radius:10px ;
+   line-height: 1.5;
+   
+}
+.nav a{
+    color: #000000;
+    text-decoration: none;
+    display: block;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-family: sans-serif;
+    margin: 30px;
+    font-weight: bold;
+    font-size: 20px;
+   
+    border-radius: 10px;
+
+}
+.nav a:hover{
+    color: #ffffff;
+    background-color: #0a1152;
+    transition: 0.3s;
+}
+.foter{
+    position: absolute;
+    margin-top: 500px;
+    position: fixed;
+}
+.leg a{
+    text-decoration: none;
+    word-spacing: 25px;
+    letter-spacing: 0.5px;
+
+}
+.leg a:hover{
+    color: #ffffff;
+    text-decoration: underline;
+}
+.hed{
+    position: absolute;
+    margin-top: 70px;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+h1{
+    position: fixed;
+    color: #ffffff;
+    font-family: sans-serif;
+
+}
+h2{
+    font-family: sans-serif;
+    font-weight: bold;
+    color: #ffffff;
+}
+.info-btn input{
+    display: block;
+    border-radius: 20px;
+    width: 270px;
+    height: 30px;
+    background-color: #d3d3d3;
+    color: #000000;
+    margin-right: 50px;
+    margin: 20px;
+    border: none;
+
+}
+ button{
+    width: 150px;
+    height: 30px;
+    color: #ffffff;
+    background-color: #5e5e5e;
+    border-radius: 15px;
+    border: none;
+}
+.info-btn label{
+    color: #ffffff;
+    font-weight: bold;
+    font-family: sans-serif;
+    margin-left: 15px;
+
+}
+ input:focus{
+    color: #000000;
+}
+input:active{
+    color: #000000;
+}
+::placeholder{
+    color: #000000;
+    position: absolute;
+    margin-left: 5px;
+
+    
+}
+.Edit-box{
+    position: absolute;
+    margin-top: 50px;
+}
+.Edit-box img{
+     width: 100px;
+    border-radius: 50px;
+    float: left;
+    margin-right: 10px;
+margin: 20px;
+}
+.Edit-box label{
+    font-weight: bold;
+}
+#me{
+    position: absolute;
+    bottom: 2px;
+    margin-bottom: 116px;
+}
+.bio{
+    position: absolute;
+    top: 10px;
+    margin-top: 90px;
+    margin-left: 200px;
+}
+
+.id-btn{
+    position: absolute;
+    margin-top: 400px;
+  padding: 5px;
+}
+.id-btn button{  
+      margin: 15px;
+      margin-top: 20px;
+      
+}
+.box-btn{
+    position: absolute;
+    margin-top: 700px;
+}
+.raw{
+    margin-top: 10px;
+     
+}
+.lib {
+    display: inline;
+    gap: 10px;
+    
+}
+.box-btn button{
+    margin: 15px;
+    margin-top: 20px;
+}
+fieldset{
+    width:700px;
+}
+.security-box{
+    position: absolute;
+    margin-top: 1000px;
+}
+.security-box input{
+     display: block;
+    border-radius: 20px;
+    width: 270px;
+    height: 30px;
+    background-color: #d3d3d3;
+    color: #000000;
+    margin: 10px;
+    margin-right: 50px;
+    border: none;
+}
+.security-box button{
+    margin: 15px;
+    margin-top: 20px;
+}
+.change{
+    margin-top: 15px;
+    margin-left: 50px;
+}
+.out-box{
+    position: absolute;
+    margin-top: 1400px;
+}
+.out-box a{
+    text-decoration: none;
+    font-family: sans-serif;
+    font-weight: bold;
+}
+.out-box a:hover{
+    color: #ffffff;
+    background-color: red;
+}
+.out-box button{
+     color: #ffffff;
+     background-color: red;
+}

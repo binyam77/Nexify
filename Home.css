@@ -13,7 +13,7 @@ h1{    font-family: 'Segoe UI',sans-serif;
 
     body{
      background-color: #0a1152;
-     color: #b0b3b8;
+     color: #ffffff;
      font-family: sans-serif;
      height: 100%;
      margin: 0;
@@ -42,16 +42,12 @@ h1{    font-family: 'Segoe UI',sans-serif;
     padding: 5px 10px;
     top: 20px;
     left: 20px;
-     text-align: center;
+    text-align: center;
 }
 a{
-    color: #9d4edd;
+    color: #ffffff;
     text-decoration: none;
     transition: 0.3s;
-}
-a:hover{
-    
-    text-shadow: 0 0 8px #c77dff;
 }
 
 .a-btn{
@@ -60,7 +56,7 @@ a:hover{
     right: 50px;
     margin-bottom: 100px;
     border-radius: 20px;
-    box-shadow: 0 0 10px #8a2be2;
+    box-shadow: 0 0 5px #8a2be2;
     display: flexbox;
     place-items: center;
 }
@@ -71,7 +67,6 @@ a:hover{
     width: 70px;
     font-size: 20px;
     height: 10px;
-    line-height: 1.5;  
     padding: 30px;
     font-weight: bold;
 
@@ -81,7 +76,7 @@ a:hover{
     top: 20px;
     padding-top: 20px;
     margin-top: 80px;
-    color: #03081a;
+    color: #000000;
     margin-right: 20px;
     backdrop-filter: blur(10px);
     box-shadow: 0 0 10px rgba(255, 255, 255, .2);
@@ -91,8 +86,9 @@ a:hover{
 
    
 .left-sidebar a:hover{
-    background-color: #e1e5e9;
-    color: #080606;
+    background-color: #d3d3d3;
+    color: #000000;
+    border-radius: 10px;
 }
 .a-btn a:hover{
     background-color: #f9fafc;
@@ -121,7 +117,7 @@ a:hover{
 .trend-btn li{
     list-style-type: square;
     text-decoration: none;
-    color: #9d4edd;
+    color: #ffffff;
     
 }
 ul{
@@ -140,50 +136,64 @@ ul{
 
 .like{
     position: relative;
-    width: 100px;
-    height: 90px;
-    margin-left: 5px;
-    
-    
+    width: 30px;
+    height: 30px;
+    background-color: #ff0050;
+    transform: rotate(-45deg);   
 }
 .like::before,
 .like::after{
     content: "";
     position: absolute;
-    top: 0;
-    width: 50px;
-    height: 80px;
-    border-radius: 50px 50px 0 0;
-    background: red;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background-color:#ff0050;
+    
 }
 .like::after{
-    left: 0;
-    transform: rotate(45deg);
-    transform-origin: 100% 100%;
+    top: 0;
+    left: 15px;
 }
 .like::before{
-    left: 50px;
-    transform: rotate(-45deg);
-    transform-origin: 0 100%;
+    top: -15;
+    left: 0;
 }
 .comment{
+    width: 30px;
+    height: 25px;
+    background-color: #fff;
+    border-radius: 5px;
     position: relative;
-    width: 50px;
-    height: 40px;
-    background-color: #ccc;
-    border-radius: 10px;
 }
 .comment::after{
     content: "";
     position: absolute;
-    bottom: -10px;
-    left: 10px;
-    width: 0;
-    height: 0;
-    border-right: 10px solid transparent;
-    border-top: 10px solid #ccc;
+    bottom: -8px;
+    left: 6px;
+    border-width: 8px 8px 0 0;
+    border-style: solid;
+    border-color: #fff transparent transparent transparent;
 
 }
+.share{
+    width: 0;
+    height: 0;
+    border-top: 15px solid transparent;
+    border-bottom: 15px solid transparent;
+    border-left: 20px solid #0a1152;
+    position: relative;
+}
+.share::after{
+    content: "";
+    position: absolute;
+    width: 15px;
+    height: 10px;
+    background-color: #9d4edd;
+    left: -25px;
+    top: -5px;
+}
+
 .name-user{ 
        position: absolute;    right: 20px;  
        top: 20px; 
@@ -215,7 +225,9 @@ ul{
     font-weight: bold;
     }
     .foter a:hover{
-        color: #c77dff;
+        color: #ffffff;
+        text-decoration: underline;
+        text-decoration: 0.3s;
     }
 #head{
     position: absolute;
@@ -230,7 +242,9 @@ ul{
     color: #ffffff
 }
  .trend-btn a:hover{
-    color: #c77dff;
+    color: #ffffff;
+    transition: 0.3s;
+    text-decoration: underline;
     
 }
 h2{

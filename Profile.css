@@ -1,6 +1,6 @@
 body{
      background-color: #0a1152;
-     color: #f5f7fc;
+     color: #ffffff;
      font-family: 'Segoe Ui', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
      height: 100%;
      margin: 0;
@@ -14,28 +14,49 @@ h1{    font-family: 'Segoe UI',sans-serif;
     line-height: 1.5;
     align-items: center;
     letter-spacing: 0.5px;
-    margin: 20px;
+    margin: 10px;
     color: #ffffff;
+    position: fixed;
+    
 
 }
 .main{
-    margin-left: 250px;
+    margin-left: 300px;
     top: 10px;
-    margin-top: 50px;
+    margin-top: 30px;
+   
 }
 .warpper{
-    width: 200px;
+    position: relative;
+    width: 50px;
+    height: 40px;
+    background-color: #ccc;
+    border-radius: 10px;
+}
+.warpper::after{
+    contain: "";
+    position: absolute;
+    bottom: -10px;
+    left: 10px;
+    width: 0;
+    height: 0;
+    border-left:10px solid transparent ;
+    border-top: 10px solid #ccc;
+}
+.warpper{
+    width: 250px;
     height: 300px;
     line-height: 1.5;
     background-color: #0a1152;
     display: block;
     line-height: 2.5;
     backdrop-filter: blur(10px);
-    box-shadow: 0 0 8px #8a2be2;
+    box-shadow: 0 0 10px rgba(255, 255, 255, .2);
     border-radius: 10px;
     position: absolute;
     top: 2px;
     margin-top: 100px;
+    position: fixed;
     
 }
 
@@ -45,15 +66,15 @@ h1{    font-family: 'Segoe UI',sans-serif;
     margin-left: 30px;
     font-weight: bold;
     font-family: sans-serif;
-    width: 170px;
+    width: 220px;
     height: 50px;
     font-size: 20px;
     color: #ffffff; 
     border-radius: 10px;  
 }
 .warpper a:hover{
-    background-color: #8a2be2;
-    color: #ffffff;
+    background-color: #d3d3d3;
+    color: #000000;
     transition: 0.3s;
 }
 .User-box button{
@@ -66,9 +87,11 @@ h1{    font-family: 'Segoe UI',sans-serif;
     margin: 10px;
 }
 .fot{
-    position: absolute;
-    margin-top: 500px;
+     position: absolute;
+     top:2px;
+     margin-top: 500px;
 }
+
  .input{
     width:300;
     height: 50px;
@@ -78,9 +101,13 @@ h1{    font-family: 'Segoe UI',sans-serif;
 .leg a{
     text-decoration: none;
     color: #ffffff;
+    word-spacing: 10px;
+    padding: 5px;
 }
 .leg a:hover{
-    color: #9d4edd;
+    color: #ffffff;
+    text-decoration: underline;
+    transition: 0.3s;
 }
 .trend-btn{
     position: absolute;
@@ -98,5 +125,46 @@ h1{    font-family: 'Segoe UI',sans-serif;
 }
 .trend-btn a:hover{
     color: #ffffff;
-    background-color: #9d4edd;
+    text-decoration: underline;
+    transition: 0.3s;
+}
+.post-box ul{
+    list-style-type: none;
+
+}
+.post-box button:hover{
+    border: none;
+    background-color: #0a1152;
+    color: #ffffff;
+    text-decoration: underline;
+}
+.post-box{
+    margin-bottom: 50px;
+}
+.post-box button{
+   background: none;
+   border: none;
+   color: #ffffff;
+   font-weight: bold;
+   font-size: 20px;
+
+}
+
+.post{
+   position:absolute ;
+   left: 25%;
+}
+.video{
+position: absolute;
+right: 0;
+margin-right: 750px;
+}
+.like{
+   position: absolute;
+   right: 0;
+   margin-right: 550px;
+   
+}
+.Grid{
+    margin-top: 100px;
 }

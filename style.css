@@ -7,7 +7,9 @@ body{
      padding: 0;
 
 }
-
+h1{
+    visibility: hidden;
+}
 
 .click-btn{
 text-align: center;
@@ -43,9 +45,10 @@ background-color: #0a1152;
     color: #ffffff;
 }
 
-a:hover{
-    background-color: #9d4edd;
-    color: white;
+ .rememer-forgot a:hover{
+    color: #ffffff;
+    text-decoration: underline;
+    transition: 0.3s;
 }
 
 .ema-box input{
@@ -64,15 +67,15 @@ a:hover{
 }
 
 .rememer-forgot  {
-    color: #ffffff;
-    text-decoration: none;
-    text-align:left;
-    justify-content: space-between;
+    text-align:right;
     display: flex;
+    justify-content: space-between;
 
 }
 .rememer-forgot a{
-    color: #ffffff;
+     margin-left: 250px;
+     text-decoration: none;
+     color: #ffffff;
 }
 .ema-box label{
     font-size: 25px;
