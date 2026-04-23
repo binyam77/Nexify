@@ -134,65 +134,7 @@ ul{
 
 }
 
-.like{
-    position: relative;
-    width: 30px;
-    height: 30px;
-    background-color: #ff0050;
-    transform: rotate(-45deg);   
-}
-.like::before,
-.like::after{
-    content: "";
-    position: absolute;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background-color:#ff0050;
-    
-}
-.like::after{
-    top: 0;
-    left: 15px;
-}
-.like::before{
-    top: -15;
-    left: 0;
-}
-.comment{
-    width: 30px;
-    height: 25px;
-    background-color: #fff;
-    border-radius: 5px;
-    position: relative;
-}
-.comment::after{
-    content: "";
-    position: absolute;
-    bottom: -8px;
-    left: 6px;
-    border-width: 8px 8px 0 0;
-    border-style: solid;
-    border-color: #fff transparent transparent transparent;
 
-}
-.share{
-    width: 0;
-    height: 0;
-    border-top: 15px solid transparent;
-    border-bottom: 15px solid transparent;
-    border-left: 20px solid #0a1152;
-    position: relative;
-}
-.share::after{
-    content: "";
-    position: absolute;
-    width: 15px;
-    height: 10px;
-    background-color: #9d4edd;
-    left: -25px;
-    top: -5px;
-}
 
 .name-user{ 
        position: absolute;    right: 20px;  
@@ -257,4 +199,94 @@ h2{
 }
 h2{
     counter-increment: secton-count;
+}
+.tiktok-sidebar{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: fixed;
+    top: 20px;
+    right:  30px;
+    gap: 25px;
+    background: #0a1152;
+    backdrop-filter: blur(10px);
+    box-shadow: 0 0 8px #8a2be2;
+    padding: 15px;
+    border-radius:50px ;
+    margin-top: 300px;
+    margin-right: 360px;
+}
+.icon-container{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    color: white;
+    font-size: 12px;
+    font-weight: bold;
+    gap: 8px;
+}
+.heart{
+    position: relative;
+    width: 25px;
+    height: 25px;
+    background-color: #ff0000;
+    transform: rotate(-45deg);
+    cursor: pointer;
+    transition: 0.3s;
+}
+.heart::before, .heart::after{
+    content: "";
+    position: absolute;
+    width: 25px;
+    height: 25px;
+    background-color: #ff0000;
+    border-radius: 50%;
+}
+.heart::before{
+    top: -12px;
+    left: 0;
+}
+.heart::after{
+   left: 12px;
+   top: 0;
+}
+.heart:hover{
+    transform: rotate(-45deg) scale(1.2);
+}
+.comment{
+    width: 28px;
+    height: 24px;
+    background-color: #fff;
+    border-radius: 4px;
+    position: relative;
+}
+.comment::after{
+    content: "";
+    position: absolute;
+    bottom: -7px;
+    left: 5px;
+    border-width: 7px 7px 0 0;
+    border-style: solid;
+    border-color: #fff transparent transparent transparent;
+    
+}
+.share-arrow{
+    width: 0;
+    height: 0;
+    border-top: 12px solid transparent;
+    border-bottom: 12px solid transparent;
+    border-left: 18px solid #fff;
+    position: relative;
+    margin-left: 10px;
+
+}
+.share-arrow::after{
+    content: "";
+    position: absolute;
+    width: 14px;
+    height: 8px;
+    background-color: #fff;
+    left: -24px;
+    top: -4px;
+    border-radius: 2px;
 }
