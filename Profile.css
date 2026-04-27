@@ -90,8 +90,14 @@ h1{    font-family: 'Segoe UI',sans-serif;
      position: absolute;
      top:2px;
      margin-top: 500px;
+     position: fixed;
 }
+.boxp{
+    margin-top: 50px;
+    color: #ccc;
+    margin-left: 50px;
 
+}
  .input{
     width:300;
     height: 50px;
@@ -138,9 +144,6 @@ h1{    font-family: 'Segoe UI',sans-serif;
     color: #ffffff;
     text-decoration: underline;
 }
-.post-box{
-    margin-bottom: 50px;
-}
 .post-box button{
    background: none;
    border: none;
@@ -149,22 +152,40 @@ h1{    font-family: 'Segoe UI',sans-serif;
    font-size: 20px;
 
 }
-
+.post-box{
+    display: grid;
+    grid-template-rows: 20px 1fr 1fr;
+    justify-content: space-between;
+    gap: 10px;
+}
 .post{
-   position:absolute ;
-   left: 25%;
+    position: absolute;
 }
 .video{
-position: absolute;
-right: 0;
-margin-right: 750px;
+    position: absolute;
+    margin-left: 200px;
 }
 .like{
-   position: absolute;
-   right: 0;
-   margin-right: 550px;
-   
+    position: absolute;
+    right: 0;
+    margin-right: 500px;
 }
 .Grid{
     margin-top: 100px;
+}
+
+.vio{
+    position: absolute;
+    top: 2px;
+    margin-top: 360px;
+    
+}
+.do{
+    position: absolute;
+    top: 2px;
+    margin-top: 360px;
+    margin-left: 310px;
+}
+video{
+    border-radius: 10px;
 }

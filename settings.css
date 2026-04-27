@@ -14,17 +14,17 @@ body{
 .nav{
     width: 200px;
     height:250px;
-    margin: 30px;
-    background-color: #d3d3d3;
+    background-color: #0a1152;
     position: absolute;
     margin-top: 100px;
-    position: fixed;
+    margin-right: 1000px;
     border-radius:10px ;
    line-height: 1.5;
+   position: fixed;
    
 }
 .nav a{
-    color: #000000;
+    color: #ffffff;
     text-decoration: none;
     display: block;
     display: flex;
@@ -39,8 +39,8 @@ body{
 
 }
 .nav a:hover{
-    color: #ffffff;
-    background-color: #0a1152;
+    color: #000000;
+    background-color:#d3d3d3;
     transition: 0.3s;
 }
 .foter{
