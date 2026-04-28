@@ -38,6 +38,7 @@ h2{
     position: absolute;
     top: 2px;
     margin-top: 50px;
+    position: fixed;
 }
 h1{
     visibility: hidden;
@@ -56,6 +57,7 @@ h1{
     background: transparent;
     box-shadow: 0 0 10px #8a2be2;
     border-width: 2px;
+    background-color: #0a1152;
 
 }
 .input-box label{
@@ -81,15 +83,14 @@ button{
     box-shadow: 0 0 10px rgba(157, 78, 221, 0.5);
     cursor: pointer;
 }
-.input-box i{
-       color: #ffffff;
-}
+
   ::placeholder{
     color: #ffffff;
     resize: none;
 }
 input{
-    color: #ffffff;
+    color: #0a1152;
+    background-color: #0a1152;
 }
 h1{
       font-family: 'Segoe UI',sans-serif;
