@@ -5,9 +5,9 @@ import Home from "./pages/home";
 
 import { Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
-import FirstEntry from "./pages/firstEntry";
-import CreateAccount from "../src/pages/createAccount";
-import Login from "../src/pages/login";
+import FirstEntry from "./auth/firstEntry";
+import CreateAccount from "./auth/createAccount";
+import Login from "./auth/login";
 import Profile from "./pages/profile";
 import Community from "./pages/comminty";
 import Settings from "./pages/settings";
