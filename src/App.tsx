@@ -1,9 +1,8 @@
 // src/App.tsx
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { AnimatePresence } from "framer-motion";
+import { Routes, Route, Navigate } from "react-router-dom"; // ✅ Navigate ጨምረናል
 import Home from "./pages/home";
-
-import { Routes, Route } from "react-router-dom";
 import Layout from "./components/Layout";
 import FirstEntry from "./auth/firstEntry";
 import CreateAccount from "./auth/createAccount";
@@ -12,7 +11,6 @@ import Profile from "./pages/profile";
 import Community from "./pages/comminty";
 import Settings from "./pages/settings";
 import { ROUTES } from "./routes";
-
 import About from "./footer/about";
 import Privacy from "./footer/privacy";
 import Terms from "./footer/terms";
@@ -20,12 +18,18 @@ import Contact from "./footer/contact";
 import Helps from "./footer/helps";
 
 export default function App() {
-  // 1. Footer Pages Navigation State
   const [currentPage, setCurrentPage] = useState<string>("main_app");
-
-  // 2. Auth States
   const [mode, setMode] = useState<"signup" | "login">("signup");
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(true);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+
+  // ✅ የ"Flash" ችግርን ለመከላከል የመጫኛ (Loading) State
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
+  useEffect(() => {
+    const user = localStorage.getItem("user");
+    setIsLoggedIn(!!user);
+    setIsLoading(false); // ቼክ አድርጎ ሲጨርስ Loading ን ያቆማል
+  }, []);
 
   const handleNavigate = (page: string) => {
     setCurrentPage(page);
@@ -40,10 +44,10 @@ export default function App() {
   const handleLoginSubmit = (email: string) => {
     console.log("Login Submitted:", { email });
     setIsLoggedIn(true);
-    setCurrentPage("main_app"); // Login ሲያደርግ ወደ ዋናው መተግበሪያ እንዲመለስ
+    setCurrentPage("main_app");
   };
 
-  // ሀ. መጀመሪያ ተጠቃሚው ከታች ያሉትን (Footer ገጾች) መርጦ ከሆነ እነሱን አሳይ
+  // Footer Pages Navigation Logic
   switch (currentPage) {
     case "privacy":
       return <Privacy onNavigate={handleNavigate} />;
@@ -57,45 +61,78 @@ export default function App() {
       return <About onNavigate={handleNavigate} />;
     case "main_app":
     default:
-      // ወደ ዋናው መተግበሪያ ሎጂክ ያልፋል
       break;
   }
 
-  // ለ. ተጠቃሚው Login ካደረገ የ Routes ገጾችን አሳይ
-  if (isLoggedIn) {
+  // ማረጋገጫው እስከሚጨርስ ባዶ ገጽ ወይም ስፒነር ማሳየት
+  if (isLoading) {
     return (
-      <Routes>
-        <Route path="/" element={<FirstEntry />} />
-        <Route element={<Layout />}>
-          <Route path={ROUTES.home} element={<Home />} />
-          <Route path={ROUTES.profile} element={<Profile />} />
-          <Route path={ROUTES.community} element={<Community />} />
-          <Route path={ROUTES.settings} element={<Settings />} />
-        </Route>
-      </Routes>
+      <div className="min-h-screen flex items-center justify-center">
+        Loading...
+      </div>
     );
   }
 
-  // ሐ. ተጠቃሚው Login ካላደረገ የ Auth (Signup/Login) ገጾችን አሳይ
   return (
-    <div className="min-h-screen w-full bg-slate-50 flex flex-col justify-center items-center p-4 sm:p-6 overflow-x-hidden relative">
-      <main className="w-full max-w-md z-10 flex justify-center items-center">
-        <AnimatePresence mode="wait">
-          {mode === "signup" ? (
-            <CreateAccount
-              key="signup"
-              onNavigateToLogin={() => setMode("login")}
-              onSubmit={handleSignupSubmit}
-            />
+    <Routes>
+      {/* FirstEntry ገጽ */}
+      <Route path="/" element={<FirstEntry />} />
+
+      {/* ✅ የተጠበቁ ገጾች (Protected Routes) */}
+      <Route
+        element={isLoggedIn ? <Layout /> : <Navigate to="/login" replace />}
+      >
+        <Route path={ROUTES.home} element={<Home />} />
+        <Route path={ROUTES.profile} element={<Profile />} />
+        <Route path={ROUTES.community} element={<Community />} />
+        <Route path={ROUTES.settings} element={<Settings />} />
+      </Route>
+
+      {/* ✅ የAuth ገጾች (ያልገቡ ሰዎች ብቻ የሚያዩት) */}
+      <Route
+        path="/createAccount"
+        element={
+          !isLoggedIn ? (
+            <div className="min-h-screen w-full bg-slate-50 flex flex-col justify-center items-center p-4 sm:p-6 overflow-x-hidden relative">
+              <main className="w-full max-w-md z-10 flex justify-center items-center">
+                <AnimatePresence mode="wait">
+                  <CreateAccount
+                    key="signup"
+                    onNavigateToLogin={() => setMode("login")}
+                    onSubmit={handleSignupSubmit}
+                  />
+                </AnimatePresence>
+              </main>
+            </div>
           ) : (
-            <Login
-              key="login"
-              onNavigateToSignup={() => setMode("signup")}
-              onSubmit={handleLoginSubmit}
-            />
-          )}
-        </AnimatePresence>
-      </main>
-    </div>
+            <Navigate to={ROUTES.home} replace />
+          )
+        }
+      />
+
+      <Route
+        path="/login"
+        element={
+          !isLoggedIn ? (
+            <div className="min-h-screen w-full bg-slate-50 flex flex-col justify-center items-center p-4 sm:p-6 overflow-x-hidden relative">
+              <main className="w-full max-w-md z-10 flex justify-center items-center">
+                <AnimatePresence mode="wait">
+                  <Login
+                    key="login"
+                    onNavigateToSignup={() => setMode("signup")}
+                    onSubmit={handleLoginSubmit}
+                  />
+                </AnimatePresence>
+              </main>
+            </div>
+          ) : (
+            <Navigate to={ROUTES.home} replace />
+          )
+        }
+      />
+
+      {/* በስህተት ለሚጻፍ Route ወደ መጀመሪያው ይመልሳል */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
   );
 }

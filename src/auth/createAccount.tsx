@@ -1,6 +1,14 @@
-import React , { useState } from 'react';
-import  { motion } from 'framer-motion';
-import { User, Mail, Lock, Eye, EyeOff, CheckCircle2, AlertCircle } from 'lucide-react';
+import React, { useState } from "react";
+import { motion } from "framer-motion";
+import {
+  User,
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  CheckCircle2,
+  AlertCircle,
+} from "lucide-react";
 
 interface CreateAccountProps {
   key?: string;
@@ -8,35 +16,39 @@ interface CreateAccountProps {
   onSubmit: (username: string, email: string) => void;
 }
 
-export default function CreateAccount({ onNavigateToLogin, onSubmit }: CreateAccountProps) {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export default function CreateAccount({
+  onNavigateToLogin,
+  onSubmit,
+}: CreateAccountProps) {
+  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setError("");
     setSuccess(false);
 
     if (username.trim().length < 3) {
-      setError('Username must be at least 3 characters long.');
+      setError("Username must be at least 3 characters long.");
       return;
     }
 
     if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('Please enter a valid email address.');
+      setError("Please enter a valid email address.");
       return;
     }
 
     if (password.length < 6) {
-      setError('Password must be at least 6 characters long.');
+      setError("Password must be at least 6 characters long.");
       return;
     }
 
     setSuccess(true);
+    localStorage.setItem("user", JSON.stringify({ username, email }));
     onSubmit(username, email);
   };
 
@@ -45,19 +57,23 @@ export default function CreateAccount({ onNavigateToLogin, onSubmit }: CreateAcc
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
-      transition={{ duration: 0.35, ease: 'easeOut' }}
+      transition={{ duration: 0.35, ease: "easeOut" }}
       className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden border border-gray-100 p-8 sm:p-10"
       id="create-account-card"
     >
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">Create Account</h2>
-        <p className="text-gray-500 mt-2 text-sm sm:text-base">Get started with your free account</p>
+        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
+          Create Account
+        </h2>
+        <p className="text-gray-500 mt-2 text-sm sm:text-base">
+          Get started with your free account
+        </p>
       </div>
 
       {error && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
+          animate={{ opacity: 1, height: "auto" }}
           className="mb-5 p-3.5 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg text-sm flex items-start gap-2.5"
         >
           <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
@@ -68,18 +84,23 @@ export default function CreateAccount({ onNavigateToLogin, onSubmit }: CreateAcc
       {success && (
         <motion.div
           initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: 'auto' }}
+          animate={{ opacity: 1, height: "auto" }}
           className="mb-5 p-3.5 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-lg text-sm flex items-start gap-2.5"
         >
           <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
-          <span>Account created successfully! Connecting your integration...</span>
+          <span>
+            Account created successfully! Connecting your integration...
+          </span>
         </motion.div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5" id="createAccount">
         {/* Username Input */}
         <div className="space-y-2">
-          <label htmlFor="username" className="text-sm font-semibold text-gray-700 block">
+          <label
+            htmlFor="username"
+            className="text-sm font-semibold text-gray-700 block"
+          >
             Username
           </label>
           <div className="relative">
@@ -100,7 +121,10 @@ export default function CreateAccount({ onNavigateToLogin, onSubmit }: CreateAcc
 
         {/* Email Input */}
         <div className="space-y-2">
-          <label htmlFor="email" className="text-sm font-semibold text-gray-700 block">
+          <label
+            htmlFor="email"
+            className="text-sm font-semibold text-gray-700 block"
+          >
             Email Address
           </label>
           <div className="relative">
@@ -121,7 +145,10 @@ export default function CreateAccount({ onNavigateToLogin, onSubmit }: CreateAcc
 
         {/* Password Input */}
         <div className="space-y-2">
-          <label htmlFor="password" className="text-sm font-semibold text-gray-700 block">
+          <label
+            htmlFor="password"
+            className="text-sm font-semibold text-gray-700 block"
+          >
             Password
           </label>
           <div className="relative">
@@ -130,7 +157,7 @@ export default function CreateAccount({ onNavigateToLogin, onSubmit }: CreateAcc
             </span>
             <input
               id="password"
-              type={showPassword ? 'text' : 'password'}
+              type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Create a strong password"
@@ -142,7 +169,11 @@ export default function CreateAccount({ onNavigateToLogin, onSubmit }: CreateAcc
               onClick={() => setShowPassword(!showPassword)}
               className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-colors"
             >
-              {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+              {showPassword ? (
+                <EyeOff className="w-5 h-5" />
+              ) : (
+                <Eye className="w-5 h-5" />
+              )}
             </button>
           </div>
         </div>
@@ -159,7 +190,7 @@ export default function CreateAccount({ onNavigateToLogin, onSubmit }: CreateAcc
 
       {/* Redirect Link */}
       <p className="text-center mt-7 text-sm text-gray-500">
-        Already have an account?{' '}
+        Already have an account?{" "}
         <button
           type="button"
           onClick={onNavigateToLogin}
