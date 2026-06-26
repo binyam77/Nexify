@@ -31,11 +31,11 @@ const footerLinks = [
 ];
 
 interface SidebarProps {
-  activeTab: NavTab;
-  setActiveTab: (tab: NavTab) => void;
-  unreadCommunityCount: number;
-  onUploadClick: () => void;
-  hideOnMobile: boolean;
+  activeTab?: NavTab;
+  setActiveTab?: (tab: NavTab) => void;
+  unreadCommunityCount?: number;
+  onUploadClick?: () => void;
+  hideOnMobile?: boolean;
 }
 
 export default function sidebar(props: SidebarProps) {
@@ -84,7 +84,7 @@ export default function sidebar(props: SidebarProps) {
               to={to}
               end={to === ROUTES.home}
               // 2. activeTab እና setActiveTab እዚህ ጋ ጥቅም ላይ ውለዋል
-              onClick={() => setActiveTab(tab)}
+              onClick={() => setActiveTab?. (tab)}
               className={({ isActive }) =>
                 cn(
                   "flex items-center justify-between rounded-lg px-4 py-3.5 text-lg font-bold text-slate-700 transition-colors hover:bg-slate-100",
@@ -98,7 +98,7 @@ export default function sidebar(props: SidebarProps) {
               </div>
 
               {/* 3. unreadCommunityCount እዚህ ጋ ጥቅም ላይ ውሏል */}
-              {tab === "community" && unreadCommunityCount > 0 && (
+              {tab === "community" && (unreadCommunityCount ?? 0) > 0 && (
                 <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
                   {unreadCommunityCount}
                 </span>
