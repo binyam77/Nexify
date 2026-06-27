@@ -1,21 +1,26 @@
 import React, { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import logo from "../assets/logo.png"; // የሎጎህን መገኛ መንገድ እዚህ ጋር ማስተካከል ትችላለህ
-const firstEntry: React.FC = () => {
+import { useAuth } from "../context/AuthContext";
+import { ROUTES } from "../routes";
+import logo from "../assets/logo.png";
+
+const FirstEntry: React.FC = () => {
   const navigate = useNavigate();
+  const { isLoggedIn, isLoading } = useAuth();
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const user = localStorage.getItem("user");
-
-      if (user) {
-        navigate("../pages/home");
+      if (isLoading) return;
+      if (isLoggedIn) {
+        navigate(ROUTES.home);
       } else {
         navigate("/createAccount");
       }
     }, 2000);
+
     return () => clearTimeout(timer);
-  }, [navigate]);
+  }, [navigate, isLoggedIn, isLoading]);
+
   return (
     <div className="flex h-screen w-screen items-center justify-center bg-white overflow-hidden select-none">
       <div className="flex items-center justify-center">
@@ -29,4 +34,4 @@ const firstEntry: React.FC = () => {
   );
 };
 
-export default firstEntry;
+export default FirstEntry;

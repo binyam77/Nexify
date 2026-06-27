@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 
 interface CreateAccountProps {
-  key?: string;
   onNavigateToLogin: () => void;
   onSubmit: (username: string, email: string) => void;
 }
@@ -48,7 +47,6 @@ export default function CreateAccount({
     }
 
     setSuccess(true);
-    localStorage.setItem("user", JSON.stringify({ username, email }));
     onSubmit(username, email);
   };
 

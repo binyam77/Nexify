@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 
 interface LoginProps {
-  key?: string;
   onNavigateToSignup: () => void;
   onSubmit: (email: string) => void;
 }
@@ -36,7 +35,17 @@ export default function Login({ onNavigateToSignup, onSubmit }: LoginProps) {
       setError("Please enter your password.");
       return;
     }
-
+// ለጊዘው localStorage check -backend ሲመጣ API call ይተካዋል
+const stored = localStorage.getItem("authUser");
+if(!stored){
+  setError("No account found.Please create an account first.");
+  return;
+}
+const storedUser= JSON.parse(stored);
+if(storedUser.email ! == email){
+  setError("Email not found.Please check and try again.");
+  return;
+}
     setSuccess(true);
     onSubmit(email);
   };

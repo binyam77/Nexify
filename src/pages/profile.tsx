@@ -4,6 +4,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
+import { useAuth } from '../context/AuthContext';
 import { 
   Camera, 
   Trash2, 
@@ -81,9 +82,10 @@ interface CommentItem {
 
 export default function Profile({ onBackToCommunity, triggerGlobalUpload, onClearGlobalUpload, onStartChat }: ProfileProps) {
   // --- Profile State ---
+  const {user, login}=useAuth();
   const [profile, setProfile] = useState({
-    name: 'Yonas G.',
-    username: 'yonas_dev',
+    name: user?.username || 'User',
+    username: user?.username || 'username',
     bio: 'Lead Fullstack Developer at Nexify. Passionate about beautiful interfaces, responsive layouts, and modern single-page architectures. Let\'s build something legendary together! 🚀✨',
     photo: '/default_avatar.jpg',
     cover: '',
@@ -369,10 +371,10 @@ export default function Profile({ onBackToCommunity, triggerGlobalUpload, onClea
       try {
         const parsed = JSON.parse(savedProfile);
         setProfile({
-          name: parsed.name || 'Yonas G.',
-          username: parsed.username || 'yonas_dev',
-          bio: parsed.bio || 'Lead Fullstack Developer at Nexify. Passionate about beautiful interfaces, responsive layouts, and modern single-page architectures. Let\'s build something legendary together! 🚀✨',
-          photo: parsed.photo || '/default_avatar.jpg',
+          name: parsed.username || user?.username || 'User',
+          username: parsed.username || user?.username || 'username',
+          bio: parsed.bio || user?.bio || '',
+          photo: parsed.photo || user?.photo || '/default_avatar.jpg',
           cover: parsed.cover || '',
         });
       } catch (e) {
@@ -380,8 +382,8 @@ export default function Profile({ onBackToCommunity, triggerGlobalUpload, onClea
       }
     } else {
       const defaultData = {
-        name: 'Yonas G.',
-        username: 'yonas_dev',
+        name: user?.username || 'User',
+        username: user?.username || 'username',
         bio: 'Lead Fullstack Developer at Nexify. Passionate about beautiful interfaces, responsive layouts, and modern single-page architectures. Let\'s build something legendary together! 🚀✨',
         photo: '/default_avatar.jpg',
         cover: '',
@@ -904,6 +906,7 @@ export default function Profile({ onBackToCommunity, triggerGlobalUpload, onClea
 
     setProfile(updatedProfile);
     localStorage.setItem('userProfile', JSON.stringify(updatedProfile));
+    login({username: updatedProfile.username, email: user?.email || ''});
     setIsEditModalOpen(false);
   };
 

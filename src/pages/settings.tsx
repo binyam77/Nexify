@@ -1,17 +1,31 @@
 import React, { useState, useRef } from "react";
-import { Check, AlertCircle, Save, LogOut, Trash2, ShieldAlert } from "lucide-react";
+import { useAuth } from "../context/AuthContext";
+import { useNavigate } from "react-router-dom";
+import type { User } from "../context/AuthContext";
+import {
+  Check,
+  AlertCircle,
+  Save,
+  LogOut,
+  Trash2,
+  ShieldAlert,
+} from "lucide-react";
 
 export default function Settings() {
   // --- ስቴት ማስተዳደሪያዎች (State Management) ---
-
+  const { logout, user, updateUser } = useAuth();
+  const navigate = useNavigate();
   // 1. የአካውንት መረጃ ስቴት (Account Info State)
-  const [username, setUsername] = useState("yaday9041");
-  const [email, setEmail] = useState("yaday9041@gmail.com");
+  const savedProfile = JSON.parse(localStorage.getItem("userProfile") || "{}");
+  const [username, setUsername] = useState(user?.username || "");
+  const [email, setEmail] = useState(user?.email || "");
   const [password, setPassword] = useState("••••••••");
 
   // 2. የፕሮፋይል ስቴት (Profile State)
-  const [profilePic, setProfilePic] = useState<string | null>(null);
-  const [bio, setBio] = useState("");
+  const [profilePic, setProfilePic] = useState<string | null>(
+    savedProfile.photo || null,
+  );
+  const [bio, setBio] = useState(savedProfile.bio || user?.bio || "");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 3. የግላዊነት ስቴት (Privacy State)
@@ -47,7 +61,12 @@ export default function Settings() {
   // 1. የአካውንት መረጃን ለማስቀመጥ (Save Account Info)
   const handleAccountSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    showAlert("success", "የአካውንት መረጃዎ በስኬት ተቀምጧል!");
+    if (!username.trim() || !email.trim()) {
+      showAlert("error", "Username and email cannot be empty!");
+      return;
+    }
+    updateUser({ username: username.trim(), email: email.trim() });
+    showAlert("success", "Your account information is successfully saved!");
   };
 
   // 2. የፕሮፋይል ምስል ለመምረጥ እና ለማሳየት (Handle Profile Image Upload)
@@ -66,7 +85,14 @@ export default function Settings() {
   // የፕሮፋይል ዝርዝሮችን ለማዘመን (Update Profile Bio)
   const handleProfileUpdate = (e: React.FormEvent) => {
     e.preventDefault();
-    showAlert("success", "የፕሮፋይል መረጃዎ በስኬት ተዘምኗል!");
+    updateUser({
+      bio: bio.trim(),
+      photo: profilePic || user?.photo || "",
+    });
+    showAlert(
+      "success",
+      "Your profile information has been successfully updated!",
+    );
   };
 
   // 3. የግላዊነት ምርጫን ለማስቀመጥ (Save Privacy Settings)
@@ -74,7 +100,7 @@ export default function Settings() {
     e.preventDefault();
     showAlert(
       "success",
-      `የግላዊነት ምርጫዎ ወደ [${privacy === "public" ? "ሁሉም ሰው ማየት ይችላል" : "ተከታዮች ብቻ ማየት ይችላሉ"}] ተቀይሯል!`
+      `የግላዊነት ምርጫዎ ወደ [${privacy === "public" ? "ሁሉም ሰው ማየት ይችላል" : "ተከታዮች ብቻ ማየት ይችላሉ"}] ተቀይሯል!`,
     );
   };
 
@@ -106,23 +132,28 @@ export default function Settings() {
 
   // 6. አካውንት መውጫ ተግባር (Logout confirmation)
   const handleLogout = () => {
-    const confirmAction = window.confirm("እርግጠኛ ነዎት መውጣት ይፈልጋሉ?");
+    const confirmAction = window.confirm("Are you sure you want to Logout?");
     if (confirmAction) {
-      showAlert("success", "በስኬት ወጥተዋል!");
+      logout();
+      navigate("./auth/login");
     }
   };
 
   // አካውንት መሰረዣ ተግባር (Delete Account confirmation)
   const handleAccountDelete = () => {
-    const confirmAction = window.confirm("እርግጠኛ ነዎት አካውንትዎን መሰረዝ ይፈልጋሉ? ይህ ድርጊት ወደ ኋላ አይመለስም!");
+    const confirmAction = window.confirm(
+      "Are you sure you want to delete your account? This action cannot be undone!",
+    );
     if (confirmAction) {
-      showAlert("error", "አካውንትዎ በቋሚነት ተሰርዟል!");
+      localStorage.removeItem("authUser");
+      localStorage.removeItem("userProfile");
+      logout();
+      navigate("./auth/createAccount");
     }
   };
 
   return (
-    <main className="flex-grow w-full max-w-4xl mx-auto px-4 py-8 sm:py-12 flex flex-col gap-8 text-slate-800">
-      
+    <main className="flex-grow w-full max-w-4xl mx-auto px-4 py-8 sm:py-12 flex flex-col gap-8 text-slate-800 overflow-y-auto h-screen">
       {/* 🔔 የተጠቃሚ መልዕክቶች ማሳያ (Toast Alert Banner) */}
       {alertMessage && (
         <div
@@ -150,7 +181,9 @@ export default function Settings() {
         </h2>
         <form onSubmit={handleAccountSubmit} className="flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-600">Edit username</label>
+            <label className="text-sm font-medium text-slate-600">
+              Edit username
+            </label>
             <input
               type="text"
               value={username}
@@ -162,7 +195,9 @@ export default function Settings() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-600">Change email</label>
+            <label className="text-sm font-medium text-slate-600">
+              Change email
+            </label>
             <input
               type="email"
               value={email}
@@ -174,7 +209,9 @@ export default function Settings() {
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-600">Change password</label>
+            <label className="text-sm font-medium text-slate-600">
+              Change password
+            </label>
             <input
               type="password"
               value={password}
@@ -204,7 +241,9 @@ export default function Settings() {
         </h2>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-600">Profile Picture</label>
+            <label className="text-sm font-medium text-slate-600">
+              Profile Picture
+            </label>
             <div className="flex items-center gap-5 mt-2 flex-wrap">
               {profilePic ? (
                 <img
@@ -265,7 +304,7 @@ export default function Settings() {
             <legend className="px-2.5 text-sm font-semibold text-slate-700">
               Who can see my profile?
             </legend>
-            
+
             <div className="flex items-center gap-2.5 cursor-pointer">
               <input
                 type="radio"
@@ -276,7 +315,10 @@ export default function Settings() {
                 onChange={() => setPrivacy("public")}
                 className="w-4 h-4 text-[#0185E5] focus:ring-[#0185E5]"
               />
-              <label htmlFor="public" className="text-sm text-slate-700 cursor-pointer">
+              <label
+                htmlFor="public"
+                className="text-sm text-slate-700 cursor-pointer"
+              >
                 Public (Everyone)
               </label>
             </div>
@@ -291,7 +333,10 @@ export default function Settings() {
                 onChange={() => setPrivacy("private")}
                 className="w-4 h-4 text-[#0185E5] focus:ring-[#0185E5]"
               />
-              <label htmlFor="private" className="text-sm text-slate-700 cursor-pointer">
+              <label
+                htmlFor="private"
+                className="text-sm text-slate-700 cursor-pointer"
+              >
                 Private (Only Followers/Members)
               </label>
             </div>
@@ -314,7 +359,10 @@ export default function Settings() {
         <h2 className="text-xl font-bold text-slate-900 mb-6 pb-2 border-b-2 border-slate-100">
           Notifications
         </h2>
-        <form onSubmit={handleNotificationsSubmit} className="flex flex-col gap-5">
+        <form
+          onSubmit={handleNotificationsSubmit}
+          className="flex flex-col gap-5"
+        >
           <fieldset className="border border-slate-300 rounded-lg p-5 flex flex-col gap-4">
             <legend className="px-2.5 text-sm font-semibold text-slate-700">
               Manage Notifications
@@ -327,11 +375,17 @@ export default function Settings() {
                   name="like_alerts"
                   checked={notifications.likes}
                   onChange={(e) =>
-                    setNotifications({ ...notifications, likes: e.target.checked })
+                    setNotifications({
+                      ...notifications,
+                      likes: e.target.checked,
+                    })
                   }
                   className="w-4 h-4 text-[#0185E5] rounded focus:ring-[#0185E5]"
                 />
-                <label htmlFor="likes" className="text-sm text-slate-700 cursor-pointer">
+                <label
+                  htmlFor="likes"
+                  className="text-sm text-slate-700 cursor-pointer"
+                >
                   Like
                 </label>
               </div>
@@ -343,11 +397,17 @@ export default function Settings() {
                   name="comment_alerts"
                   checked={notifications.comments}
                   onChange={(e) =>
-                    setNotifications({ ...notifications, comments: e.target.checked })
+                    setNotifications({
+                      ...notifications,
+                      comments: e.target.checked,
+                    })
                   }
                   className="w-4 h-4 text-[#0185E5] rounded focus:ring-[#0185E5]"
                 />
-                <label htmlFor="comment" className="text-sm text-slate-700 cursor-pointer">
+                <label
+                  htmlFor="comment"
+                  className="text-sm text-slate-700 cursor-pointer"
+                >
                   Comments
                 </label>
               </div>
@@ -359,11 +419,17 @@ export default function Settings() {
                   name="follows_alerts"
                   checked={notifications.follows}
                   onChange={(e) =>
-                    setNotifications({ ...notifications, follows: e.target.checked })
+                    setNotifications({
+                      ...notifications,
+                      follows: e.target.checked,
+                    })
                   }
                   className="w-4 h-4 text-[#0185E5] rounded focus:ring-[#0185E5]"
                 />
-                <label htmlFor="follows" className="text-sm text-slate-700 cursor-pointer">
+                <label
+                  htmlFor="follows"
+                  className="text-sm text-slate-700 cursor-pointer"
+                >
                   New Follows
                 </label>
               </div>
@@ -394,7 +460,9 @@ export default function Settings() {
             </legend>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-slate-600">New password</label>
+                <label className="text-sm font-medium text-slate-600">
+                  New password
+                </label>
                 <input
                   type="password"
                   id="new-password"
@@ -408,7 +476,9 @@ export default function Settings() {
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-slate-600">Confirm password</label>
+                <label className="text-sm font-medium text-slate-600">
+                  Confirm password
+                </label>
                 <input
                   type="password"
                   id="confirm-password"
@@ -463,34 +533,33 @@ export default function Settings() {
       <footer className="mt-8 pt-6 border-t border-slate-200 text-xs text-slate-400 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="font-semibold text-slate-500">&copy; Nexify</div>
         <div className="flex items-center gap-4 flex-wrap">
-          <a
-            href="./footer/about/about.html"
-            onClick={(e) => e.preventDefault()}
-            className="hover:text-[#0185E5] transition-colors"
+          <span
+            onClick={() => navigate("./footer/about")}
+            className="hover:text-[#0185e5] transition-colors cursor-pointer"
           >
             About
-          </a>
-          <a
-            href="./footer/privacy/privacy.html"
-            onClick={(e) => e.preventDefault()}
-            className="hover:text-[#0185E5] transition-colors"
+          </span>
+
+          <span
+            onClick={() => navigate("./footer/privacy")}
+            className="hover:text-[#0185e5] transition-colors cursor-pointer"
           >
             Privacy
-          </a>
-          <a
-            href="./footer/terms/terms.html"
-            onClick={(e) => e.preventDefault()}
-            className="hover:text-[#0185E5] transition-colors"
+          </span>
+
+          <span
+            onClick={() => navigate("./footer/terms")}
+            className="hover:text-[#0185e5] transition-colors cursor-pointer"
           >
             Terms
-          </a>
-          <a
-            href="./footer/contact/contact.html"
-            onClick={(e) => e.preventDefault()}
-            className="hover:text-[#0185E5] transition-colors"
+          </span>
+
+          <span
+            onClick={() => navigate("./footer/contact")}
+            className="hover:text-[#0185e5] transition-colors cursor-pointer"
           >
             Contact
-          </a>
+          </span>
         </div>
       </footer>
     </main>

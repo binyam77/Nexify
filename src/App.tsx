@@ -1,7 +1,7 @@
 // src/App.tsx
-import { useState, useEffect } from "react";
+import { useAuth } from "./context/AuthContext";
 import { AnimatePresence } from "framer-motion";
-import { Routes, Route, Navigate } from "react-router-dom"; // ✅ Navigate ጨምረናል
+import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import Home from "./pages/home";
 import Layout from "./components/Layout";
 import FirstEntry from "./auth/firstEntry";
@@ -18,53 +18,32 @@ import Contact from "./footer/contact";
 import Helps from "./footer/helps";
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState<string>("main_app");
-  const [mode, setMode] = useState<"signup" | "login">("signup");
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const navigate = useNavigate();
+  const { isLoggedIn, isLoading, login } = useAuth();
 
-  // ✅ የ"Flash" ችግርን ለመከላከል የመጫኛ (Loading) State
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    const user = localStorage.getItem("user");
-    setIsLoggedIn(!!user);
-    setIsLoading(false); // ቼክ አድርጎ ሲጨርስ Loading ን ያቆማል
-  }, []);
-
-  const handleNavigate = (page: string) => {
-    setCurrentPage(page);
+  // የድሮውን handleNavigate በ react-router-dom መተካት
+  const handleNavigate = (path: string) => {
+    navigate(path);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const handleSignupSubmit = (username: string, email: string) => {
-    console.log("Signup Submitted:", { username, email });
-    setMode("login");
+    login({ username, email });
+    navigate(ROUTES.home);
   };
 
   const handleLoginSubmit = (email: string) => {
-    console.log("Login Submitted:", { email });
-    setIsLoggedIn(true);
-    setCurrentPage("main_app");
+    // ለጊዘው localStorage--> backend  ሲመጣ  API response ይጠከማል
+    const stored = localStorage.getItem("authUser");
+    const storedUser = stored ? JSON.parse(stored) : null;
+    login({
+      email,
+      username: storedUser?.username || email,
+    });
+    navigate(ROUTES.home);
   };
 
-  // Footer Pages Navigation Logic
-  switch (currentPage) {
-    case "privacy":
-      return <Privacy onNavigate={handleNavigate} />;
-    case "terms":
-      return <Terms onNavigate={handleNavigate} />;
-    case "contact":
-      return <Contact onNavigate={handleNavigate} />;
-    case "helps":
-      return <Helps onNavigate={handleNavigate} />;
-    case "about":
-      return <About onNavigate={handleNavigate} />;
-    case "main_app":
-    default:
-      break;
-  }
-
-  // ማረጋገጫው እስከሚጨርስ ባዶ ገጽ ወይም ስፒነር ማሳየት
+  // ማረጋገጫው እስከሚጨርስ ሎዲንግ ማሳየት (ከሁሉም በላይ መሆን አለበት)
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -88,7 +67,20 @@ export default function App() {
         <Route path={ROUTES.settings} element={<Settings />} />
       </Route>
 
-      {/* ✅ የAuth ገጾች (ያልገቡ ሰዎች ብቻ የሚያዩት) */}
+      {/* ✅ የFooter ገጾች (አሁን በRoute ሆነዋል!) */}
+      <Route
+        path="/privacy"
+        element={<Privacy onNavigate={handleNavigate} />}
+      />
+      <Route path="/terms" element={<Terms onNavigate={handleNavigate} />} />
+      <Route
+        path="/contact"
+        element={<Contact onNavigate={handleNavigate} />}
+      />
+      <Route path="/helps" element={<Helps onNavigate={handleNavigate} />} />
+      <Route path="/about" element={<About onNavigate={handleNavigate} />} />
+
+      {/* ✅ የAuth ገጾች */}
       <Route
         path="/createAccount"
         element={
@@ -98,7 +90,7 @@ export default function App() {
                 <AnimatePresence mode="wait">
                   <CreateAccount
                     key="signup"
-                    onNavigateToLogin={() => setMode("login")}
+                    onNavigateToLogin={() => navigate("/login")}
                     onSubmit={handleSignupSubmit}
                   />
                 </AnimatePresence>
@@ -119,7 +111,7 @@ export default function App() {
                 <AnimatePresence mode="wait">
                   <Login
                     key="login"
-                    onNavigateToSignup={() => setMode("signup")}
+                    onNavigateToSignup={() => navigate("/createAccount")}
                     onSubmit={handleLoginSubmit}
                   />
                 </AnimatePresence>
@@ -131,7 +123,7 @@ export default function App() {
         }
       />
 
-      {/* በስህተት ለሚጻፍ Route ወደ መጀመሪያው ይመልሳል */}
+      {/* በስህተት ለሚጻፍ Route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
