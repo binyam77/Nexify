@@ -4,21 +4,14 @@ import { useState } from "react";
 
 import { NavLink, Link } from "react-router-dom";
 
-import { House, Users, User, Settings, Search } from "lucide-react";
+import { House, Users, User, Settings, Search, Bell } from "lucide-react";
 
 import { ROUTES } from "../routes";
 
 import { cn } from "../utils";
-
+import { useNotifications } from "../context/NotificationContext";
 import logo from "../assets/logo.png";
 import type { NavTab } from "../types";
-
-const navItems = [
-  { label: "Home", to: ROUTES.home, icon: House, tab: "home" as NavTab },
-  { label: "Community", to: ROUTES.community, icon: Users, tab: "community" as NavTab },
-  { label: "Profile", to: ROUTES.profile, icon: User, tab: "profile" as NavTab },
-  { label: "Settings", to: ROUTES.settings, icon: Settings, tab: "settings" as NavTab },
-];
 
 const footerLinks = [
   { label: "About", to: ROUTES.about },
@@ -40,16 +33,59 @@ interface SidebarProps {
 
 export default function Sidebar(props: SidebarProps) {
   // እዚህ ጋር ያሉትን ቫሪያብሎች ከታች በተግባር ተጠቅመናቸዋል
-  const { activeTab, setActiveTab, unreadCommunityCount, onUploadClick, hideOnMobile } = props;
-
+  const {
+    activeTab,
+    setActiveTab,
+    unreadCommunityCount,
+    onUploadClick,
+    hideOnMobile,
+  } = props;
+  const { unreadCount } = useNotifications();
+  const navItems = [
+    {
+      label: "Home",
+      to: ROUTES.home,
+      icon: House,
+      tab: "home" as NavTab,
+      badge: 0,
+    },
+    {
+      label: "Community",
+      to: ROUTES.community,
+      icon: Users,
+      tab: "community" as NavTab,
+      badge: unreadCommunityCount ?? 0,
+    },
+    {
+      label: "Notifications",
+      to: ROUTES.notifications,
+      icon: Bell,
+      tab: "notifications" as NavTab,
+      badge: unreadCount,
+    },
+    {
+      label: "Profile",
+      to: ROUTES.profile,
+      icon: User,
+      tab: "profile" as NavTab,
+      badge: 0,
+    },
+    {
+      label: "Settings",
+      to: ROUTES.settings,
+      icon: Settings,
+      tab: "settings" as NavTab,
+      badge: 0,
+    },
+  ];
   const [query, setQuery] = useState("");
 
   return (
-    <aside 
+    <aside
       // 1. hideOnMobile እዚህ ጋ ጥቅም ላይ ውሏል
       className={cn(
         "hidden h-screen w-[280px] shrink-0 flex-col justify-between border-r border-slate-200 bg-white px-5 py-6 md:flex",
-        hideOnMobile && "md:hidden" 
+        hideOnMobile && "md:hidden",
       )}
     >
       <div className="flex flex-col gap-5">
@@ -78,13 +114,13 @@ export default function Sidebar(props: SidebarProps) {
         </div>
 
         <nav className="flex flex-col gap-1.5">
-          {navItems.map(({ label, to, icon: Icon, tab }) => (
+          {navItems.map(({ label, to, icon: Icon, tab, badge }) => (
             <NavLink
               key={to}
               to={to}
               end={to === ROUTES.home}
               // 2. activeTab እና setActiveTab እዚህ ጋ ጥቅም ላይ ውለዋል
-              onClick={() => setActiveTab?. (tab)}
+              onClick={() => setActiveTab?.(tab)}
               className={({ isActive }) =>
                 cn(
                   "flex items-center justify-between rounded-lg px-4 py-3.5 text-lg font-bold text-slate-700 transition-colors hover:bg-slate-100",
@@ -98,16 +134,16 @@ export default function Sidebar(props: SidebarProps) {
               </div>
 
               {/* 3. unreadCommunityCount እዚህ ጋ ጥቅም ላይ ውሏል */}
-              {tab === "community" && (unreadCommunityCount ?? 0) > 0 && (
-                <span className="bg-blue-600 text-white text-xs px-2 py-0.5 rounded-full">
-                  {unreadCommunityCount}
+              {badge > 0 && (
+                <span className="bg-rose-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                  {badge}
                 </span>
               )}
             </NavLink>
           ))}
-          
+
           {/* 4. onUploadClick እዚህ ጋ ጥቅም ላይ ውሏል */}
-          <button 
+          <button
             onClick={onUploadClick}
             className="mt-4 w-full bg-blue-600 text-white py-2.5 rounded-lg font-bold text-sm hover:bg-blue-700 transition-colors"
           >

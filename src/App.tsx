@@ -16,6 +16,7 @@ import Privacy from "./footer/privacy";
 import Terms from "./footer/terms";
 import Contact from "./footer/contact";
 import Helps from "./footer/helps";
+import Notifications from "./pages/notfications";
 
 export default function App() {
   const navigate = useNavigate();
@@ -63,6 +64,7 @@ export default function App() {
       >
         <Route path={ROUTES.home} element={<Home />} />
         <Route path={ROUTES.profile} element={<Profile />} />
+        <Route path={ROUTES.notifications} element={<Notifications/>}/>
         <Route path={ROUTES.community} element={<Community />} />
         <Route path={ROUTES.settings} element={<Settings />} />
       </Route>

@@ -6,13 +6,15 @@ import { AuthProvider } from "./context/AuthContext.tsx";
 import App from "./App.tsx";
 import "./index.css";
 import { FeedProvider } from "./context/FeedContext.tsx";
-
+import { NotificationProvider } from "./context/NotificationContext.tsx";
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
       <AuthProvider>
         <FeedProvider>
-          <App />
+          <NotificationProvider>
+            <App />
+          </NotificationProvider>
         </FeedProvider>
       </AuthProvider>
     </BrowserRouter>
