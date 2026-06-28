@@ -38,7 +38,7 @@ interface SidebarProps {
   hideOnMobile?: boolean;
 }
 
-export default function sidebar(props: SidebarProps) {
+export default function Sidebar(props: SidebarProps) {
   // እዚህ ጋር ያሉትን ቫሪያብሎች ከታች በተግባር ተጠቅመናቸዋል
   const { activeTab, setActiveTab, unreadCommunityCount, onUploadClick, hideOnMobile } = props;
 

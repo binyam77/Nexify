@@ -10,6 +10,7 @@ import ChatsSidebar from "../components/ChatsSidebar";
 import MessageArea from "../components/MessageArea";
 import NewGroupModal from "../components/NewGroupModal";
 import Profile from "./profile";
+import { useAuth } from "../context/AuthContext";
 import type { Chat, Message, NavTab } from "../types";
 import { saveMediaFile } from "../lib/db";
 
@@ -27,50 +28,13 @@ export default function Community() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // User profile details (Current member profile loaded dynamically from localStorage)
-  const [userProfile, setUserProfile] = useState(() => {
-    const saved = localStorage.getItem("userProfile");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        return {
-          name: parsed.name || "Yonas G.",
-          role: parsed.bio
-            ? parsed.bio.split(".")[0] || "Lead Fullstack Developer"
-            : "Lead Fullstack Developer",
-          avatar: parsed.photo || "",
-          username: parsed.username || "yonas_dev",
-        };
-      } catch (e) {
-        console.error("Error loading saved profile in Community state:", e);
-      }
-    }
-    return {
-      name: "Yonas G.",
-      role: "Lead Fullstack Developer",
-      avatar: "",
-      username: "yonas_dev",
-    };
-  });
-
-  // Sync profile details whenever the active tab changes (e.g. returning from Profile edits)
-  useEffect(() => {
-    const saved = localStorage.getItem("userProfile");
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        setUserProfile({
-          name: parsed.name || "Yonas G.",
-          role: parsed.bio
-            ? parsed.bio.split(".")[0] || "Lead Fullstack Developer"
-            : "Lead Fullstack Developer",
-          avatar: parsed.photo || "",
-          username: parsed.username || "yonas_dev",
-        });
-      } catch (e) {
-        console.error("Error syncing profile in Community tab:", e);
-      }
-    }
-  }, [activeTab]);
+  const { user } = useAuth();
+  const userProfile = {
+    name: user?.username || "User",
+    role: user?.bio?.split(".")[0] || "Developer",
+    avatar: user?.photo || "",
+    username: user?.username || "username",
+  };
 
   // List of group rooms (Community Chats / Channels)
   // Users can create their own rooms or join existing public rooms.
@@ -749,7 +713,6 @@ export default function Community() {
         />
       )}
 
-      
       {/* 3. NEW GROUP MODAL (Create new group/room dialog window) */}
       <NewGroupModal
         isOpen={isNewGroupOpen}

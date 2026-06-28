@@ -6,6 +6,8 @@ export interface User {
   email: string;
   bio?: string;
   photo?: string;
+  followersCount?:number;
+  followingCount?:number;
   // ✅ backend ሲመጣ ሌሎች fields እዚህ ጨምር (id, avatar, etc.)
 }
 
@@ -16,6 +18,7 @@ interface AuthContextType {
   login: (userData: User) => void;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
+  updateFollowCount:(type: 'followers' | 'following', increment:boolean)=>void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -65,10 +68,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return updated;
     });
   };
-
+const updateFollowCount=(type:'followers' | 'following', increment:boolean)=>{
+  setUser(prev =>{
+    if(!prev)return prev;
+    const updated={
+      ...prev,
+      followersCount: type === 'followers'
+      ? (prev.followersCount || 0) + (increment ? 1 : -1)
+      :prev.followersCount,
+      followingCount: type === 'following'
+      ?(prev.followingCount || 0) + (increment ? 1 : -1)
+      :prev.followingCount,
+    };
+    localStorage.setItem("authUser", JSON.stringify(updated));
+    return updated;
+  })
+}
   return (
     <AuthContext.Provider
-      value={{ user, isLoggedIn: !!user, isLoading, login, logout, updateUser }}
+      value={{ user, isLoggedIn: !!user, isLoading, login, logout, updateUser,updateFollowCount }}
     >
       {children}
     </AuthContext.Provider>

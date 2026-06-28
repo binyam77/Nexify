@@ -11,6 +11,11 @@ export interface VideoData {
   authorName: string;
   authorAvatarUrl: string;
   caption: string;
+  hashtags?: string[];
+  isVideo?:boolean;
+  thumbnail?:string;
+  likes?:number;
+  views?: number;
 }
 
 export interface CommentReply {
@@ -79,4 +84,22 @@ export interface Message {
   reactions?: { emoji: string; count: number; users: string[] }[]; // ተጠቃሚዎች የሰጡት ምላሽ (List of user reactions to this message)
 }
 
+export interface FeedPost{
+  id: string;
+  userId:string;  // PostagraSQL: usres.id
+  username:string;
+  userAvatar:string;
+  type:'video' | 'photo';
+  mediaUrls: string[];// carousel = array, video=[0]
+  caption:string;
+  hashtags: string[];
+  likesCount: number;
+  commentsCount :number;
+  sharesCount:number;
+  savesCount : number;
+  viewsCount:number;
+  createdAt:string;
+  
+
+}
 export type NavTab = 'home' | 'community' | 'profile' | 'settings' | 'explore';

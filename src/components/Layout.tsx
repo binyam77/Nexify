@@ -1,17 +1,22 @@
+import { useState } from 'react';
 import { Outlet } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
 import NotificationBell from './NotificationBell';
+import UploadModal from './UploadModal';
 
 export default function Layout() {
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-100">
-      <Sidebar />
-      <main className="relative flex-1 overflow-hidden">
+      <Sidebar onUploadClick={() => setIsUploadOpen(true)} />
+      <main className="relative flex-1 overflow-hidden ">
         <NotificationBell />
         <Outlet />
       </main>
-      <BottomNav />
+      <BottomNav onUploadClick={() => setIsUploadOpen(true)} />
+      <UploadModal isOpen={isUploadOpen} onClose={() => setIsUploadOpen(false)} />
     </div>
   );
 }
