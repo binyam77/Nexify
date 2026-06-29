@@ -13,7 +13,7 @@ import Profile from "./profile";
 import { useAuth } from "../context/AuthContext";
 import type { Chat, Message, NavTab } from "../types";
 import { saveMediaFile } from "../lib/db";
-
+import { useLocation } from "react-router-dom";
 // ==========================================
 // Title: This is the primary Community.tsx file
 // ==========================================
@@ -220,7 +220,18 @@ export default function Community() {
       };
     },
   );
-
+  const location = useLocation();
+  // Profile >>Community chat redirect
+  useEffect(() => {
+    const state = location.state as {
+      openChatWith?: { name: string; username: string; photo: string };
+    };
+    if (state?.openChatWith) {
+      handleStartChat(state.openChatWith);
+      // State ተዳ ፟>> reload ሲሆን እንደገና እንዳይከፈት
+      window.history.replaceState({}, "");
+    }
+  }, []);
   // Save changes to localStorage on change
   useEffect(() => {
     localStorage.setItem("nexify_chats", JSON.stringify(chats));

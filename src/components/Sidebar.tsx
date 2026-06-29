@@ -4,7 +4,7 @@ import { useState } from "react";
 
 import { NavLink, Link } from "react-router-dom";
 
-import { House, Users, User, Settings, Search, Bell } from "lucide-react";
+import { House, UsersRound, User, Settings, Search, Bell } from "lucide-react";
 
 import { ROUTES } from "../routes";
 
@@ -52,7 +52,7 @@ export default function Sidebar(props: SidebarProps) {
     {
       label: "Community",
       to: ROUTES.community,
-      icon: Users,
+      icon: UsersRound,
       tab: "community" as NavTab,
       badge: unreadCommunityCount ?? 0,
     },
@@ -79,6 +79,18 @@ export default function Sidebar(props: SidebarProps) {
     },
   ];
   const [query, setQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<typeof navItems>([]);
+  const handleSearch = (value: string) => {
+    setQuery(value);
+    if (!value.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const filtered = navItems.filter((item) =>
+      item.label.toLowerCase().includes(value.toLowerCase()),
+    );
+    setSearchResults(filtered);
+  };
 
   return (
     <aside
@@ -98,7 +110,14 @@ export default function Sidebar(props: SidebarProps) {
           Nexify
         </h1>
 
-        <div className="relative">
+        <div
+          className="relative"
+          onBlur={(e) => {
+            if (!e.currentTarget.contains(e.relatedTarget)) {
+              setSearchResults([]);
+            }
+          }}
+        >
           <Search
             size={14}
             className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
@@ -107,10 +126,28 @@ export default function Sidebar(props: SidebarProps) {
           <input
             type="text"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e) => handleSearch(e.target.value)}
             placeholder="Search..."
             className="w-full rounded-md border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-700 outline-none focus:border-blue-600"
           />
+          {searchResults.length > 0 && (
+            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 roundedlg shawdow-lg z-50 overflow-hidden">
+              {searchResults.map(({ label, to, icon: Icon }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  onClick={() => {
+                    setQuery("");
+                    setSearchResults([]);
+                  }}
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                >
+                  <Icon size={16} />
+                  {label}
+                </NavLink>
+              ))}
+            </div>
+          )}
         </div>
 
         <nav className="flex flex-col gap-1.5">

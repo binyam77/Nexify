@@ -565,7 +565,7 @@ export default function MessageArea({
       </div>
 
       {/* 3. የመልዕክት መጻፊያ ወይም የመቀላቀያ (Join) አዝራር */}
-      <footer className="border-t border-gray-100 bg-white p-4 shrink-0 relative select-none">
+      <footer className="border-t border-gray-100 bg-white px-4 pt-4 pb-20 md:pb-4 shrink-0 relative select-none">
         {chat.isJoined || chat.type === 'chat' ? (
           // ተጠቃሚው ግሩፑን ተቀላቅሏል ወይም የራሱ የግል ቻት ነው፡ መጻፊያ ሳጥኑ ይታያል
           <div className="relative">

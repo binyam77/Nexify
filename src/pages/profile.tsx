@@ -6,7 +6,8 @@
 import type { FeedPost } from "../types";
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
-
+import { useNavigate } from "react-router-dom";
+import {ROUTES}from '../routes';
 import {
   Camera,
   Trash2,
@@ -103,6 +104,19 @@ export default function Profile({
     photo: "/default_avatar.jpg",
     cover: "",
   });
+
+const navigate=useNavigate();
+const handleMessageUser= (otherUsers:{name:string; username:string; photo:string})=>{
+  if(onStartChat){
+    // Community ውስጥ embedded ሲሆን
+    onStartChat(otherUsers);
+  }else{
+    // Direct /profile route  ሲሆን
+    navigate(ROUTES.community,{
+      state:{openChatWith:otherUsers}
+    });
+  }  
+};
 
   // --- View Mode ('me' = My profile, 'other' = Other developer) ---
   const [viewMode, setViewMode] = useState<"me" | "other">("me");
@@ -1451,7 +1465,7 @@ export default function Profile({
               {/* Message button: takes the user directly to Community Chat with this user */}
               <button
                 onClick={() =>
-                  onStartChat?.({
+                  handleMessageUser({
                     name: otherProfile.name,
                     username: otherProfile.username,
                     photo: otherProfile.photo,

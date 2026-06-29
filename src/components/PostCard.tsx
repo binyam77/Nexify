@@ -59,6 +59,7 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
   const [imgIsVertical, setImgVertical] = useState<boolean>(true);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [volume, setVolume] = useState<number>(0.8);
+  const [captionExpanded, setCaptionExpanded] = useState<boolean>(false);
   const isOwnPost =
     currentUser.fullName === post.username || currentUser.id === post.userId;
   useEffect(() => {
@@ -135,6 +136,7 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
               // ተጠካሚ  volume button ሲነካ unmute ይደረጋል
               v.muted = true;
               v.volume = volume;
+              v.play().catch(() => {});
             }}
           />
           {/* Sound toggle botton */}
@@ -159,25 +161,21 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
               />
             )}
             <button
-              onClick={async () => {
+              onClick={async (e) => {
+                e.stopPropagation();
                 const next = !isMuted;
                 setIsMuted(next);
-                if (videoRef.current) {
-                  if (!next) {
-                    // Mobile unlock: replay with sound
-                    videoRef.current.pause();
-                    videoRef.current.muted = false;
-                    videoRef.current.volume = volume;
-                    try {
-                      await videoRef.current.play();
-                    } catch {
-                      // fallback: keep muted
-                      videoRef.current.muted = true;
-                      setIsMuted(true);
-                    }
-                  } else {
-                    videoRef.current.muted = true;
+                if (!videoRef.current) return;
+                try {
+                  videoRef.current.muted = next;
+                  videoRef.current.volume = next ? 0 : volume;
+                  if (!videoRef.current.paused) {
+                    return;
                   }
+                  await videoRef.current.play();
+                } catch {
+                  videoRef.current.muted = true;
+                  setIsMuted(true);
                 }
               }}
               className="bg-black/50 rounded-full p-2 backdrop-blur-sm"
@@ -311,9 +309,25 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
           </div>
         </div>
         {post.caption && (
-          <p className="text-white text-xs leading-relaxed drop-shadow line-clamp-2 md:text-slate-700">
-            {post.caption}
-          </p>
+          <div>
+            <p
+              className={`text-white text-xs leading-relaxed drop-shadow md:text-slate-700 
+            transition-all ${captionExpanded ? "" : "line-clamp-2"}`}
+            >
+              {post.caption}
+            </p>
+            {post.caption.length > 80 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setCaptionExpanded((c) => !c);
+                }}
+                className="text-white/70 text-[11px] font-semibold mt-0.5 md:text-slate-500"
+              >
+                {captionExpanded ? "less" : "more"}
+              </button>
+            )}
+          </div>
         )}
       </div>
 

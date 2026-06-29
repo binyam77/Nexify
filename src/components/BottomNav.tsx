@@ -1,5 +1,5 @@
 import { NavLink, useNavigate } from "react-router-dom";
-import { House, Users, User, Bell, Plus } from "lucide-react";
+import { House, UsersRound, User, Bell, Plus } from "lucide-react";
 import { ROUTES } from "../routes";
 import { cn } from "../utils";
 import { useNotifications } from "../context/NotificationContext";
@@ -19,7 +19,7 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
 
   const leftItems = [
     { label: "Home",      to: ROUTES.home,      icon: House },
-    { label: "Community", to: ROUTES.community, icon: Users },
+    { label: "Community", to: ROUTES.community, icon: UsersRound },
   ];
 
   const rightItems = [
