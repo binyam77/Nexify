@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+
 import {
   User,
   Mail,
@@ -50,13 +51,14 @@ export default function CreateAccount({
     onSubmit(username, email);
   };
 
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="w-full max-w-md bg-white rounded-2xl shadow-soft overflow-hidden border border-gray-100 p-8 sm:p-10"
+      className="w-full max-w-md bg-white rounded-2xl shadow-input overflow-hidden border border-gray-200 p-8 sm:p-10"
       id="create-account-card"
     >
       <div className="text-center mb-8">
@@ -112,7 +114,8 @@ export default function CreateAccount({
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Enter your username"
               required
-              className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+              className="w-full pl-10 pr-4 py-3 bg-input  border border-input-border rounded-lg text-input-text placeholder:text-input-placeholder focus:outline-none  focus:border-input-focus
+              hover:border-input-hover transition-all text-sm"
             />
           </div>
         </div>
@@ -136,7 +139,8 @@ export default function CreateAccount({
               onChange={(e) => setEmail(e.target.value)}
               placeholder="example@domain.com"
               required
-              className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+              className="w-full pl-10 pr-4 py-3 bg-input  border border-input-border rounded-lg text-input-text placeholder:text-input-placeholder focus:outline-none 
+              focus:input-focus hover:border-input-hover transition-all text-sm"
             />
           </div>
         </div>
@@ -160,12 +164,13 @@ export default function CreateAccount({
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Create a strong password"
               required
-              className="w-0full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none showdaw-soft transition-all text-sm"
+              className="w-full pl-10 pr-12 py-3 bg-input border border-input-border rounded-lg text-text-input placeholder:text-input-placeholder
+              hover:border-input-hover    focus:outline-none showdaw-soft transition-all text-sm"
             />
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600 transition-colors"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-input-text hover:text-gray-600 transition-colors"
             >
               {showPassword ? (
                 <EyeOff className="w-5 h-5" />
