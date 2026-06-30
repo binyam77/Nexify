@@ -1447,7 +1447,7 @@ const handleMessageUser= (otherUsers:{name:string; username:string; photo:string
                 className="p-2.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 hover:text-blue-600 text-gray-600 transition-all shadow-sm flex items-center justify-center shrink-0"
                 title="Edit Profile"
               >
-                <Edit className="w-5 h-5" />
+                <Edit className="w-10 h-5  " /> Edit
               </button>
 
               {/* Toggle switch to Abel T. (Others) next to edit button */}
@@ -1510,7 +1510,7 @@ const handleMessageUser= (otherUsers:{name:string; username:string; photo:string
         {(viewMode === "me" ? profile.bio : otherProfile.bio) && (
           <div className="bg-white border border-gray-100/80 rounded-2xl p-4.5 shadow-sm shadow-gray-100/10 mb-6">
             <h4 className="text-xs font-black tracking-widest text-blue-600 uppercase mb-2 flex items-center gap-1.5">
-              <span>✍️ BIO</span>
+              <span>BIO</span>
             </h4>
 
             <p className="text-sm font-medium text-gray-700 leading-relaxed break-words whitespace-pre-line">

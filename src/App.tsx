@@ -87,7 +87,7 @@ export default function App() {
         path="/createAccount"
         element={
           !isLoggedIn ? (
-            <div className="min-h-screen w-full bg-slate-50 flex flex-col justify-center items-center p-4 sm:p-6 overflow-x-hidden relative">
+            <div className="min-h-screen w-full bg-white flex flex-col justify-center items-center p-4 sm:p-6 overflow-x-hidden relative">
               <main className="w-full max-w-md z-10 flex justify-center items-center">
                 <AnimatePresence mode="wait">
                   <CreateAccount

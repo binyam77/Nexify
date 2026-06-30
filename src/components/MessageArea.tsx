@@ -161,7 +161,6 @@ export default function MessageArea({
     // We let Enter function as standard newline insertion in the textarea on all platforms
     // to allow multi-line drafting. The user will use the explicit Send button to submit.
   };
-
   // Display welcome interface if no chat room is selected
   if (!chat) {
     return (
@@ -395,7 +394,7 @@ export default function MessageArea({
                               <button
                                 key={r.emoji}
                                 onClick={() => onReactMessage(msg.id, r.emoji)}
-                                className={`text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-1 bg-white/10 text-white hover:bg-white/20`}
+                                className={`text-[10px] px-1.5 py-0.5 rounded-md flex items-center gap-1 bg-white/10 text-white hover:bg-white/20 `}
                               >
                                 <span>{r.emoji}</span>
                                 <span>{r.count}</span>
@@ -411,7 +410,7 @@ export default function MessageArea({
                         <img 
                           src={currentUserProfile.avatar} 
                           alt={currentUserProfile.name} 
-                          className="w-9 h-9 rounded-full object-cover border border-white shadow-sm shrink-0 hover:scale-105 active:scale-95 transition-all select-none"
+                          className="w-9 h-9 rounded-full object-cover border border-white shadow-sm shrink-0 hover:scale-105  active:scale-95 transition-all select-none"
                           referrerPolicy="no-referrer"
                         />
                       ) : (

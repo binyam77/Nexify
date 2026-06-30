@@ -35,17 +35,17 @@ export default function Login({ onNavigateToSignup, onSubmit }: LoginProps) {
       setError("Please enter your password.");
       return;
     }
-// ለጊዘው localStorage check -backend ሲመጣ API call ይተካዋል
-const stored = localStorage.getItem("authUser");
-if(!stored){
-  setError("No account found.Please create an account first.");
-  return;
-}
-const storedUser= JSON.parse(stored);
-if(storedUser.email ! == email){
-  setError("Email not found.Please check and try again.");
-  return;
-}
+    // ለጊዘው localStorage check -backend ሲመጣ API call ይተካዋል
+    const stored = localStorage.getItem("authUser");
+    if (!stored) {
+      setError("No account found.Please create an account first.");
+      return;
+    }
+    const storedUser = JSON.parse(stored);
+    if (storedUser.email! == email) {
+      setError("Email not found.Please check and try again.");
+      return;
+    }
     setSuccess(true);
     onSubmit(email);
   };
@@ -134,7 +134,7 @@ if(storedUser.email ! == email){
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter your password"
               required
-              className="w-full pl-10 pr-12 py-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all text-sm"
+              className="w-full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none showdaw-soft transition-all text-sm"
             />
             <button
               type="button"
@@ -154,7 +154,7 @@ if(storedUser.email ! == email){
         <button
           type="submit"
           id="button"
-          className="w-full py-3.5 px-4 bg-blue-600 text-white font-semibold rounded-lg text-sm sm:text-base cursor-pointer hover:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-500/15"
+          className="w-full py-3.5 px-4 bg-brand text-white font-semibold rounded-lg text-sm sm:text-base cursor-pointer hover:bg-brand-dark active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand/15"
         >
           Log In
         </button>
@@ -166,7 +166,7 @@ if(storedUser.email ! == email){
         <button
           type="button"
           onClick={onNavigateToSignup}
-          className="text-blue-600 hover:text-blue-700 font-bold hover:underline cursor-pointer focus:outline-none ml-1"
+          className="text-brand hover:text-brand-dark font-bold hover:underline cursor-pointer focus:outline-none ml-1"
         >
           Create Account
         </button>
