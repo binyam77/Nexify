@@ -178,14 +178,14 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
                   setIsMuted(true);
                 }
               }}
-              className="bg-black/50 rounded-full p-2 backdrop-blur-sm"
+              className="<bg-black/50 rounded-full p-2 backdrop-blur-sm"
             >
               {!isMuted ? (
-                <VolumeX className="w-5 h-5 text-white" />
+                <VolumeX className="w-5 h-5 text-input" />
               ) : volume > 0.5 ? (
-                <Volume2 className="w-5 h-5 text-white" />
+                <Volume2 className="w-5 h-5 text-input" />
               ) : (
-                <Volume1 className="w-5 h-5 text-white" />
+                <Volume1 className="w-5 h-5 text-input" />
               )}
             </button>
           </div>
@@ -290,20 +290,20 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
             )}
           </div>
           <div className="flex item-center gap-2 ">
-            <span className="text-white font-bold text-sm drop-shadow md:text-slate-900">
+            <span className="text-input font-bold text-sm drop-shadow md:text-slate-900">
               {post.username}
             </span>
             {!isOwnPost && (
               <button
                 onClick={() => setIsFollowing((f) => !f)}
-                className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border transition-colors
+                className={`text-[11px] font-bold px-2.5 py-0.5  rounded-full border transition-colors
             ${
               isFollowing
-                ? "border-white/60 text-white/60 md:border-slate-400 md:text-slate-400"
-                : "border-white bg-white/20 text-white hover:bg-white/30 md:border-slate-700 md:text-slate-700 md:bg-transparent"
+                ? "border-white/60 text-white/60  md:border-slate-400 md:text-slate-400"
+                : "border-white md:border-slate-400  md:border-slate-400  md:border-slate-700 md:text-slate-700 md:bg-transparent"
             }`}
               >
-                {isFollowing ? "Following" : "Follow"}
+                {isFollowing ? "Following" :   "Follow"}
               </button>
             )}
           </div>

@@ -54,7 +54,8 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
       <div className="flex items-center justify-center px-2">
         <button
           onClick={handleUpload}
-          className="w-14 h-14 bg-black rounded-full flex items-center justify-center shadow-xl -translate-y-4 border-4 border-white active:scale-95 transition-transform"
+          className="w-14 h-14 bg-brand  rounded-full flex items-center justify-center
+           shadow-xl -translate-y-4 border-4 border-input active:scale-95 transition-transform"
           aria-label="Upload"
         >
           <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />

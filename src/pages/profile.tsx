@@ -7,7 +7,7 @@ import type { FeedPost } from "../types";
 import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import {ROUTES}from '../routes';
+import { ROUTES } from "../routes";
 import {
   Camera,
   Trash2,
@@ -39,7 +39,26 @@ import {
 import { saveMediaFile, getMediaFile, deleteMediaFile } from "../lib/db";
 import ShareModal from "../components/ShareModal";
 import { useFeed } from "../context/FeedContext";
-import { form } from "framer-motion/client";
+
+const compressImage = (
+  base64Str: string,
+  quality: number,
+  maxWidth: number,
+): Promise<string> => {
+  return new Promise<string>((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement("canvas");
+      const scale = maxWidth / img.width;
+      canvas.width = maxWidth;
+      canvas.height = img.height * scale;
+      const ctx = canvas.getContext("2d");
+      ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.src = base64Str;
+  });
+};
 
 interface ProfileProps {
   onBackToCommunity?: () => void;
@@ -105,191 +124,36 @@ export default function Profile({
     cover: "",
   });
 
-const navigate=useNavigate();
-const handleMessageUser= (otherUsers:{name:string; username:string; photo:string})=>{
-  if(onStartChat){
-    // Community ውስጥ embedded ሲሆን
-    onStartChat(otherUsers);
-  }else{
-    // Direct /profile route  ሲሆን
-    navigate(ROUTES.community,{
-      state:{openChatWith:otherUsers}
-    });
-  }  
-};
+  const navigate = useNavigate();
+  const handleMessageUser = (otherUsers: {
+    name: string;
+    username: string;
+    photo: string;
+  }) => {
+    if (onStartChat) {
+      // Community ውስጥ embedded ሲሆን
+      onStartChat(otherUsers);
+    } else {
+      // Direct /profile route  ሲሆን
+      navigate(ROUTES.community, {
+        state: { openChatWith: otherUsers },
+      });
+    }
+  };
 
   // --- View Mode ('me' = My profile, 'other' = Other developer) ---
   const [viewMode, setViewMode] = useState<"me" | "other">("me");
 
-  // --- Dynamic Developer Profiles System ---
   const [selectedOtherUser, setSelectedOtherUser] = useState<number>(0);
   const [isOthersModalOpen, setIsOthersModalOpen] = useState(false);
-
-  const [otherUsers, setOtherUsers] = useState([
-    {
-      id: 0,
-      name: "Abel T.",
-      username: "abel_codes",
-      bio: "Senior Frontend Architect at Nexify. Building high-performance visual dashboards, responsive workspace layouts, and interactive SVG graphics. Open source contributor! 💻⚡",
-      photo: "",
-      cover: "",
-      isFollowing: false,
-      followersCount: 984,
-      followingCount: 189,
-      loginsCount: 14,
-      gradient: "from-purple-500 to-indigo-600",
-      posts: [
-        {
-          id: 9001,
-          title: "Dynamic Interactive Canvas Dashboard",
-          description:
-            "Exploring custom SVG math and real-time canvas renders in React. Super fluid animations under 16ms! #canvas #react #frontend",
-          isVideo: false,
-          views: 342,
-          likes: 48,
-          liked: false,
-          saves: 12,
-          saved: false,
-          timestamp: new Date(Date.now() - 3600000 * 4).toISOString(),
-          thumbnail:
-            "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=600&auto=format&fit=crop",
-          username: "abel_codes",
-        },
-        {
-          id: 9002,
-          title: "Custom UI Layout Components",
-          description:
-            "Designing modular sub-panels and workspace structures for high-density tools. Clean borders, elegant dividers, and smooth transitions! #design #react",
-          isVideo: false,
-          views: 215,
-          likes: 31,
-          liked: false,
-          saves: 8,
-          saved: false,
-          timestamp: new Date(Date.now() - 3600000 * 20).toISOString(),
-          thumbnail:
-            "https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?q=80&w=600&auto=format&fit=crop",
-          username: "abel_codes",
-        },
-      ],
-    },
-    {
-      id: 1,
-      name: "Mahlet K.",
-      username: "mahlet_dev",
-      bio: "UI/UX Designer at Nexify. Passionate about color systems, human-centered design, and elegant micro-interactions. Let's make everything intuitive! 🎨✨",
-      photo: "",
-      cover: "",
-      isFollowing: false,
-      followersCount: 412,
-      followingCount: 150,
-      loginsCount: 8,
-      gradient: "from-rose-500 to-pink-600",
-      posts: [
-        {
-          id: 9101,
-          title: "Color Palette Systems",
-          description:
-            "Constructing dynamic color tokens for light and dark environments. Balanced contrasts make a huge difference in long coding sessions. #colors #designsystem",
-          isVideo: false,
-          views: 189,
-          likes: 56,
-          liked: false,
-          saves: 22,
-          saved: false,
-          timestamp: new Date(Date.now() - 3600000 * 8).toISOString(),
-          thumbnail:
-            "https://images.unsplash.com/photo-1513542789411-b6a5d4f31634?q=80&w=600&auto=format&fit=crop",
-          username: "mahlet_dev",
-        },
-      ],
-    },
-    {
-      id: 2,
-      name: "Fitsum A.",
-      username: "fitsum_backend",
-      bio: "DevOps & Systems Engineer. Loving Rust, Docker, PostgreSQL, and high-performance server architectures. Keep it fast, keep it secure! 🛡️⚙️",
-      photo: "",
-      cover: "",
-      isFollowing: false,
-      followersCount: 1205,
-      followingCount: 342,
-      loginsCount: 21,
-      gradient: "from-blue-600 to-sky-500",
-      posts: [
-        {
-          id: 9201,
-          title: "Database Schema Sharding",
-          description:
-            "A deep dive into distributed Postgres setups. Scaled writes by 3x with simple query isolation patterns. No complexity, pure scale. #postgres #backend",
-          isVideo: false,
-          views: 512,
-          likes: 94,
-          liked: false,
-          saves: 45,
-          saved: false,
-          timestamp: new Date(Date.now() - 3600000 * 12).toISOString(),
-          thumbnail:
-            "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?q=80&w=600&auto=format&fit=crop",
-          username: "fitsum_backend",
-        },
-        {
-          id: 9202,
-          title: "Containerization Best Practices",
-          description:
-            "Reducing image build times from 5 minutes to 15 seconds using multi-stage Docker builds and optimal cache layouts. #docker #devops",
-          isVideo: false,
-          views: 403,
-          likes: 72,
-          liked: false,
-          saves: 30,
-          saved: false,
-          timestamp: new Date(Date.now() - 3600000 * 30).toISOString(),
-          thumbnail:
-            "https://images.unsplash.com/photo-1607799279861-4dd421887fb3?q=80&w=600&auto=format&fit=crop",
-          username: "fitsum_backend",
-        },
-      ],
-    },
-    {
-      id: 3,
-      name: "Eden D.",
-      username: "eden_creates",
-      bio: "Creative Tech & Animator. Transforming complex ideas into smooth animations, webgl shaders, and rich immersive web experiences. 🎬🌈",
-      photo: "",
-      cover: "",
-      isFollowing: false,
-      followersCount: 310,
-      followingCount: 95,
-      loginsCount: 6,
-      gradient: "from-teal-500 to-emerald-600",
-      posts: [
-        {
-          id: 9301,
-          title: "3D WebGL Shader Loop",
-          description:
-            "Crafting beautiful vector patterns that morph dynamically based on screen cursor coordinate tracking. Smooth as silk! #webgl #animation",
-          isVideo: false,
-          views: 298,
-          likes: 85,
-          liked: false,
-          saves: 37,
-          saved: false,
-          timestamp: new Date(Date.now() - 3600000 * 18).toISOString(),
-          thumbnail:
-            "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600&auto=format&fit=crop",
-          username: "eden_creates",
-        },
-      ],
-    },
-  ]);
-
-  const otherProfile = otherUsers[selectedOtherUser];
+  const [otherUsers, setOtherUsers] = useState<any[]>([]);
+  const otherProfile = otherUsers[selectedOtherUser] || null;
+const { posts: feedPosts } = useFeed();
 
   // --- Followers & Following ---
   const [isFollowing, setIsFollowing] = useState(false);
-  const [followersCount, setFollowersCount] = useState(1420);
-  const [starsCount, setStarsCount] = useState(254); // starsCount is now the "Following" stat!
+  const [followersCount, setFollowersCount] = useState(0);
+  const [starsCount, setStarsCount] = useState(); // starsCount is now the "Following" stat!
 
   const toggleFollowUser = (index: number) => {
     setOtherUsers((prev) =>
@@ -408,7 +272,7 @@ const handleMessageUser= (otherUsers:{name:string; username:string; photo:string
   } | null>(null);
 
   // --- Mock Posts for Other User ---
-  const otherPosts: PostMeta[] = otherProfile.posts;
+  const otherPosts: PostMeta[] = otherProfile?.posts;
 
   // --- Load Saved Profile Data ---
   useEffect(() => {
@@ -463,7 +327,7 @@ const handleMessageUser= (otherUsers:{name:string; username:string; photo:string
       setPosts([]);
       localStorage.setItem("userPostsMeta", JSON.stringify([]));
     }
-  }, []);
+  }, [feedPosts.length]);
 
   // --- Trigger Upload from Outside (e.g. Sidebar + click) ---
   useEffect(() => {
@@ -549,7 +413,7 @@ const handleMessageUser= (otherUsers:{name:string; username:string; photo:string
       if (!currentPost) return null;
       const currentList = viewMode === "me" ? posts : otherProfile.posts;
       const currentIndex = currentList.findIndex(
-        (p) => p.id === currentPost.id,
+        (p: any) => p.id === currentPost.id,
       );
       if (currentIndex === -1) return currentPost;
 
@@ -582,7 +446,7 @@ const handleMessageUser= (otherUsers:{name:string; username:string; photo:string
   useEffect(() => {
     if (!selectedPost) return;
 
-    let timeoutId: any;
+    let timeoutId: number | undefined = undefined;
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "ArrowDown" || e.key === "PageDown") {
         e.preventDefault();
@@ -598,7 +462,7 @@ const handleMessageUser= (otherUsers:{name:string; username:string; photo:string
     const handleWheel = (e: WheelEvent) => {
       e.preventDefault();
       // Debounce wheel scroll to prevent rapid scrolling
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
         if (e.deltaY > 30) {
           handleNavigatePost("next");
@@ -636,7 +500,7 @@ const handleMessageUser= (otherUsers:{name:string; username:string; photo:string
       window.removeEventListener("wheel", handleWheel);
       window.removeEventListener("touchstart", handleTouchStart);
       window.removeEventListener("touchend", handleTouchEnd);
-      clearTimeout(timeoutId);
+      if (timeoutId) clearTimeout(timeoutId);
     };
   }, [selectedPost, viewMode, posts, otherUsers]);
 
@@ -906,7 +770,7 @@ const handleMessageUser= (otherUsers:{name:string; username:string; photo:string
       foundPost = posts.find((p) => p.id === postId) || null;
       if (!foundPost) {
         for (const user of otherUsers) {
-          const match = user.posts.find((p) => p.id === postId);
+          const match = user.posts.find((p: any) => p.id === postId);
           if (match) {
             foundPost = match as unknown as PostMeta;
             break;
@@ -1254,10 +1118,6 @@ const handleMessageUser= (otherUsers:{name:string; username:string; photo:string
         </div>
 
         {/* Display Title or Stats Indicator */}
-        <div className="hidden sm:flex items-center gap-2 bg-white/10 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wider select-none">
-          <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-          <span>DEVELOPER HUB</span>
-        </div>
       </header>
 
       {/* Hidden File Upload Triggers */}
@@ -1418,7 +1278,7 @@ const handleMessageUser= (otherUsers:{name:string; username:string; photo:string
               <span className="text-lg font-black text-gray-900 tracking-tight">
                 {viewMode === "me"
                   ? formatCount(posts.length)
-                  : formatCount(otherPosts.length)}
+                  : formatCount(otherPosts?.length ?? 0)}
               </span>
               <span className="text-xs text-gray-400 font-bold tracking-wide uppercase">
                 Posts
@@ -1427,8 +1287,8 @@ const handleMessageUser= (otherUsers:{name:string; username:string; photo:string
             <div className="flex flex-col items-center">
               <span className="text-lg font-black text-gray-900 tracking-tight flex items-center gap-1">
                 {viewMode === "me"
-                  ? formatCount(starsCount)
-                  : formatCount(otherProfile.followingCount)}
+                  ? formatCount(starsCount ?? 0)
+                  : formatCount(otherProfile?.followingCount ?? 0)}
               </span>
               <span className="text-xs text-gray-400 font-bold tracking-wide uppercase">
                 Following
@@ -1572,14 +1432,6 @@ const handleMessageUser= (otherUsers:{name:string; username:string; photo:string
                 Select a file and publish your very first picture or video
                 stream with hashtags!
               </p>
-              {viewMode === "me" && (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="px-4 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-xl transition-all"
-                >
-                  Choose File
-                </button>
-              )}
             </div>
           ) : (
             <div className="grid grid-cols-3 gap-2.5 sm:gap-4">
@@ -1633,7 +1485,9 @@ const handleMessageUser= (otherUsers:{name:string; username:string; photo:string
                         Loading file...
                       </div>
                     )}
-
+                    <p className="text-sm text-brand font-semibold mt-2">
+                      Use the + button below to post your first content
+                    </p>
                     {/* Always visible views & likes stats badge on the outside preview */}
                     <div className="absolute bottom-2.5 right-2.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-2.5 shadow-sm z-10 group-hover:opacity-0 transition-opacity duration-200 border border-white/5">
                       <span className="flex items-center gap-1">
@@ -3266,7 +3120,7 @@ const handleMessageUser= (otherUsers:{name:string; username:string; photo:string
               {otherUsers.map((user, idx) => {
                 const initials = user.name
                   .split(" ")
-                  .map((n) => n[0])
+                  .map((n: string) => n[0])
                   .join("")
                   .toUpperCase()
                   .slice(0, 2);

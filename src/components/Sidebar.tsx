@@ -128,7 +128,8 @@ export default function Sidebar(props: SidebarProps) {
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="Search..."
-            className="w-full rounded-md border border-slate-200 bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-700 outline-none focus:border-blue-600"
+            className="w-full rounded-md border border-input-border bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-700
+             outline-none focus:border-input-focus"
           />
           {searchResults.length > 0 && (
             <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 roundedlg shawdow-lg z-50 overflow-hidden">
@@ -172,7 +173,7 @@ export default function Sidebar(props: SidebarProps) {
 
               {/* 3. unreadCommunityCount እዚህ ጋ ጥቅም ላይ ውሏል */}
               {badge > 0 && (
-                <span className="bg-rose-500 text-white text-xs px-2 py-0.5 rounded-full font-bold">
+                <span className="bg-rose-500 text-input text-xs px-2 py-0.5 rounded-full font-bold">
                   {badge}
                 </span>
               )}
@@ -182,7 +183,7 @@ export default function Sidebar(props: SidebarProps) {
           {/* 4. onUploadClick እዚህ ጋ ጥቅም ላይ ውሏል */}
           <button
             onClick={onUploadClick}
-            className="mt-4 w-full bg-blue-600 text-white py-2.5 rounded-lg font-bold text-sm hover:bg-blue-700 transition-colors"
+            className="mt-4 w-full bg-brand text-input py-2.5 rounded-lg font-bold text-sm hover:bg-brand-dark shadow-input transition-colors"
           >
             Upload New
           </button>
