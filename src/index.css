@@ -1,9 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --color-brand: #4f46e5;
-  --color-brand-light: #019be5; /* አናት ቁልፎች */
-  --color-brand: #0185e5; /* transition / icon middle */
+  --background-image-brand:linear-gradient(to right, #019be5,#0071e3,#0185e5);
   --color-brand-dark: #0071e3; /* ግርጌ icon */
   --color-success: #27bd5f; /* post/send, focus ring */
   --color-ink: #000000; /* ልዩ ርዕስ */

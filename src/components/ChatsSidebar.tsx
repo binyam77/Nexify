@@ -61,14 +61,15 @@ export default function ChatsSidebar({
       </header>
 
       {/* የፍለጋ ሳጥን (Search Bar) */}
-      <div className="px-4 py-3 bg-white shrink-0">
+      <div className="px-4 py-3 bg-input shadow-input shrink-0">
         <div className="relative">
           <input
             type="search"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Search chats..."
-            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-transparent rounded-xl text-sm text-gray-700 placeholder-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200"
+            className="w-full pl-10 pr-4 py-2.5 bg-input border border-input-border rounded-xl text-sm text-input-text placeholder:placeholder-input-text focus:bg-input
+             focus:border-input-focus  outline-none transition-all "
           />
           <Search className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
         </div>
@@ -93,22 +94,23 @@ export default function ChatsSidebar({
                 onClick={() => onSelectChat(chat.id)}
                 className={`flex items-center gap-3.5 px-4.5 py-4 cursor-pointer transition-all duration-200 relative ${
                   isActive
-                    ? 'bg-blue-50/70 border-l-4 border-blue-600'
-                    : 'bg-white hover:bg-gray-50/60'
+                    ? 'bg-blue-50/70 border-l-3 border-brand'
+                    : 'bg-input hover:bg-gray-50/60 '
                 }`}
               >
                 {/* Chat Avatar (colorful circular initials or photo) */}
-                <div className="relative shrink-0">
+                <div className="relative shrink-0 bg-brand rounded-full ">
                   {chat.avatarUrl ? (
                     <img
                       src={chat.avatarUrl}
                       alt={chat.name}
-                      className="w-12 h-12 rounded-xl object-cover shrink-0 shadow-sm border border-gray-100"
+                      className="w-12 h-12 rounded-full object-cover shrink-0 shadow-sm border border-input"
                       referrerPolicy="no-referrer"
                     />
                   ) : (
                     <div
-                      className={`w-12 h-12 rounded-xl flex items-center justify-center font-bold text-base text-white shrink-0 shadow-sm ${chat.bgGradient}`}
+                      className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base
+                         text-white shrink-0 shadow-sm ${chat.bgGradient}`}
                     >
                       {chat.avatarLabel}
                     </div>

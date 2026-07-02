@@ -119,7 +119,7 @@ export default function Profile({
   const [profile, setProfile] = useState({
     name: user?.username || "User",
     username: user?.username || "username",
-    bio: "Lead Fullstack Developer at Nexify. Passionate about beautiful interfaces, responsive layouts, and modern single-page architectures. Let's build something legendary together! 🚀✨",
+    bio: "",
     photo: "/default_avatar.jpg",
     cover: "",
   });
@@ -148,7 +148,7 @@ export default function Profile({
   const [isOthersModalOpen, setIsOthersModalOpen] = useState(false);
   const [otherUsers, setOtherUsers] = useState<any[]>([]);
   const otherProfile = otherUsers[selectedOtherUser] || null;
-const { posts: feedPosts } = useFeed();
+  const { posts: feedPosts } = useFeed();
 
   // --- Followers & Following ---
   const [isFollowing, setIsFollowing] = useState(false);
@@ -295,7 +295,7 @@ const { posts: feedPosts } = useFeed();
       const defaultData = {
         name: user?.username || "User",
         username: user?.username || "username",
-        bio: "Lead Fullstack Developer at Nexify. Passionate about beautiful interfaces, responsive layouts, and modern single-page architectures. Let's build something legendary together! 🚀✨",
+        bio: "",
         photo: "/default_avatar.jpg",
         cover: "",
       };
@@ -308,9 +308,9 @@ const { posts: feedPosts } = useFeed();
     const savedCountF = localStorage.getItem("countF");
     setIsFollowing(savedIsFollowing);
     if (savedCountF !== null) {
-      setFollowersCount(parseInt(savedCountF, 10));
+      setFollowersCount(parseInt(savedCountF, 0));
     } else {
-      setFollowersCount(1420);
+      setFollowersCount(0);
     }
 
     // 3. Load posts metadata
@@ -1093,7 +1093,10 @@ const { posts: feedPosts } = useFeed();
           ======================================================== */}
 
       {/* 1. Header with logo and search box */}
-      <header className="sticky top-0 left-0 right-0 h-16 bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-md z-40 flex items-center justify-between px-4 md:px-8 shrink-0">
+      <header
+        className="sticky top-0 left-0 right-0 h-16 bg-gradient-to-r 
+     hidden md:block bg-brand shadow-md z-40 flex items-center justify-between px-4 md:px-8 shrink-0"
+      >
         <div className="flex items-center gap-3">
           {onBackToCommunity && (
             <button
@@ -1104,17 +1107,6 @@ const { posts: feedPosts } = useFeed();
               <ArrowLeft className="w-5 h-5 text-white" />
             </button>
           )}
-          <img
-            src="/logo.png"
-            alt="Nexify"
-            className="w-8 h-8 object-contain rounded-lg"
-            onError={(e) => {
-              e.currentTarget.style.display = "none";
-            }}
-          />
-          <h1 className="text-xl font-black tracking-tight flex items-center gap-1.5 select-none">
-            Nexify <span className="text-amber-400 font-extrabold">.</span>
-          </h1>
         </div>
 
         {/* Display Title or Stats Indicator */}
@@ -1304,10 +1296,10 @@ const { posts: feedPosts } = useFeed();
               {/* Sleek Pencil Icon button for Edit Profile */}
               <button
                 onClick={handleOpenEditModal}
-                className="p-2.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 hover:text-blue-600 text-gray-600 transition-all shadow-sm flex items-center justify-center shrink-0"
+                className="p-2.5 rounded-xl bg-white border border-gray-200 hover:bg-gray-50 hover:text-blue-600 text-gray-750 font-black transition-all shadow-sm flex items-center justify-center shrink-0"
                 title="Edit Profile"
               >
-                <Edit className="w-10 h-5  " /> Edit
+                <Edit className="w-10 h-5 text-gray-500 " /> Edit
               </button>
 
               {/* Toggle switch to Abel T. (Others) next to edit button */}
@@ -1550,7 +1542,7 @@ const { posts: feedPosts } = useFeed();
             {/* Header */}
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10 shrink-0">
               <h3 className="text-lg font-black tracking-tight text-gray-900">
-                ✏️ Edit Developer Profile
+                Edit Profile
               </h3>
               <button
                 onClick={() => setIsEditModalOpen(false)}
@@ -1623,7 +1615,7 @@ const { posts: feedPosts } = useFeed();
 
                 <div className="flex-1">
                   <span className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-1">
-                    Developer Avatar
+                    Avatar
                   </span>
                   <button
                     onClick={() => photoInputRef.current?.click()}
@@ -1946,7 +1938,11 @@ const { posts: feedPosts } = useFeed();
                         handleDeletePost(selectedPost.id, e);
                         handleClosePlayer();
                       }}
-                      className="absolute top-[18px] right-[18px] px-3.5 py-2 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-1.5 text-xs font-black tracking-wide transition-all backdrop-blur-md z-30 shadow-lg pointer-events-auto md:hidden animate-pulse"
+                      className="absolute top-[18px] right-[18px] px-3.5 py-2 rounded-full
+                       bg-rose-600 hover:bg-rose-700 text-white 
+                       flex items-center gap-1.5 text-xs font-black tracking-wide
+                        transition-all backdrop-blur-md z-30 shadow-lg
+                         pointer-events-auto md:hidden "
                       title="Delete Post"
                     >
                       <Trash2 className="w-3.5 h-3.5 text-white" />
@@ -2376,9 +2372,12 @@ const { posts: feedPosts } = useFeed();
                   </section>
 
                   {/* Comment Input Section */}
-                  <section className="border-t border-gray-100 p-4 pb-5 shrink-0 bg-white relative">
-                    <div className="flex items-center gap-2 mb-2 select-none">
-                      <div className="w-7 h-7 rounded-full overflow-hidden bg-blue-50 flex items-center justify-center text-blue-600 text-[10px] font-black shrink-0 border border-slate-100">
+                  <section className="border-t border-gray-100 p-4 pb-5 -translate-y-2 md:translate-y-0 shrink-0 bg-white relative">
+                    <div className="flex items-center gap-2 mb-2 select-none ">
+                      <div
+                        className="w-7 h-7 rounded-full overflow-hidden bg-blue-50 flex items-center
+                       justify-center text-blue-600 text-[10px] font-black shrink-0 border border-slate-100"
+                      >
                         {profile.photo ? (
                           <img
                             src={profile.photo}
@@ -2558,7 +2557,7 @@ const { posts: feedPosts } = useFeed();
                       className="flex flex-col items-center justify-center active:scale-90 transition-all focus:outline-none"
                     >
                       <div
-                        className={`w-11 h-11 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 ${
+                        className={`w-11 h-11 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 ${
                           selectedPost.liked ? "text-rose-500" : "text-white"
                         }`}
                       >
@@ -2576,7 +2575,7 @@ const { posts: feedPosts } = useFeed();
                       onClick={() => setMobileCommentsOpen(true)}
                       className="flex flex-col items-center justify-center active:scale-90 transition-all focus:outline-none"
                     >
-                      <div className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 text-white">
+                      <div className="w-11 h-11 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 text-white">
                         <MessageCircle className="w-5.5 h-5.5" />
                       </div>
                       <span className="text-[10px] font-bold text-white mt-1 drop-shadow-md bg-black/25 px-1.5 py-0.5 rounded-full select-none">
@@ -2590,7 +2589,7 @@ const { posts: feedPosts } = useFeed();
                       className="flex flex-col items-center justify-center active:scale-90 transition-all focus:outline-none"
                     >
                       <div
-                        className={`w-11 h-11 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 ${
+                        className={`w-11 h-11 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 ${
                           selectedPost.saved ? "text-amber-400" : "text-white"
                         }`}
                       >
@@ -2608,7 +2607,7 @@ const { posts: feedPosts } = useFeed();
                       onClick={() => handleSharePost(selectedPost.id)}
                       className="flex flex-col items-center justify-center active:scale-90 transition-all focus:outline-none"
                     >
-                      <div className="w-11 h-11 rounded-full bg-black/40 backdrop-blur-md flex items-center justify-center border border-white/10 text-white">
+                      <div className="w-11 h-11 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 text-white">
                         <Share2 className="w-5.5 h-5.5" />
                       </div>
                       <span className="text-[10px] font-bold text-white mt-1 drop-shadow-md bg-black/25 px-1.5 py-0.5 rounded-full select-none">
@@ -2695,7 +2694,7 @@ const { posts: feedPosts } = useFeed();
                         e.preventDefault();
                         handleAddComment(selectedPost.id, commentInputText);
                       }}
-                      className="flex items-center gap-3 mt-2 relative"
+                      className="flex items-center gap-3 mb-10 md:mb-0 relative"
                     >
                       <button
                         type="button"
@@ -2724,13 +2723,17 @@ const { posts: feedPosts } = useFeed();
                             }
                           }
                         }}
-                        className="flex-1 bg-white/15 border border-white/20 focus:border-blue-500 rounded-2xl px-4.5 py-3 text-[14px] text-white placeholder:text-white/60 outline-none backdrop-blur-md resize-none min-h-[46px] max-h-[100px] overflow-y-auto scrollbar-thin font-medium"
+                        className="flex-1 bg-input border border-input-border focus:border-input-focus
+                        shadow-input rounded-2xl px-4.5 py-3 text-[14px] text-white placeholder:text-input-placeholder
+                         outline-none backdrop-blur-md resize-none min-h-[46px] max-h-[100px] overflow-y-auto scrollbar-thin
+                          font-medium"
                       />
 
                       <button
                         type="submit"
                         disabled={!commentInputText.trim()}
-                        className="w-10 h-10 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white rounded-full flex items-center justify-center shadow-md transition-all shrink-0 active:scale-90"
+                        className="w-10 h-10 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white
+                         rounded-full flex items-center justify-center shadow-md transition-all shrink-0 active:scale-90"
                       >
                         <Send className="w-4 h-4 text-white" />
                       </button>
@@ -3104,7 +3107,7 @@ const { posts: feedPosts } = useFeed();
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-blue-600" />
                 <h3 className="text-base font-black tracking-tight text-gray-900">
-                  Explore Developers
+                  Explore 
                 </h3>
               </div>
               <button

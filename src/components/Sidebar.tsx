@@ -96,7 +96,7 @@ export default function Sidebar(props: SidebarProps) {
     <aside
       // 1. hideOnMobile እዚህ ጋ ጥቅም ላይ ውሏል
       className={cn(
-        "hidden h-screen w-[280px] shrink-0 flex-col justify-between border-r border-slate-200 bg-white px-5 py-6 md:flex",
+        "hidden h-screen w-[280px] shrink-0 flex-col justify-between border-r border-slate-200 bg-input px-5 py-6 md:flex",
         hideOnMobile && "md:hidden",
       )}
     >
@@ -128,11 +128,15 @@ export default function Sidebar(props: SidebarProps) {
             value={query}
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="Search..."
-            className="w-full rounded-md border border-input-border bg-slate-50 py-3 pl-10 pr-3 text-sm text-slate-700
+            className="w-full rounded-md border border-input-border
+            placeholder:placeholder-input-placeholder bg-input shadow-input py-3 pl-10 pr-3 text-sm text-slate-700
              outline-none focus:border-input-focus"
           />
           {searchResults.length > 0 && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-200 roundedlg shawdow-lg z-50 overflow-hidden">
+            <div
+              className="absolute top-full left-0 right-0 mt-1 bg-input border border-slate-200
+             roundedlg shawdow-lg z-50 overflow-hidden"
+            >
               {searchResults.map(({ label, to, icon: Icon }) => (
                 <NavLink
                   key={to}

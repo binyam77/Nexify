@@ -180,15 +180,16 @@ export default function MessageArea({
     <section className="flex-1 flex flex-col bg-white h-full relative min-h-0 overflow-hidden" aria-label="Current Conversation">
       
       {/* 1. Header - Conversation title, online member count or last seen timestamp */}
-      <header className="py-4 md:py-5 min-h-[76px] px-5 md:px-7 border-b border-gray-100 flex items-center justify-between bg-white shrink-0 shadow-sm z-10">
-        <div className="flex items-center gap-3.5">
+      <header className="py-4 md:py-5 min-h-[76px] px-5 md:px-7 
+     text-white border-b border-gray-100 flex items-center justify-between bg-brand shrink-0 shadow-sm z-10">
+        <div className="flex items-center gap-3.5 ">
           {/* Back button shown on mobile view only */}
           <button
             onClick={onBack}
-            className="md:hidden p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            className="md:hidden p-1.5 text-gray-900 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
             aria-label="Back to chat list"
           >
-            <ArrowLeft className="w-5 h-5" />
+            <ArrowLeft className="w-5 h-5 " />
           </button>
 
           {/* Custom Avatar label initials or photo */}
@@ -196,27 +197,30 @@ export default function MessageArea({
             <img
               src={chat.avatarUrl}
               alt={chat.name}
-              className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-sm border border-gray-100"
+              className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-sm border border-input-border"
               referrerPolicy="no-referrer"
             />
           ) : (
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-bold text-sm text-white shrink-0 shadow-sm ${chat.bgGradient}`}>
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center
+             font-bold text-sm text-white shrink-0 shadow-sm ${chat.bgGradient}`}>
               {chat.avatarLabel}
             </div>
           )}
 
-          <div className="min-w-0">
-            <h2 className="text-sm md:text-base font-extrabold text-gray-900 truncate tracking-tight">
+          <div className="min-w-0 ">
+            <h2 className="text-[19px] md:text-base font-bold text-input 
+            truncate tracking-tight">
               {chat.name}
             </h2>
             {chat.type === 'group' ? (
-              <span className="text-[11px] md:text-xs text-gray-500 font-bold tracking-wide flex items-center gap-1 leading-none mt-0.5" id="group-online-status">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block animate-pulse"></span>
+              <span className="text-[11px] md:text-xs text-gray-500 font-bold tracking-wide 
+              flex items-center gap-1 leading-none mt-0.5" id="group-online-status">
+                <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse"></span>
                 <span>{chat.onlineCount} online</span>
               </span>
             ) : chat.isOnline !== false ? (
               <span className="text-[11px] md:text-xs text-emerald-600 font-extrabold tracking-wider uppercase flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-md mt-0.5" id="chat-online-status">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block"></span>
+                <span className="w-1.5 h-1.5 rounded-full bg-success inline-block"></span>
                 <span>online</span>
               </span>
             ) : (
