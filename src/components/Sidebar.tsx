@@ -4,7 +4,14 @@ import { useState } from "react";
 
 import { NavLink, Link } from "react-router-dom";
 
-import { House, UsersRound, User, Settings, Search, Bell } from "lucide-react";
+import {
+  HouseSimple,
+  UsersThree,
+  UserCircle,
+  Gear,
+  MagnifyingGlass,
+  Bell,
+} from "@phosphor-icons/react";
 
 import { ROUTES } from "../routes";
 
@@ -45,14 +52,14 @@ export default function Sidebar(props: SidebarProps) {
     {
       label: "Home",
       to: ROUTES.home,
-      icon: House,
+      icon: HouseSimple,
       tab: "home" as NavTab,
       badge: 0,
     },
     {
       label: "Community",
       to: ROUTES.community,
-      icon: UsersRound,
+      icon: UsersThree,
       tab: "community" as NavTab,
       badge: unreadCommunityCount ?? 0,
     },
@@ -66,14 +73,14 @@ export default function Sidebar(props: SidebarProps) {
     {
       label: "Profile",
       to: ROUTES.profile,
-      icon: User,
+      icon: UserCircle,
       tab: "profile" as NavTab,
       badge: 0,
     },
     {
       label: "Settings",
       to: ROUTES.settings,
-      icon: Settings,
+      icon: Gear,
       tab: "settings" as NavTab,
       badge: 0,
     },
@@ -118,7 +125,7 @@ export default function Sidebar(props: SidebarProps) {
             }
           }}
         >
-          <Search
+          <MagnifyingGlass
             size={14}
             className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
           />

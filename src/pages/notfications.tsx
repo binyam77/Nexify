@@ -10,20 +10,20 @@ function NotifIcon({ type }: { type: NotificationType }) {
   const base = "w-4 h-4";
   switch (type) {
     case 'like':    return <Heart className={cn(base, "text-rose-500")} fill="currentColor" />;
-    case 'comment': return <MessageCircle className={cn(base, "text-blue-500")} />;
-    case 'follow':  return <UserPlus className={cn(base, "text-emerald-500")} />;
+    case 'comment': return <MessageCircle className={cn(base, "text-emerald-500")}fill="currentColor" />;
+    case 'follow':  return <UserPlus className={cn(base, "text-blue-500")} />;
     case 'mention': return <AtSign className={cn(base, "text-purple-500")} />;
-    default:        return <Bell className={cn(base, "text-slate-400")} />;
+    default:        return <Bell className={cn(base, "text-slate-400")}fill="currentColor" />;
   }
 }
 
 // Icon bg color by type
 function iconBg(type: NotificationType) {
   switch (type) {
-    case 'like':    return 'bg-rose-50';
-    case 'comment': return 'bg-blue-50';
-    case 'follow':  return 'bg-emerald-50';
-    case 'mention': return 'bg-purple-50';
+    case 'like':    return 'bg-input';
+    case 'comment': return 'bg-input';
+    case 'follow':  return 'bg-input';
+    case 'mention': return 'bg-input';
     default:        return 'bg-slate-100';
   }
 }
@@ -59,7 +59,7 @@ function NotifItem({ notif, onRead }: { notif: AppNotification; onRead: () => vo
           }
         </div>
         <div className={cn(
-          "absolute -bottom-0.5 -right-0.5 w-5 h-5 rounded-full flex items-center justify-center",
+          "absolute -bottom-0.5 -right-0.5 w-5 h-5  rounded-full flex items-center justify-center",
           iconBg(notif.type)
         )}>
           <NotifIcon type={notif.type} />
@@ -77,7 +77,7 @@ function NotifItem({ notif, onRead }: { notif: AppNotification; onRead: () => vo
 
       {/* Unread dot */}
       {!notif.isRead && (
-        <div className="w-2 h-2 rounded-full bg-blue-500 shrink-0 mt-1.5" />
+        <div className="w-2 h-2 rounded-full bg-success shrink-0 mt-1.5" />
       )}
     </div>
   );
@@ -134,8 +134,8 @@ export default function Notifications() {
       {/* Unread */}
       {unread.length > 0 && (
         <div>
-          <p className="px-4 pt-4 pb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">New</p>
-          <div className="divide-y divide-slate-100">
+          <p className="px-4 pt-4 pb-2 text-xs font-bold text-input-text uppercase tracking-wider">New</p>
+          <div className="divide-y divide-slate-100 bg-slate-300">
             {unread.map(n => (
               <NotifItem key={n.id} notif={n} onRead={() => markAsRead(n.id)} />
             ))}
@@ -146,7 +146,7 @@ export default function Notifications() {
       {/* Read */}
       {read.length > 0 && (
         <div>
-          <p className="px-4 pt-4 pb-2 text-xs font-bold text-slate-400 uppercase tracking-wider">Earlier</p>
+          <p className="px-4 pt-4 pb-2 text-xs font-bold text-input-text uppercase tracking-wider">Earlier</p>
           <div className="divide-y divide-slate-100">
             {read.map(n => (
               <NotifItem key={n.id} notif={n} onRead={() => markAsRead(n.id)} />

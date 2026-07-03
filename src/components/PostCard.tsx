@@ -72,7 +72,8 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
-
+const lastTapRef = useRef<number>(0);
+const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // View tracking
   const viewedRef = useRef(false);
   useEffect(() => {
@@ -91,15 +92,32 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
   }, [onView]);
 
   const handleVideoClick = () => {
-    if (!videoRef.current) return;
-    if (videoRef.current.paused) {
-      videoRef.current.play();
-      setIsPlaying(true);
-    } else {
-      videoRef.current.pause();
-      setIsPlaying(false);
+  const now = Date.now();
+  const DOUBLE_TAP_DELAY = 300;
+
+  if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+    // Double tap → Like
+    if (tapTimeoutRef.current) {
+      clearTimeout(tapTimeoutRef.current);
+      tapTimeoutRef.current = null;
     }
-  };
+    if (!liked) toggleLike();
+    lastTapRef.current = 0;
+  } else {
+    lastTapRef.current = now;
+    tapTimeoutRef.current = setTimeout(() => {
+      // Single tap → Play/Pause
+      if (!videoRef.current) return;
+      if (videoRef.current.paused) {
+        videoRef.current.play();
+        setIsPlaying(true);
+      } else {
+        videoRef.current.pause();
+        setIsPlaying(false);
+      }
+    }, DOUBLE_TAP_DELAY);
+  }
+};
 
   const handlePrev = () => setCurrentIndex((i) => Math.max(0, i - 1));
   const handleNext = () =>
@@ -150,7 +168,7 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
                 type="range"
                 min="0"
                 max="1"
-                step="0.5"
+                step="0.1"
                 value={volume}
                 onChange={(e) => {
                   const val = Number(e.target.value);
@@ -178,9 +196,9 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
                   setIsMuted(true);
                 }
               }}
-              className="<bg-black/50 rounded-full p-2 backdrop-blur-sm"
+              className="bg-black/50 rounded-full p-2 backdrop-blur-sm"
             >
-              {!isMuted ? (
+              {isMuted ? (
                 <VolumeX className="w-5 h-5 text-input" />
               ) : volume > 0.5 ? (
                 <Volume2 className="w-5 h-5 text-input" />
@@ -299,11 +317,11 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
                 className={`text-[11px] font-bold px-2.5 py-0.5  rounded-full border transition-colors
             ${
               isFollowing
-                ? "border-white/60 text-white/60  md:border-slate-400 md:text-slate-400"
-                : "border-white md:border-slate-400  md:border-slate-400  md:border-slate-700 md:text-slate-700 md:bg-transparent"
+                ? "border border-input-border text-input  md:border-input-border md:text-input-text"
+                : "border-brand-light bg-brand text-input w-15  md:border-brand-light md:text-input md:bg-brand"
             }`}
               >
-                {isFollowing ? "Following" :   "Follow"}
+                {isFollowing ? "Following" : "Follow"}
               </button>
             )}
           </div>
@@ -333,7 +351,7 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
 
       {/* ===== Action Buttons (right side) ===== */}
       <div
-        className="absolute bottom-20 right-3 z-10 flex flex-col items-center gap-4
+        className="absolute bottom-20 right-3 z-10 flex flex-col items-center gap-3
       md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
       >
         {/* Like */}
@@ -363,13 +381,13 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
         {/* Share */}
         <button onClick={share} className="flex flex-col items-center gap-1">
           <div
-            className="w-11 h-11 rounded-full flex items-center justify-center
-          bg-white/20 backdrop-blur-sm  text-white 
-           md:bg-slate-200 md:backdrop-blur-none md:text-slate-700"
+            className="w-12 h-11 rounded-full flex items-center justify-center
+          drop-shadow-lg  text-white 
+           md:bg-slate-200 md:shadow-none md:text-slate-700"
           >
             <Share2 size={20} />
           </div>
-          <span className="text-white text-xs drop-shadow md:text-slate-700 md:drop-showdow-none">
+          <span className="text-white text-xs font-medium  drop-shadow md:text-slate-700 md:drop-shadow-none">
             {post.sharesCount}
           </span>
         </button>
@@ -423,13 +441,13 @@ function ActionBtn({
   return (
     <button onClick={onClick} className="flex flex-col items-center gap-1">
       <div
-        className={`w-11 h-11 rounded-full  flex items-center justify-center transition-colors
-          bg-white/20 backdrop-blur-sm md:bg-slate-200 md:backdrop-blur-none
+        className={`w-12 h-11 rounded-full  flex items-center justify-center transition-colors
+          drop-shadow-lg  md:bg-slate-200 md:shadow-none
            ${active ? activeColor : "text-white md:text-slate-700"}`}
       >
         {icon}
       </div>
-      <span className="text-white text-xs drop-shadow md:text-slate-700 md:drop-showdow-none">
+      <span className="text-white text-xs font-medium  drop-shadow md:text-slate-700 md:drop-shadow-none">
         {label}
       </span>
     </button>
