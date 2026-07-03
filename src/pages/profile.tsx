@@ -2515,7 +2515,7 @@ export default function Profile({
                           "👇",
                           "☝️",
                           "✍️",
-                          "🤳",
+                          
                           "💪",
                           "🌟",
                           "💥",
@@ -2523,8 +2523,6 @@ export default function Profile({
                           "☕",
                           "🍕",
                           "🍻",
-                          "🎮",
-                          "📱",
                           "📷",
                           "🎨",
                           "🎙️",
@@ -2699,7 +2697,7 @@ export default function Profile({
                       <button
                         type="button"
                         onClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
-                        className="text-2xl active:scale-90 transition-all p-1"
+                        className="text-2xl  active:scale-90 transition-all p-1"
                         title="Add emoji"
                       >
                         😊
@@ -2740,7 +2738,11 @@ export default function Profile({
 
                       {/* Emoji Picker Panel overlay for mobile overlay input */}
                       {emojiPickerOpen && (
-                        <div className="absolute bottom-[60px] left-0 bg-white border border-gray-200 rounded-2xl shadow-xl p-2.5 grid grid-cols-8 gap-1.5 w-72 max-h-48 overflow-y-auto z-50 scrollbar-thin">
+                        <div
+                          className="absolute bottom-[60px] left-0 bg-input border border-gray-200
+                         rounded-2xl shadow-xl p-2.5 grid grid-cols-8 gap-1.5 w-72 max-h-48
+                          overflow-y-auto z-50 scrollbar-thin"
+                        >
                           {[
                             "😊",
                             "😂",
@@ -2764,8 +2766,6 @@ export default function Profile({
                             "💖",
                             "💡",
                             "🌈",
-                            "⚡",
-                            "🍿",
                             "🤣",
                             "🥰",
                             "🤩",
@@ -2800,7 +2800,6 @@ export default function Profile({
                             "👇",
                             "☝️",
                             "✍️",
-                            "🤳",
                             "💪",
                           ].map((emoji) => (
                             <button
@@ -2889,7 +2888,10 @@ export default function Profile({
                                   )}
                                 </div>
                                 {/* --- የሞባይል ኮሜንት ካርድ ኮንቲነር (Mobile Comment Container - Expanded and styled) --- */}
-                                <div className="flex-1 bg-slate-50 rounded-2xl py-3.5 px-4.5 border-l-4 border-blue-500 shadow-sm transition-all hover:bg-slate-100/70">
+                                <div
+                                  className="flex-1 bg-slate-50 rounded-2xl py-3.5 px-4.5 border-l-3
+                                  border-blue-400 shadow-sm transition-all hover:bg-slate-100/70"
+                                >
                                   <h4
                                     onClick={() => {
                                       setMobileCommentsOpen(false);
@@ -3037,11 +3039,15 @@ export default function Profile({
                                     }
                                     placeholder="Reply text..."
                                     maxLength={200}
-                                    className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-[12.5px] h-9 focus:border-teal-500 transition-all text-slate-700 outline-none"
+                                    className="flex-1 bg-input border border-input-border rounded-xl px-4 py-2 
+                                    text-[12.5px] h-9 focus:border-input-focus transition-all text-input-text
+                                    placeholder:placeholder-input-placeholder shadow-input outline-none"
                                   />
                                   <button
                                     type="submit"
-                                    className="w-8.5 h-8.5 bg-teal-500 text-white rounded-xl flex items-center justify-center shadow-sm shrink-0 active:scale-90 transition-transform"
+                                    className="w-8.5 h-8.5 bg-success text-white 
+                                    rounded-xl flex items-center justify-center
+                                     shadow-sm shrink-0 active:scale-90 transition-transform"
                                   >
                                     <Send className="w-3.5 h-3.5" />
                                   </button>
@@ -3058,7 +3064,8 @@ export default function Profile({
                           e.preventDefault();
                           handleAddComment(selectedPost.id, commentInputText);
                         }}
-                        className="border-t border-gray-100 p-4 bg-white flex items-center gap-3 shrink-0 pb-6 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]"
+                        className="border-t border-gray-100 p-4  bg-white flex items-center gap-3
+                         shrink-0 mb-13 md:mb-0 pb-6 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]"
                       >
                         {/* --- የኮሜንት መጻፊያ ሳጥን (Comment Input Textarea that wraps) --- */}
                         <textarea
@@ -3078,12 +3085,17 @@ export default function Profile({
                               }
                             }
                           }}
-                          className="flex-1 bg-slate-50 border border-slate-100 focus:border-blue-500 rounded-2xl px-4.5 py-3 text-[14px] text-slate-700 outline-none resize-none min-h-[46px] max-h-[100px] overflow-y-auto scrollbar-thin font-medium transition-all shadow-inner"
+                          className="flex-1 bg-input border border-input-border focus:border-input-focus
+                           rounded-2xl px-4.5 py-3 text-[14px] text-input-text outline-none resize-none 
+                           min-h-[46px] max-h-[100px] overflow-y-auto scrollbar-thin font-medium transition-all
+                            shadow-input placeholder:placeholder-input-placeholder"
                         />
                         <button
                           type="submit"
                           disabled={!commentInputText.trim()}
-                          className="w-10 h-10 bg-emerald-500 disabled:opacity-40 text-white rounded-full flex items-center justify-center shadow-md shrink-0 active:scale-95 transition-transform"
+                          className="w-10 h-10 bg-success sabled:opacity-40 text-white
+                           rounded-full flex items-center justify-center shadow-md shrink-0 active:scale-95
+                             transition-transform"
                         >
                           <Send className="w-4.5 h-4.5 text-white" />
                         </button>
@@ -3097,7 +3109,7 @@ export default function Profile({
         })()}
 
       {/* ========================================================
-          MODAL: EXPLORE OTHER DEVELOPERS
+          MODAL: EXPLORE OTHER 
           ======================================================== */}
       {isOthersModalOpen && (
         <div className="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
@@ -3107,7 +3119,7 @@ export default function Profile({
               <div className="flex items-center gap-2">
                 <Users className="w-5 h-5 text-blue-600" />
                 <h3 className="text-base font-black tracking-tight text-gray-900">
-                  Explore 
+                  Explore
                 </h3>
               </div>
               <button

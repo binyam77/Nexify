@@ -1,7 +1,7 @@
 @import "tailwindcss";
 
 @theme {
-  --background-image-brand:linear-gradient(to right, #019be5,#0071e3,#0185e5);
+  --background-image-brand:linear-gradient(to bottom,#019be5, #0185e5,  #0071e3);
   --color-brand-dark: #0071e3; /* ግርጌ icon */
   --color-success: #27bd5f; /* post/send, focus ring */
   --color-ink: #000000; /* ልዩ ርዕስ */
@@ -9,6 +9,7 @@
   --color-danger: #dc2626; /* logout/delete (Settings.tsx ካለው ጋር ይመሳሰላል) */
   --shadow-soft: 0 2px 6px #e5e7eb, 0 8px 24px #d1d5db;
   --color-input: #ffffff;
+  --color-green-light:#10b981;
   --color-input-text: #111827;
   --color-input-placeholder: #9ca3af;
   --color-input-border: #bcc8d1;
