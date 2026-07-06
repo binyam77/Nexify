@@ -72,7 +72,7 @@ export default function Home() {
 
   if (posts.length === 0) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center bg-[#f1f5f9] text-slate-400 gap-3">
+      <div className="h-full w-full flex flex-col items-center justify-center bg-[#f1f5f9] dark:bg-neutral-900 text-slate-400  dark:text-neutral-500 gap-3">
         <p className="text-lg font-semibold">No posts yet</p>
         <p className="text-sm opacity-60">Profile ውስጥ ፖስት ጨምር!</p>
       </div>
@@ -80,7 +80,7 @@ export default function Home() {
   }
 
   return (
-    <div className="relative h-full w-full bg-[#f1f5f9] overflow-hidden">
+    <div className="relative h-full w-full bg-[#f1f5f9] dark:bg-neutral-900 overflow-hidden">
       <div className="h-full w-full flex items-center justify-center">
         <PostCard
           key={posts[currentIndex]?.id}
@@ -94,7 +94,7 @@ export default function Home() {
       {posts.length > 1 && (
         <div className="hidden md:flex fixed right-8 top-1/2 -translate-y-1/2 flex-col gap-3 z-50">
           <button onClick={goPrev} disabled={currentIndex === 0}
-            className="w-10 h-10 rounded-full bg-white/90 hover:bg-white shadow-lg flex items-center justify-center text-slate-700 disabled:opacity-30 transition-all">
+            className="w-10 h-10 rounded-full bg-white/90 hover:bg-white dark:bg-neutral-800/900 dark:hover:bg-neutral-800 shadow-lg flex items-center justify-center text-slate-700 dark:text-neutral-200 disabled:opacity-30 transition-all">
             <ChevronUp className="w-5 h-5" />
           </button>
           <button onClick={goNext} disabled={currentIndex === posts.length - 1}

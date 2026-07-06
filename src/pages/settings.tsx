@@ -10,7 +10,7 @@ import {
   Trash2,
   ShieldAlert,
 } from "lucide-react";
-
+import { useTheme } from '../context/ThemeContext';
 export default function Settings() {
   // --- ስቴት ማስተዳደሪያዎች (State Management) ---
   const { logout, user, updateUser } = useAuth();
@@ -19,8 +19,8 @@ export default function Settings() {
   const savedProfile = JSON.parse(localStorage.getItem("userProfile") || "{}");
   const [username, setUsername] = useState(user?.username || "");
   const [email, setEmail] = useState(user?.email || "");
-  const [password, setPassword] = useState("••••••••");
-
+  const [password, setPassword] = useState("");
+const { theme, toggleTheme } = useTheme();
   // 2. የፕሮፋይል ስቴት (Profile State)
   const [profilePic, setProfilePic] = useState<string | null>(
     savedProfile.photo || null,
@@ -171,7 +171,13 @@ export default function Settings() {
           <span className="text-sm font-medium">{alertMessage.text}</span>
         </div>
       )}
-
+<button
+   onClick={toggleTheme}
+   className="flex items-center justify-between w-full p-3 rounded-lg bg-surface"
+ >
+   <span>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
+   <span>{theme === 'dark' ? '🌙' : '☀️'}</span>
+</button>
       {/* ==========================================================================
           1. የአካውንት መረጃ ክፍል (Account Info Section)
           ========================================================================== */}

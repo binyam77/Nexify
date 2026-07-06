@@ -17,7 +17,7 @@ import Terms from "./footer/terms";
 import Contact from "./footer/contact";
 import Helps from "./footer/helps";
 import Notifications from "./pages/notfications";
-
+ 
 export default function App() {
   const navigate = useNavigate();
   const { isLoggedIn, isLoading, login } = useAuth();

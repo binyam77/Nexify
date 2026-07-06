@@ -1,5 +1,12 @@
 @import "tailwindcss";
+@custom-variant dark (&:where(.dark, .dark*));
+:root{
+  color-scheme:light ;
 
+}
+:root.dark{
+color-scheme: dark;
+}
 @theme {
   --background-image-brand:linear-gradient(to bottom,#019be5, #0185e5,  #0071e3);
   --color-brand-dark: #0071e3; /* ግርጌ icon */

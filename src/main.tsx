@@ -7,9 +7,11 @@ import App from "./App.tsx";
 import "./index.css";
 import { FeedProvider } from "./context/FeedContext.tsx";
 import { NotificationProvider } from "./context/NotificationContext.tsx";
+import { ThemeProvider } from './context/ThemeContext';
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <BrowserRouter>
+      <ThemeProvider>
       <AuthProvider>
         <FeedProvider>
           <NotificationProvider>
@@ -17,6 +19,7 @@ createRoot(document.getElementById("root")!).render(
           </NotificationProvider>
         </FeedProvider>
       </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   </StrictMode>,
 );
