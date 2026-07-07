@@ -130,7 +130,7 @@ const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   return (
     <div
       ref={containerRef}
-      className="relative h-full w-full bg-black md:bg-[#f1f5f9] md:dark:bg-neutral-900 flex items-center justify-center md:justify-center"
+      className="relative h-full w-full bg-black md:bg-surface  flex items-center justify-center md:justify-center"
     >
       {/* ===== Media Area ===== */}
       {post.type === "video" ? (
@@ -308,7 +308,7 @@ const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
             )}
           </div>
           <div className="flex item-center gap-2 ">
-            <span className="text-input font-bold text-sm drop-shadow md:text-slate-900 md:dark:text-neutral-100">
+            <span className="text-input font-bold text-sm drop-shadow md:text-ink">
               {post.username}
             </span>
             {!isOwnPost && (
@@ -329,7 +329,7 @@ const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
         {post.caption && (
           <div>
             <p
-              className={`text-white text-xs leading-relaxed drop-shadow md:text-slate-700 md:dark:text-neutral-300
+              className={`text-white text-xs leading-relaxed drop-shadow md:text-input-text 
             transition-all ${captionExpanded ? "" : "line-clamp-2"}`}
             >
               {post.caption}
@@ -340,7 +340,7 @@ const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
                   e.stopPropagation();
                   setCaptionExpanded((c) => !c);
                 }}
-                className="text-white/70 text-[11px] font-semibold mt-0.5 md:text-slate-500 md:dark:text-neutral-400"
+                className="text-white/70 text-[11px] font-semibold mt-0.5 md:text-input-placeholder"
               >
                 {captionExpanded ? "less" : "more"}
               </button>
@@ -383,11 +383,11 @@ const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
           <div
             className="w-12 h-11 rounded-full flex items-center justify-center
           drop-shadow-lg  text-white 
-           md:bg-slate-200 md:dark:bg-neutral-800 md:shadow-none md:text-slate-700 md:dark:text-neutral-300"
+           md:bg-surface  md:shadow-none md:text-input-text"
           >
             <Share2 size={20} />
           </div>
-          <span className="text-white text-xs font-medium  drop-shadow md:text-slate-700 md:drop-shadow-none md:dark:text-neutral-300">
+          <span className="text-white text-xs font-medium  drop-shadow md:text-input-text md:drop-shadow-none md:dark:text-neutral-300">
             {post.sharesCount}
           </span>
         </button>
@@ -442,12 +442,12 @@ function ActionBtn({
     <button onClick={onClick} className="flex flex-col items-center gap-1">
       <div
         className={`w-12 h-11 rounded-full  flex items-center justify-center transition-colors
-          drop-shadow-lg  md:bg-slate-200 md:shadow-none md:dark:bg-neutral-800
-           ${active ? activeColor : "text-white md:text-slate-700 md:dark:text-neutral-300"}`}
+          drop-shadow-lg  md:bg-surface  md:shadow-none 
+           ${active ? activeColor : "text-white md:text-input-text"}`}
       >
         {icon}
       </div>
-      <span className="text-white text-xs font-medium  drop-shadow md:text-slate-700 md:drop-shadow-none md:dark:text-neutral-300">
+      <span className="text-white text-xs font-medium  drop-shadow md:text-input-text md:drop-shadow-none md:dark:text-neutral-300">
         {label}
       </span>
     </button>

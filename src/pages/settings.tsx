@@ -10,7 +10,7 @@ import {
   Trash2,
   ShieldAlert,
 } from "lucide-react";
-import { useTheme } from '../context/ThemeContext';
+import { useTheme } from "../context/ThemeContext";
 export default function Settings() {
   // --- ስቴት ማስተዳደሪያዎች (State Management) ---
   const { logout, user, updateUser } = useAuth();
@@ -20,7 +20,7 @@ export default function Settings() {
   const [username, setUsername] = useState(user?.username || "");
   const [email, setEmail] = useState(user?.email || "");
   const [password, setPassword] = useState("");
-const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme } = useTheme();
   // 2. የፕሮፋይል ስቴት (Profile State)
   const [profilePic, setProfilePic] = useState<string | null>(
     savedProfile.photo || null,
@@ -171,13 +171,31 @@ const { theme, toggleTheme } = useTheme();
           <span className="text-sm font-medium">{alertMessage.text}</span>
         </div>
       )}
-<button
-   onClick={toggleTheme}
-   className="flex items-center justify-between w-full p-3 rounded-lg bg-surface"
- >
-   <span>{theme === 'dark' ? 'Dark Mode' : 'Light Mode'}</span>
-   <span>{theme === 'dark' ? '🌙' : '☀️'}</span>
-</button>
+
+      <button
+        onClick={toggleTheme}
+        role="switch"
+        aria-checked={theme === "dark"}
+        aria-label="Toggle dark mode"
+        className="flex items-center justify-between w-full p-4 rounded-xl bg-surface border border-slate-200"
+      >
+        <span className="text-sm font-medium text-slate-700">
+          {theme === "dark" ? "Dark Mode" : "Light Mode"}
+        </span>
+
+        <span
+          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 ${
+            theme === "dark" ? "bg-brand" : "bg-slate-300"
+          }`}
+        >
+          <span
+            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-md transition-transform duration-300 ${
+              theme === "dark" ? "translate-x-6" : "translate-x-1"
+            }`}
+          />
+        </span>
+      </button>
+
       {/* ==========================================================================
           1. የአካውንት መረጃ ክፍል (Account Info Section)
           ========================================================================== */}
