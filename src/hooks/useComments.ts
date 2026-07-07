@@ -12,7 +12,7 @@ export function useComments(videoId: string) {
       username,
       avatar,
       timestamp: formatTimestamp(),
-      likes: 0,
+      likesCount: 0,
       liked: false,
       replies: [],
     };
@@ -30,7 +30,7 @@ export function useComments(videoId: string) {
   function toggleLike(commentId: number) {
     setComments((prev) =>
       prev.map((c) =>
-        c.id === commentId ? { ...c, liked: !c.liked, likes: c.liked ? c.likes - 1 : c.likes + 1 } : c,
+        c.id === commentId ? { ...c, liked: !c.liked, likesCount: c.liked ? c.likesCount - 1 : c.likesCount + 1 } : c,
       ),
     );
   }

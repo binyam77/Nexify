@@ -83,7 +83,7 @@ export default function CommentCard({ comment, currentUsername, onDelete, onEdit
       <div className="mt-2.5 flex items-center gap-3.5">
         <button type="button" onClick={() => onToggleLike(comment.id)} className={`flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold hover:bg-blue-50 ${comment.liked ? 'text-rose-600' : 'text-slate-500'}`}>
           <Heart size={14} fill={comment.liked ? 'currentColor' : 'none'} />
-          <span>{comment.likes}</span>
+          <span>{comment.likesCount}</span>
         </button>
         <button type="button" onClick={() => setShowReplyInput((s) => !s)} className="rounded-full px-2.5 py-1 text-xs font-bold text-blue-600 hover:bg-blue-50">Reply</button>
       </div>
