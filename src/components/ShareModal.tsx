@@ -9,15 +9,15 @@ import { X, Copy, Check, Send, Share2 } from 'lucide-react';
 // --- የShareModalProps በይነገጽ (Props Interface) ---
 interface ShareModalProps {
   post: {
-    id: number;
-    description: string;
+    id: string;
+    caption: string;
     username: string;
-    isVideo?: boolean;
-    thumbnail?: string | null;
+    type: 'photo' | 'video';
+    mediaUrls: string[];
   } | null;
   isOpen: boolean;
   onClose: () => void;
-  onShareIncrement: (postId: number) => void;
+  onShareIncrement: (postId: string) => void;
 }
 
 /**
@@ -57,7 +57,7 @@ export default function ShareModal({ post, isOpen, onClose, onShareIncrement }: 
           <path d="M20.665 3.717l-17.73 6.837c-1.21.486-1.203 1.161-.222 1.462l4.552 1.42 10.532-6.645c.498-.303.953-.14.579.192l-8.533 7.701-.332 4.96c.488 0 .702-.223.974-.488l2.337-2.27 4.861 3.59c.896.495 1.537.24 1.761-.83l3.19-15.03c.326-1.31-.5-1.9-1.36-.148z"/>
         </svg>
       ),
-      url: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(post.description)}`
+      url: `https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(post.caption)}`
     },
     {
       name: 'WhatsApp',
@@ -67,7 +67,7 @@ export default function ShareModal({ post, isOpen, onClose, onShareIncrement }: 
           <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946C.06 5.348 5.397.01 12.008.01c3.202.001 6.212 1.246 8.477 3.514 2.266 2.268 3.507 5.28 3.505 8.484-.004 6.657-5.34 11.997-11.953 11.997-2.005-.001-3.973-.502-5.724-1.455L0 24zm6.59-4.846c1.6.95 3.188 1.449 4.825 1.451 5.436 0 9.86-4.37 9.864-9.742.002-2.602-1.01-5.05-2.85-6.892-1.84-1.842-4.287-2.856-6.886-2.858-5.441 0-9.868 4.372-9.872 9.746-.002 1.785.485 3.532 1.411 5.086L1.87 21.057l5.127-1.341c.04-.01.07.01.11-.01zm11.367-7.64c-.31-.155-1.838-.906-2.12-.1-.28.105-.482.906-.59.13-.108-.077-.245-.27-.514-.515-1.07-.942-1.85-2.033-2.06-2.396-.21-.362.22-.38.43-.586.19-.19.31-.36.46-.57.15-.21.08-.39-.04-.6-.12-.21-.93-2.24-1.27-3.07-.33-.8-.71-.69-.97-.7l-.83-.01c-.28 0-.73.11-1.11.53-.38.41-1.46 1.43-1.46 3.49 0 2.06 1.5 4.05 1.71 4.33.21.28 2.95 4.51 7.15 6.32 1 .43 1.78.69 2.39.88 1 .32 1.9.28 2.62.17.8-.12 2.45-.1 2.76-1.12.31-.13.31-2.27.13-2.58-.18-.3-.68-.46-.99-.61z"/>
         </svg>
       ),
-      url: `https://api.whatsapp.com/send?text=${encodeURIComponent(post.description + ' ' + shareUrl)}`
+      url: `https://api.whatsapp.com/send?text=${encodeURIComponent(post.caption + ' ' + shareUrl)}`
     },
     {
       name: 'Facebook',
@@ -87,7 +87,7 @@ export default function ShareModal({ post, isOpen, onClose, onShareIncrement }: 
           <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
         </svg>
       ),
-      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(post.description)}`
+      url: `https://twitter.com/intent/tweet?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(post.caption)}`
     },
     {
       name: 'LinkedIn',
@@ -129,16 +129,16 @@ export default function ShareModal({ post, isOpen, onClose, onShareIncrement }: 
 
         {/* Post Preview Snippet (የልጥፉ አጭር መግለጫ) */}
         <div className="bg-slate-50 rounded-2xl p-3 mb-4 flex items-center gap-3 border border-slate-100">
-          {post.thumbnail ? (
-            <img src={post.thumbnail} alt="thumbnail" className="w-12 h-12 rounded-xl object-cover border" />
+          {post.mediaUrls[0] && post.type ==="photo" ? (
+            <img src={post.mediaUrls[0]} alt="thumbnail" className="w-12 h-12 rounded-xl object-cover border" />
           ) : (
             <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 font-bold">
-              {post.isVideo ? '🎬' : '📷'}
+              {post.type === 'video' ? '🎬' : '📷'}
             </div>
           )}
           <div className="flex-1 min-w-0">
             <p className="text-xs font-bold text-gray-400">@{post.username}</p>
-            <p className="text-xs text-gray-700 truncate font-semibold">{post.description || 'No description'}</p>
+            <p className="text-xs text-gray-700 truncate font-semibold">{post.caption || 'No description'}</p>
           </div>
         </div>
 

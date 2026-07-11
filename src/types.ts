@@ -83,26 +83,6 @@ export interface Message {
   isEdited?: boolean; // መልዕክቱ የተቀየረ መሆኑን ማሳያ (Flag to indicate if the message has been edited)
   reactions?: { emoji: string; count: number; users: string[] }[]; // ተጠቃሚዎች የሰጡት ምላሽ (List of user reactions to this message)
 }
-
-
-export interface PostMeta {
-  id: number;
-  title: string;
-  isVideo: boolean;
-  fileName?: string;
-  description: string;
-  hashtags: string[];
-  username: string;
-  avatar: string | null;
-  views: number;
-  likes: number;
-  liked: boolean;
-  saves: number;
-  saved: boolean;
-  timestamp: string;
-  thumbnail?: string;
-}
-
 export interface OtherCreator {
   id: number;
   name: string;
@@ -114,7 +94,7 @@ export interface OtherCreator {
   followingCount: number;
   bio: string;
   loginsCount: number;
-  posts: PostMeta[];
+  posts: FeedPost[];
 }
 
 
@@ -133,6 +113,8 @@ export interface FeedPost{
   savesCount : number;
   viewsCount:number;
   createdAt:string;
+  liked:boolean;
+  saved:boolean;
   
 
 }

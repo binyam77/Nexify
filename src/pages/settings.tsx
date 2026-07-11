@@ -153,7 +153,7 @@ export default function Settings() {
   };
 
   return (
-    <main className="flex-grow w-full max-w-4xl mx-auto px-4 py-8 sm:py-12 flex flex-col gap-8 text-slate-800 overflow-y-auto h-screen">
+    <main className="flex-grow w-full max-w-4xl mx-auto px-4 py-8 sm:py-12 flex flex-col gap-8 bg-bodey-bg++ text-text overflow-y-auto h-screen">
       {/* 🔔 የተጠቃሚ መልዕክቶች ማሳያ (Toast Alert Banner) */}
       {alertMessage && (
         <div
@@ -199,13 +199,13 @@ export default function Settings() {
       {/* ==========================================================================
           1. የአካውንት መረጃ ክፍል (Account Info Section)
           ========================================================================== */}
-      <section className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
-        <h2 className="text-xl font-bold text-slate-900 mb-6 pb-2 border-b-2 border-slate-100 flex items-center gap-2">
+      <section className="bg-bodey-bg border border-input-border rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
+        <h2 className="text-xl font-bold text-text-h2 mb-6 pb-2 border-b-2 border-slate-100 flex items-center gap-2">
           Account Info
         </h2>
         <form onSubmit={handleAccountSubmit} className="flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-600">
+            <label className="text-sm font-medium text-small-text">
               Edit username
             </label>
             <input
@@ -213,13 +213,13 @@ export default function Settings() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="username"
-              className="w-full max-w-lg px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-800 focus:border-[#0185E5] focus:ring-2 focus:ring-[#0185E5]/20 focus:outline-none transition-all text-sm"
+              className="w-full max-w-lg px-4 py-2.5 bg-input border border-input-border rounded-lg text-input-text focus:border-input-focus focus:outline-none transition-all text-sm"
               required
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-600">
+            <label className="text-sm font-medium text-small-text">
               Change email
             </label>
             <input
@@ -227,13 +227,13 @@ export default function Settings() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="email"
-              className="w-full max-w-lg px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-800 focus:border-[#0185E5] focus:ring-2 focus:ring-[#0185E5]/20 focus:outline-none transition-all text-sm"
+              className="w-full max-w-lg px-4 py-2.5 bg-input border border-input-border rounded-lg text-input-text focus:border-input-focus  focus:outline-none transition-all text-sm"
               required
             />
           </div>
 
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-slate-600">
+            <label className="text-sm font-medium text-small-text">
               Change password
             </label>
             <input
@@ -241,7 +241,7 @@ export default function Settings() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="password"
-              className="w-full max-w-lg px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-800 focus:border-[#0185E5] focus:ring-2 focus:ring-[#0185E5]/20 focus:outline-none transition-all text-sm"
+              className="w-full max-w-lg px-4 py-2.5 bg-input border border-input-border rounded-lg text-input-text focus:border-input-focus focus:outline-none transition-all text-sm"
               required
             />
           </div>
@@ -249,7 +249,7 @@ export default function Settings() {
           {/* 🔘 ብሉ ግራዲየንት አዝራር (Custom Blue Gradient Button) */}
           <button
             type="submit"
-            className="self-start bg-gradient-to-b from-[#019BE5] via-[#0185E5] to-[#0071E3] text-white font-semibold rounded-lg px-6 py-2.5 shadow-md hover:brightness-110 active:scale-[0.98] transition-all text-sm flex items-center gap-2 cursor-pointer"
+            className="self-start bg-brand hover:brightness-110 text-one-text font-semibold rounded-lg px-6 py-2.5 shadow-md active:scale-[0.98] transition-all text-sm flex items-center gap-2 cursor-pointer"
           >
             <Save className="w-4 h-4" /> Save
           </button>
@@ -259,13 +259,13 @@ export default function Settings() {
       {/* ==========================================================================
           2. የፕሮፋይል ክፍል (Profile Section)
           ========================================================================== */}
-      <section className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
-        <h2 className="text-xl font-bold text-slate-900 mb-6 pb-2 border-b-2 border-slate-100">
+      <section className="bg-bodey-bg border border-input-border rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
+        <h2 className="text-xl font-bold text-text-h2 mb-6 pb-2 border-b-2 border-slate-100">
           Profile
         </h2>
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-slate-600">
+            <label className="text-sm font-medium text-small-text">
               Profile Picture
             </label>
             <div className="flex items-center gap-5 mt-2 flex-wrap">
@@ -293,7 +293,7 @@ export default function Settings() {
           </div>
 
           <div className="flex flex-col gap-1.5 mt-2">
-            <label id="me" className="text-sm font-medium text-slate-600">
+            <label id="me" className="text-sm font-medium text-small-text">
               About You
             </label>
             <textarea
@@ -301,7 +301,7 @@ export default function Settings() {
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Bio..."
-              className="w-full max-w-lg px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-800 focus:border-[#0185E5] focus:ring-2 focus:ring-[#0185E5]/20 focus:outline-none transition-all text-sm resize-y min-h-[100px]"
+              className="w-full max-w-lg px-4 py-2.5 bg-input border border-input-border rounded-lg text-input-text focus:border-input-focus focus:outline-none transition-all text-sm resize-y min-h-[100px]"
             />
           </div>
 
@@ -309,7 +309,7 @@ export default function Settings() {
           <button
             type="button"
             onClick={handleProfileUpdate}
-            className="self-start bg-gradient-to-b from-[#019BE5] via-[#0185E5] to-[#0071E3] text-white font-semibold rounded-lg px-6 py-2.5 shadow-md hover:brightness-110 active:scale-[0.98] transition-all text-sm flex items-center gap-2 cursor-pointer"
+            className="self-start bg-brand text-one-text font-semibold rounded-lg px-6 py-2.5 shadow-md hover:brightness-110 active:scale-[0.98] transition-all text-sm flex items-center gap-2 cursor-pointer"
           >
             Update Profile
           </button>
@@ -319,13 +319,13 @@ export default function Settings() {
       {/* ==========================================================================
           3. የግላዊነት ክፍል (Privacy Section)
           ========================================================================== */}
-      <section className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
-        <h2 className="text-xl font-bold text-slate-900 mb-6 pb-2 border-b-2 border-slate-100">
+      <section className="bg-bodey-bg border border-input-border rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
+        <h2 className="text-xl font-bold text-text-h2 mb-6 pb-2 border-b-2 border-slate-100">
           Privacy
         </h2>
         <form onSubmit={handlePrivacySubmit} className="flex flex-col gap-5">
-          <fieldset className="border border-slate-300 rounded-lg p-5 flex flex-col gap-4">
-            <legend className="px-2.5 text-sm font-semibold text-slate-700">
+          <fieldset className="border border-input-border rounded-lg p-5 flex flex-col gap-4">
+            <legend className="px-2.5 text-sm font-semibold text-small-text">
               Who can see my profile?
             </legend>
 
@@ -337,11 +337,11 @@ export default function Settings() {
                 value="public"
                 checked={privacy === "public"}
                 onChange={() => setPrivacy("public")}
-                className="w-4 h-4 text-[#0185E5] focus:ring-[#0185E5]"
+                className="w-4 h-4 focus:bg-brand-dark text-brand "
               />
               <label
                 htmlFor="public"
-                className="text-sm text-slate-700 cursor-pointer"
+                className="text-sm text-small-text cursor-pointer"
               >
                 Public (Everyone)
               </label>
@@ -359,7 +359,7 @@ export default function Settings() {
               />
               <label
                 htmlFor="private"
-                className="text-sm text-slate-700 cursor-pointer"
+                className="text-sm text-small-text cursor-pointer"
               >
                 Private (Only Followers/Members)
               </label>
@@ -368,7 +368,7 @@ export default function Settings() {
             {/* 🔘 ብሉ ግራዲየንት አዝራር (Custom Blue Gradient Button) */}
             <button
               type="submit"
-              className="mt-2 self-start bg-gradient-to-b from-[#019BE5] via-[#0185E5] to-[#0071E3] text-white font-semibold rounded-lg px-6 py-2.5 shadow-md hover:brightness-110 active:scale-[0.98] transition-all text-sm flex items-center gap-2 cursor-pointer"
+              className="mt-2 self-start bg-brand text-one-text font-semibold rounded-lg px-6 py-2.5 shadow-md hover:brightness-110 active:scale-[0.98] transition-all text-sm flex items-center gap-2 cursor-pointer"
             >
               Save
             </button>

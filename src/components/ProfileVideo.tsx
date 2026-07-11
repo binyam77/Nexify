@@ -5,21 +5,19 @@
 
 import React from "react";
 import { Eye, Heart, Trash2 } from "lucide-react";
-import type{ PostMeta } from "../types";
+import type{ FeedPost } from "../types";
 
 // ProfileVideo.tsx የProp ዓይነቶች መግለጫ (Props Interface for ProfileVideo.tsx)
 interface ProfileVideoProps {
-  filteredPosts: PostMeta[];
-  mediaUrls: Record<number, string>;
+  filteredPosts: FeedPost[];
   viewMode: "me" | "other";
-  handleOpenPlayer: (post: PostMeta) => void;
-  handleDeletePost: (postId: number, e?: React.MouseEvent) => void;
+  handleOpenPlayer: (post: FeedPost) => void;
+  handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
   formatCount: (num: number) => string;
 }
 
 export default function ProfileVideo({
   filteredPosts,
-  mediaUrls,
   viewMode,
   handleOpenPlayer,
   handleDeletePost,
@@ -40,7 +38,8 @@ export default function ProfileVideo({
       ) : (
         <div className="grid grid-cols-3 gap-2.5 sm:gap-4 animate-fade-in">
           {filteredPosts.map((post) => {
-            const mediaSrc = mediaUrls[post.id];
+            const mediaSrc = post.mediaUrls[0];
+            const isVideo = post.type === "video";
 
             return (
               <div
@@ -49,22 +48,8 @@ export default function ProfileVideo({
                 className="aspect-[9/16] bg-gray-900 rounded-2xl overflow-hidden relative cursor-pointer group shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100/50"
               >
                 {/* 1. Media Preview Grid Block */}
-                {post.thumbnail || mediaSrc ? (
-                  post.thumbnail ? (
-                    <>
-                      <img
-                        src={post.thumbnail}
-                        alt="Post thumbnail"
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                      {post.isVideo && (
-                        <div className="absolute top-3 left-3 bg-black/60 backdrop-blur-sm text-white text-[10px] font-black px-2 py-0.5 rounded-md uppercase tracking-wider z-10">
-                          🎬 VIDEO
-                        </div>
-                      )}
-                    </>
-                  ) : post.isVideo ? (
+                {mediaSrc ? (
+                  isVideo ? (
                     <>
                       <video
                         src={mediaSrc}
@@ -94,33 +79,33 @@ export default function ProfileVideo({
                 <div className="absolute bottom-2.5 right-2.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-2.5 shadow-sm z-10 group-hover:opacity-0 transition-opacity duration-200 border border-white/5">
                   <span className="flex items-center gap-1">
                     <Eye className="w-3.5 h-3.5 text-white/95" />
-                    <span>{formatCount(post.views)}</span>
+                    <span>{formatCount(post.viewsCount)}</span>
                   </span>
                   <span className="flex items-center gap-1">
                     <Heart
                       className={`w-3.5 h-3.5 ${post.liked ? "fill-rose-500 text-rose-500" : "text-white/95"}`}
                     />
-                    <span>{formatCount(post.likes)}</span>
+                    <span>{formatCount(post.likesCount)}</span>
                   </span>
                 </div>
 
                 {/* 3. Likes, Description and Trash/Delete Action on Hover (Desktop) */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <p className="text-xs text-white/90 font-medium line-clamp-2 leading-relaxed mb-3">
-                    {post.description}
+                    {post.caption}
                   </p>
 
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3 text-white text-xs font-bold">
                       <span className="flex items-center gap-1">
                         <Eye className="w-3.5 h-3.5 text-white/80" />{" "}
-                        {formatCount(post.views)}
+                        {formatCount(post.viewsCount)}
                       </span>
                       <span className="flex items-center gap-1">
                         <Heart
                           className={`w-3.5 h-3.5 ${post.liked ? "fill-rose-500 text-rose-500" : "text-white/80"}`}
                         />{" "}
-                        {formatCount(post.likes)}
+                        {formatCount(post.likesCount)}
                       </span>
                     </div>
 

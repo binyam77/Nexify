@@ -18,15 +18,21 @@ color-scheme: dark;
   --color-input: #ffffff;
   --color-green-light:#10b981;
   --color-input-text: #111827;
-  --color-input-placeholder: #9ca3af;
-  --color-input-border: #bcc8d1;
+  --color-placeholder: #9ca3af;
+  --color-input-border: #e2e8f0;
   --shadow-input: 0 4px 12px rgba(0, 0, 0, 0.08);
   --color-input-hover: #0071e3;
   --color-input-focus: #4f46e5;
-  --color-input-focus: #0185e5;
-
+  --color-hover-input: #f8fafc;
+  --color-text:#0f172a;
+  --color-one-text:#f8fafc;
+  --color-bodey-bg:#ffffff;
+  --color-text-h1:#00000;
+  --color-text-h2:#0f172a;
+  --color-small-text:#475569;
 }
 :root.dark{
+  --color-bodey-bg:#121212;
   --color-surface:#000000;
   --color-ink:#ffffff;
 
@@ -34,14 +40,18 @@ color-scheme: dark;
   --color-brand-light:#0071e3;
   --color-brand-dark:#0071e3;
 
+  --color-small-text:#a1a1aa;
   
   --color-input:#1a1a1a;
   --color-input-text:#ffffff;
-  --color-placeholder:#6b7280;
-  --color-input-border:#2e2e2e;
+  --color-placeholder:#71717a;
+  --color-input-border:#2d2d2d;
   --color-input-hover:#0071e3;
   --color-input-focus:#0071e3;
-  
+  --color-hover-input:#232323;
+  --color-text:#f8fafc;
+  --color-text-h1:#ffffff;
+  --color-text-h2:#f5f5f5;
   --color-success:#27bd5f;
   --color-danger:#f87171;
   --color-green-light:#10b981;

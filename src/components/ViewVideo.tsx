@@ -16,21 +16,20 @@ import {
   Share2,
   Send,
 } from "lucide-react";
-import type { PostMeta, CommentItem } from "../types";
+import type { FeedPost, CommentItem,OtherCreator } from "../types";
 import Left from "./Left";
 
 // ViewVideo.tsx የProp ዓይነቶች መግለጫ (Props Interface for ViewVideo.tsx)
 interface ViewVideoProps {
-  selectedPost: PostMeta;
-  commentsMap: Record<number, CommentItem[]>;
-  shareCounts: Record<number, number>;
+  selectedPost: FeedPost;
+  commentsMap: Record<string, CommentItem[]>;
   profile: {
     name: string;
     username: string;
     photo: string;
     bio: string;
   };
-  otherUsers: any[];
+  otherUsers: OtherCreator[];
   viewMode: "me" | "other";
   followersCount: number;
   selectedMediaSrc: string | null;
@@ -38,14 +37,14 @@ interface ViewVideoProps {
   // ተፅዕኖ ፈጣሪ ተግባራት (Action callback methods)
   handleClosePlayer: () => void;
   handleNavigatePost: (direction: "next" | "prev") => void;
-  handleToggleLikePost: (postId: number) => void;
-  handleToggleSavePost: (postId: number) => void;
-  handleSharePost: (postId: number) => void;
-  handleDeletePost: (postId: number, e?: React.MouseEvent) => void;
-  handleToggleCommentLike: (postId: number, commentId: number) => void;
-  handleAddComment: (postId: number, text: string) => void;
-  handleDeleteComment: (postId: number, commentId: number) => void;
-  handleAddReply: (postId: number, commentId: number, text: string) => void;
+  handleToggleLikePost: (postId: string) => void;
+  handleToggleSavePost: (postId: string) => void;
+  handleSharePost: (postId: string) => void;
+  handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
+  handleToggleCommentLike: (postId: string, commentId: number) => void;
+  handleAddComment: (postId: string, text: string) => void;
+  handleDeleteComment: (postId: string, commentId: number) => void;
+  handleAddReply: (postId: string, commentId: number, text: string) => void;
   handleNavigateToUserProfile: (username: string) => void;
   toggleFollowUser: (index: number) => void;
   formatCount: (num: number) => string;
@@ -54,7 +53,6 @@ interface ViewVideoProps {
 export default function ViewVideo({
   selectedPost,
   commentsMap,
-  shareCounts,
   profile,
   otherUsers,
   viewMode,
@@ -75,7 +73,7 @@ export default function ViewVideo({
   formatCount,
 }: ViewVideoProps) {
   const comments = commentsMap[selectedPost.id] || [];
-  const shares = shareCounts[selectedPost.id] || 0;
+  const shares = selectedPost.sharesCount;
 
   // የልጥፉ ባለቤት ማነው? (Detect who is the author of this post)
   const isOwnPost = selectedPost.username === profile.username;
@@ -190,8 +188,8 @@ export default function ViewVideo({
           </div>
 
           {/* Media Player element */}
-          {selectedPost.thumbnail || selectedMediaSrc ? (
-            selectedPost.isVideo ? (
+          {selectedMediaSrc ? (
+            selectedPost.type === "video" ? (
               <div
                 onClick={handleVideoClick}
                 className="w-full h-full cursor-pointer relative flex items-center justify-center group select-none"
@@ -237,7 +235,7 @@ export default function ViewVideo({
               </div>
             ) : (
               <img
-                src={selectedPost.thumbnail || selectedMediaSrc || undefined}
+                src={ selectedMediaSrc || undefined}
                 alt="Post photo content"
                 className="w-full h-full object-contain block bg-black"
               />
@@ -266,7 +264,7 @@ export default function ViewVideo({
           handleToggleLikePost={handleToggleLikePost}
           handleToggleSavePost={handleToggleSavePost}
           handleSharePost={handleSharePost}
-          handleDeletePost={handleDeletePost}
+         handleDeletePost ={handleDeletePost}
           handleToggleCommentLike={handleToggleCommentLike}
           handleAddComment={handleAddComment}
           handleDeleteComment={handleDeleteComment}
@@ -295,7 +293,7 @@ export default function ViewVideo({
                 />
               </div>
               <span className="text-[10px] font-bold text-white mt-1 drop-shadow-md bg-black/25 px-1.5 py-0.5 rounded-full select-none">
-                {formatCount(selectedPost.likes)}
+                {formatCount(selectedPost.likesCount)}
               </span>
             </button>
 
@@ -327,7 +325,7 @@ export default function ViewVideo({
                 />
               </div>
               <span className="text-[10px] font-bold text-white mt-1 drop-shadow-md bg-black/25 px-1.5 py-0.5 rounded-full select-none">
-                {formatCount(selectedPost.saves)}
+                {formatCount(selectedPost.savesCount)}
               </span>
             </button>
 
@@ -393,7 +391,7 @@ export default function ViewVideo({
             </div>
 
             <p className="text-[12px] text-white/95 leading-relaxed break-words line-clamp-2 max-h-16 overflow-y-auto pr-2">
-              {selectedPost.description.split(/(\s+)/).map((word, i) => {
+              {selectedPost.caption.split(/(\s+)/).map((word, i) => {
                 if (word.startsWith("#")) {
                   return (
                     <span

@@ -11,10 +11,7 @@ import {
   Volume1,
   VolumeX,
 } from "lucide-react";
-import { useLike } from "../hooks/useLike";
-import { useSave } from "../hooks/useSave";
 import { useShare } from "../hooks/useShare";
-import { useComments } from "../hooks/useComments";
 import CommentModal from "./CommentModal";
 import { useFeed } from "../context/FeedContext";
 import type { FeedPost, User } from "../types";
@@ -27,25 +24,26 @@ interface PostCardProps {
 
 export default function PostCard({ post, currentUser, onView }: PostCardProps) {
   const {
-    liked,
-    count: likeCount,
-    toggleLike,
-  } = useLike(post.id, post.likesCount);
-  const {
-    saved,
-    count: saveCount,
-    toggleSave,
-  } = useSave(post.id, post.savesCount);
-  const {
-    comments,
-    postComment,
+    toggleLike: toggleLikePost,
+    toggleSave: toggleSavePost,
+    incrementShare,
+    commentsMap,
+    addComment,
     deleteComment,
     editComment,
-    toggleLike: toggleCommentLike,
+    toggleCommentLike,
     addReply,
     deleteReply,
-  } = useComments(post.id);
-  const { share } = useShare({
+  } = useFeed();
+  //"post"prop በከትታ FeedContext array element  ስለሆነ(Home.tsx ካስተላለፈው):
+  // toggle ሰደረግ context ራሱ ይከየራል: re-render ይህን በራሱ ያንተባርካል
+  const liked = post.liked;
+  const likeCount = post.likesCount;
+  const saved = post.saved;
+  const saveCount = post.savesCount;
+  const comments = commentsMap[post.id] || [];
+
+  const { share, toastMessage, toastVisible } = useShare({
     title: post.caption,
     text: `Check out this post by ${post.username} on Nexify!`,
     url: typeof window !== "undefined" ? window.location.href : "",
@@ -72,8 +70,8 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const containerRef = useRef<HTMLDivElement>(null);
-const lastTapRef = useRef<number>(0);
-const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastTapRef = useRef<number>(0);
+  const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   // View tracking
   const viewedRef = useRef(false);
   useEffect(() => {
@@ -92,39 +90,38 @@ const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   }, [onView]);
 
   const handleVideoClick = () => {
-  const now = Date.now();
-  const DOUBLE_TAP_DELAY = 300;
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 300;
 
-  if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-    // Double tap → Like
-    if (tapTimeoutRef.current) {
-      clearTimeout(tapTimeoutRef.current);
-      tapTimeoutRef.current = null;
-    }
-    if (!liked) toggleLike();
-    lastTapRef.current = 0;
-  } else {
-    lastTapRef.current = now;
-    tapTimeoutRef.current = setTimeout(() => {
-      // Single tap → Play/Pause
-      if (!videoRef.current) return;
-      if (videoRef.current.paused) {
-        videoRef.current.play();
-        setIsPlaying(true);
-      } else {
-        videoRef.current.pause();
-        setIsPlaying(false);
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      // Double tap → Like
+      if (tapTimeoutRef.current) {
+        clearTimeout(tapTimeoutRef.current);
+        tapTimeoutRef.current = null;
       }
-    }, DOUBLE_TAP_DELAY);
-  }
-};
+      if (!liked) toggleLikePost(post.id);
+      lastTapRef.current = 0;
+    } else {
+      lastTapRef.current = now;
+      tapTimeoutRef.current = setTimeout(() => {
+        // Single tap → Play/Pause
+        if (!videoRef.current) return;
+        if (videoRef.current.paused) {
+          videoRef.current.play();
+          setIsPlaying(true);
+        } else {
+          videoRef.current.pause();
+          setIsPlaying(false);
+        }
+      }, DOUBLE_TAP_DELAY);
+    }
+  };
 
   const handlePrev = () => setCurrentIndex((i) => Math.max(0, i - 1));
   const handleNext = () =>
     setCurrentIndex((i) => Math.min(post.mediaUrls.length - 1, i + 1));
 
   const isMultiPhoto = post.type === "photo" && post.mediaUrls.length > 1;
-  const { addPost } = useFeed();
   // FeedContext ማሳወቅ — backend ሲመጣ addPost ይቀራል፣ API ብቻ ይቀየራል
 
   return (
@@ -132,6 +129,14 @@ const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
       ref={containerRef}
       className="relative h-full w-full bg-black md:bg-surface  flex items-center justify-center md:justify-center"
     >
+      {/*Share feedback toast - clipboard success/failure ተተካሚው እንዲያውክ */}
+      {toastVisible && (
+        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 bg-black/80 text-white text-xs
+        font-medium py-2 px-4 rounded-full backdrop-blur-sm shadow-lg animate-fade-in
+        pointer-events-none">
+          {toastMessage}
+        </div>
+      )}
       {/* ===== Media Area ===== */}
       {post.type === "video" ? (
         <div
@@ -360,7 +365,7 @@ const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
           label={likeCount}
           active={liked}
           activeColor="text-rose-500"
-          onClick={toggleLike}
+          onClick={() => toggleLikePost(post.id)}
         />
         {/* Comment */}
         <ActionBtn
@@ -376,10 +381,16 @@ const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
           label={saveCount}
           active={saved}
           activeColor="text-yellow-400"
-          onClick={toggleSave}
+          onClick={() => toggleSavePost(post.id)}
         />
         {/* Share */}
-        <button onClick={share} className="flex flex-col items-center gap-1">
+        <button
+          onClick={ async() => {
+           const success= await share();
+          if(success)  incrementShare(post.id);
+          }}
+          className="flex flex-col items-center gap-1"
+        >
           <div
             className="w-12 h-11 rounded-full flex items-center justify-center
           drop-shadow-lg  text-white 
@@ -400,24 +411,30 @@ const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
           currentUsername={currentUser.fullName}
           onClose={() => setIsCommentsOpen(false)}
           onPostComment={(text) =>
-            postComment(
+            addComment(
+              post.id,
               text,
               currentUser.fullName,
               currentUser.avatarUrl ?? null,
             )
           }
-          onDeleteComment={deleteComment}
-          onEditComment={editComment}
-          onToggleLike={toggleCommentLike}
+          onDeleteComment={(commentId) => deleteComment(post.id, commentId)}
+          onEditComment={(commentId, newText) =>
+            editComment(post.id, commentId, newText)
+          }
+          onToggleLike={(commentId) => toggleCommentLike(post.id, commentId)}
           onAddReply={(id, text) =>
             addReply(
+              post.id,
               id,
               text,
               currentUser.fullName,
               currentUser.avatarUrl ?? null,
             )
           }
-          onDeleteReply={deleteReply}
+          onDeleteReply={(commentId, replyId) =>
+            deleteReply(post.id, commentId, replyId)
+          }
         />
       )}
     </div>

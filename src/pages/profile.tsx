@@ -7,18 +7,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../routes";
-import {
-  ArrowLeft,
-  X,
-  Camera,
-  Trash2,
-  Edit,
-  Send,
-} from "lucide-react";
-import { saveMediaFile, getMediaFile, deleteMediaFile } from "../lib/db";
+import { ArrowLeft, X, Camera, Trash2, Edit, Send } from "lucide-react";
+import { saveMediaFile, deleteMediaFile } from "../lib/db";
 import ShareModal from "../components/ShareModal";
 import { useFeed } from "../context/FeedContext";
-import type { PostMeta, CommentItem, FeedPost, OtherCreator } from "../types";
+import type { FeedPost, OtherCreator } from "../types";
 
 // ንዑስ ክፍሎች ማስመጫ (Importing child components)
 import UserProfile from "../components/UserProfile";
@@ -45,8 +38,28 @@ export default function Profile({
 }: ProfileProps) {
   // --- መለያ ፍቃድ መቆጣጠሪያ (Auth System Hooks) ---
   const { user, login, updateFollowCount } = useAuth();
-  const { posts: feedPosts, addPost } = useFeed();
   const navigate = useNavigate();
+  const {
+    posts: feedPosts,
+    commentsMap,
+    addPost,
+    removePost,
+    incrementView,
+    toggleLike,
+    toggleSave,
+    incrementShare,
+    addComment,
+    editComment,
+    deleteComment,
+    toggleCommentLike,
+    addReply,
+    deleteReply,
+  } = useFeed();
+  // Single source of truth: Profile የራሱ post copy አይይዝም፤ FeedContext ን filter ብቻ ያደርጋል
+
+  const myPosts = feedPosts.filter(
+    (p) => p.userId === (user?.username || "me"),
+  );
 
   // --- የተጠቃሚ መገለጫ ሁኔታ መቆጣጠሪያ (Profile Information States) ---
   const [profile, setProfile] = useState({
@@ -63,6 +76,7 @@ export default function Profile({
   const [isOthersModalOpen, setIsOthersModalOpen] = useState(false);
 
   // --- የሌሎች ተጠቃሚዎች መረጃ ዳታቤዝ (Other Creators Database for browsing) ---
+
   const [otherUsers, setOtherUsers] = useState<OtherCreator[]>([
     {
       id: 1,
@@ -77,38 +91,48 @@ export default function Profile({
       loginsCount: 14,
       posts: [
         {
-          id: 1001,
-          title: "Focus on Goals",
-          isVideo: true,
-          description: "Focus on your goals, everything else is just a distraction 🎬🔥 #goals #motivation #growth",
-          hashtags: ["#goals", "#motivation", "#growth"],
+          id: "mock-o-1001",
+          userId: "abel_codes",
           username: "abel_codes",
-          avatar: null,
-          views: 342,
-          likes: 125,
+          userAvatar: "",
+          type: "video",
+          mediaUrls: [
+            "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80",
+          ],
+          caption:
+            "Focus on your goals, everything else is just a distraction 🎬🔥 #goals #motivation #growth",
+          hashtags: ["#goals", "#motivation", "#growth"],
+          likesCount: 125,
+          commentsCount: 0,
+          sharesCount: 0,
+          savesCount: 45,
+          viewsCount: 342,
+          createdAt: new Date().toISOString(),
           liked: false,
-          saves: 45,
           saved: false,
-          timestamp: new Date().toISOString(),
-          thumbnail: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80",
         },
         {
-          id: 1002,
-          title: "Developer Desk",
-          isVideo: false,
-          description: "Rate my custom multi-monitor development workspace setup! 💻🔥 #workstation #developer #desksetup",
-          hashtags: ["#workstation", "#developer", "#desksetup"],
+          id: "mock-o-1002",
+          userId: "abel_codes",
           username: "abel_codes",
-          avatar: null,
-          views: 1204,
-          likes: 412,
+          userAvatar: "",
+          type: "photo",
+          mediaUrls: [
+            "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=400&q=80",
+          ],
+          caption:
+            "Rate my custom multi-monitor development workspace setup! 💻🔥 #workstation #developer #desksetup",
+          hashtags: ["#workstation", "#developer", "#desksetup"],
+          likesCount: 412,
+          commentsCount: 0,
+          sharesCount: 0,
+          savesCount: 85,
+          viewsCount: 1204,
+          createdAt: new Date().toISOString(),
           liked: false,
-          saves: 85,
           saved: false,
-          timestamp: new Date().toISOString(),
-          thumbnail: "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=400&q=80",
-        }
-      ]
+        },
+      ],
     },
     {
       id: 2,
@@ -123,23 +147,28 @@ export default function Profile({
       loginsCount: 34,
       posts: [
         {
-          id: 1003,
-          title: "Tailwind Styling Tricks",
-          isVideo: false,
-          description: "Check out these seamless custom theme setups using Tailwind CSS! #design #tailwind #coding",
-          hashtags: ["#design", "#tailwind", "#coding"],
+          id: "mock-o-1003",
+          userId: "betty_dev",
           username: "betty_dev",
-          avatar: null,
-          views: 940,
-          likes: 310,
+          userAvatar: "",
+          type: "photo",
+          mediaUrls: [
+            "https://images.unsplash.com/photo-1541462608143-67571c6738dd?auto=format&fit=crop&w=400&q=80",
+          ],
+          caption:
+            "Check out these seamless custom theme setups using Tailwind CSS! #design #tailwind #coding",
+          hashtags: ["#design", "#tailwind", "#coding"],
+          likesCount: 310,
+          commentsCount: 0,
+          sharesCount: 0,
+          savesCount: 45,
+          viewsCount: 940,
+          createdAt: new Date().toISOString(),
           liked: false,
-          saves: 45,
           saved: false,
-          timestamp: new Date().toISOString(),
-          thumbnail: "https://images.unsplash.com/photo-1541462608143-67571c6738dd?auto=format&fit=crop&w=400&q=80",
-        }
-      ]
-    }
+        },
+      ],
+    },
   ]);
 
   const otherProfile = otherUsers[selectedOtherUser] || null;
@@ -149,36 +178,22 @@ export default function Profile({
   const [followersCount, setFollowersCount] = useState(0);
   const [starsCount, setStarsCount] = useState(0); // starsCount represents Following count!
 
-  // --- የልጥፎች መረጃ (User posts collection) ---
-  const [posts, setPosts] = useState<PostMeta[]>([]);
-  const [mediaUrls, setMediaUrls] = useState<Record<number, string>>({});
-
-  // --- የልጥፍ እይታ እና የማጋሪያ ሁኔታ መቆጣጠሪያዎች (Player and Share Modal states) ---
-  const [selectedPost, setSelectedPost] = useState<PostMeta | null>(null);
+  // --- የልጥፎች እይታ እና የማጋሪያ ሁነታ መኮጣጠሪያዎች (Player and Share Modal states) ---
+  //selectedPostId ብቻ ይይዛል፤ ራሱ post object ሁልጊዘ ከ FeedContext ትኩስ ይመጣል (single source of truth)
+  const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedMediaSrc, setSelectedMediaSrc] = useState<string | null>(null);
-  const [shareModalPost, setShareModalPost] = useState<PostMeta | null>(null);
+  const [shareModalPost, setShareModalPost] = useState<FeedPost | null>(null);
 
-  // --- የአስተያየት እና ሼሮች ካርታ (Engagement Comments Maps in LocalStorage) ---
-  const [commentsMap, setCommentsMap] = useState<Record<number, CommentItem[]>>(() => {
-    try {
-      const saved = localStorage.getItem("postCommentsMap");
-      return saved ? JSON.parse(saved) : {};
-    } catch (e) {
-      return {};
-    }
-  });
-
-  const [shareCounts, setShareCounts] = useState<Record<number, number>>(() => {
-    try {
-      const saved = localStorage.getItem("postShareCounts");
-      return saved ? JSON.parse(saved) : {};
-    } catch (e) {
-      return {};
-    }
-  });
+  const selectedPost: FeedPost | null = selectedPostId
+    ? (viewMode === "me" ? myPosts : otherProfile?.posts || []).find(
+        (p) => p.id === selectedPostId,
+      ) || null
+    : null;
 
   // --- የተጠቃሚ ገፅ ሞዳሎች መቆጣጠሪያዎች (UI Dialog / Modals display togglers) ---
-  const [activeTab, setActiveTab] = useState<"posts" | "video" | "likes">("posts");
+  const [activeTab, setActiveTab] = useState<"posts" | "video" | "likes">(
+    "posts",
+  );
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isBioExpanded, setIsBioExpanded] = useState(false);
@@ -187,7 +202,7 @@ export default function Profile({
   const [deleteConfirmState, setDeleteConfirmState] = useState<{
     isOpen: boolean;
     type: "post" | "comment";
-    postId: number;
+    postId: string;
     commentId?: number;
   } | null>(null);
 
@@ -244,7 +259,7 @@ export default function Profile({
           };
         }
         return u;
-      })
+      }),
     );
   };
 
@@ -292,42 +307,7 @@ export default function Profile({
     } else {
       setStarsCount(84); // Default Following count
     }
-
-    // Load user published posts list metadata
-    const savedPosts = localStorage.getItem("userPostsMeta");
-    if (savedPosts) {
-      try {
-        setPosts(JSON.parse(savedPosts));
-      } catch (e) {
-        console.error("Error loading posts:", e);
-        setPosts([]);
-      }
-    } else {
-      // Add a default post for new users
-      const initialPosts: PostMeta[] = [
-        {
-          id: 1005,
-          title: "Focus on Goals",
-          isVideo: true,
-          fileName: "sample.mp4",
-          description: "Focus on your goals, everything else is just a distraction 🎯🎬 #goals #motivation",
-          hashtags: ["#goals", "#motivation"],
-          username: "binjam",
-          avatar: null,
-          views: 1205,
-          likes: 489,
-          liked: true,
-          saves: 110,
-          saved: false,
-          timestamp: new Date().toISOString(),
-          thumbnail: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80",
-        }
-      ];
-      setPosts(initialPosts);
-      localStorage.setItem("userPostsMeta", JSON.stringify(initialPosts));
-    }
-  }, [feedPosts.length]);
-
+  }, []);
   // --- ውጫዊ ሚዲያ መጫኛ መቆጣጠሪያ (Manage background uploads from outside) ---
   useEffect(() => {
     if (triggerGlobalUpload && fileInputRef.current) {
@@ -338,76 +318,39 @@ export default function Profile({
     }
   }, [triggerGlobalUpload, onClearGlobalUpload]);
 
-  // --- የሚዲያ አድራሻዎች መከታተያ (Download file binaries from IndexedDB) ---
-  useEffect(() => {
-    async function loadBlobs() {
-      const urls: Record<number, string> = {};
-      for (const post of posts) {
-        if (post.id > 2000) {
-          try {
-            const blob = await getMediaFile(post.id);
-            if (blob) {
-              urls[post.id] = URL.createObjectURL(blob);
-            }
-          } catch (e) {
-            console.error(`Failed loading blob for post ${post.id}:`, e);
-          }
-        }
-      }
-      setMediaUrls((prev) => ({ ...prev, ...urls }));
-    }
-    loadBlobs();
-
-    return () => {
-      Object.values(mediaUrls).forEach((url) => URL.revokeObjectURL(url as string));
-    };
-  }, [posts]);
-
   // --- የቪዲዮ ማጫወቻ ገፅ ክፈት (Open media viewport modal) ---
-  const handleOpenPlayer = async (post: PostMeta) => {
-    setSelectedPost(post);
-    if (post.id <= 2000) {
-      setSelectedMediaSrc("");
-    } else {
-      const src = mediaUrls[post.id] || "";
-      setSelectedMediaSrc(src);
-    }
+  const handleOpenPlayer = (post: FeedPost) => {
+    setSelectedPostId(post.id);
+    setSelectedMediaSrc(post.mediaUrls[0] || "");
 
-    // views increments handler
+    // view increments handler - duplicate-view guard አሁንም እንፈልጋለን
     const viewedKey = "viewedPostIds";
     const viewed = JSON.parse(localStorage.getItem(viewedKey) || "[]");
     if (!viewed.includes(post.id)) {
       viewed.push(post.id);
       localStorage.setItem(viewedKey, JSON.stringify(viewed));
-
-      const updated = posts.map((p) =>
-        p.id === post.id ? { ...p, views: p.views + 1 } : p
-      );
-      setPosts(updated);
-      localStorage.setItem("userPostsMeta", JSON.stringify(updated));
+      incrementView(post.id);
     }
   };
 
   const handleClosePlayer = () => {
-    setSelectedPost(null);
+    setSelectedPostId(null);
     setSelectedMediaSrc(null);
   };
 
   // --- በልጥፎች መካከል ተንሸራተህ እይ (Browse Next/Prev posts easily) ---
   const handleNavigatePost = (direction: "next" | "prev") => {
-    const currentList = viewMode === "me" ? posts : otherProfile.posts;
-    const currentIndex = currentList.findIndex((p: any) => p.id === selectedPost?.id);
+    const currentList = viewMode === "me" ? myPosts : otherProfile?.posts || [];
+    const currentIndex = currentList.findIndex(
+      (p) => p.id === selectedPost?.id,
+    );
     if (currentIndex === -1) return;
 
     let nextIndex = currentIndex + (direction === "next" ? 1 : -1);
     if (nextIndex >= 0 && nextIndex < currentList.length) {
       const nextPost = currentList[nextIndex];
-      setSelectedPost(nextPost);
-      if (nextPost.id <= 2000) {
-        setSelectedMediaSrc("");
-      } else {
-        setSelectedMediaSrc(mediaUrls[nextPost.id] || "");
-      }
+      setSelectedPostId(nextPost.id);
+      setSelectedMediaSrc(nextPost.mediaUrls[0] || "");
     }
   };
 
@@ -429,133 +372,35 @@ export default function Profile({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedPost, viewMode, posts, otherUsers]);
+  }, [selectedPost, viewMode, myPosts, otherUsers]);
 
   // --- ላይክ ተግባራት (Toggle like actions) ---
-  const handleToggleLikePost = (postId: number) => {
-    const updated = posts.map((p) => {
-      if (p.id === postId) {
-        const liked = !p.liked;
-        return {
-          ...p,
-          liked,
-          likes: liked ? p.likes + 1 : p.likes - 1,
-        };
-      }
-      return p;
-    });
-    setPosts(updated);
-    localStorage.setItem("userPostsMeta", JSON.stringify(updated));
-
-    if (selectedPost?.id === postId) {
-      setSelectedPost((prev) =>
-        prev
-          ? {
-              ...prev,
-              liked: !prev.liked,
-              likes: !prev.liked ? prev.likes + 1 : prev.likes - 1,
-            }
-          : null
-      );
-    }
+  const handleToggleLikePost = (postId: string) => {
+    toggleLike(postId);
   };
 
   // --- ሴቭ ተግባራት (Toggle save actions) ---
-  const handleToggleSavePost = (postId: number) => {
-    const updated = posts.map((p) => {
-      if (p.id === postId) {
-        const saved = !p.saved;
-        return {
-          ...p,
-          saved,
-          saves: saved ? p.saves + 1 : p.saves - 1,
-        };
-      }
-      return p;
-    });
-    setPosts(updated);
-    localStorage.setItem("userPostsMeta", JSON.stringify(updated));
-
-    if (selectedPost?.id === postId) {
-      setSelectedPost((prev) =>
-        prev
-          ? {
-              ...prev,
-              saved: !prev.saved,
-              saves: !prev.saved ? prev.saves + 1 : prev.saves - 1,
-            }
-          : null
-      );
-    }
+  const handleToggleSavePost = (postId: string) => {
+    toggleSave(postId);
   };
 
-  // --- አስተያየት መጨመርያ (Add comments on a post) ---
-  const handleAddComment = (postId: number, text: string) => {
-    if (!text.trim()) return;
-    const newComment: CommentItem = {
-      id: Date.now(),
-      username: profile.username,
-      avatar: profile.photo || null,
-      text: text.trim(),
-      timestamp: new Date().toISOString(),
-      liked: false,
-      likesCount: 0,
-      replies: [],
-    };
-
-    const updated = {
-      ...commentsMap,
-      [postId]: [...(commentsMap[postId] || []), newComment],
-    };
-    setCommentsMap(updated);
-    localStorage.setItem("postCommentsMap", JSON.stringify(updated));
+  // --- አስተያየት መጨመርያ (Delegate to FeedContext) ---
+  const handleAddComment = (postId: string, text: string) => {
+    addComment(postId, text, profile.username, profile.photo || null);
   };
 
-  // --- የአስተያየት ላይክ መቆጣጠሪያ (Like comment toggler) ---
-  const handleToggleCommentLike = (postId: number, commentId: number) => {
-    const list = commentsMap[postId] || [];
-    const updatedComments = list.map((c) => {
-      if (c.id === commentId) {
-        const liked = !c.liked;
-        return {
-          ...c,
-          liked,
-          likesCount: liked ? (c.likesCount || 0) + 1 : Math.max(0, (c.likesCount || 0) - 1),
-        };
-      }
-      return c;
-    });
-
-    const updated = { ...commentsMap, [postId]: updatedComments };
-    setCommentsMap(updated);
-    localStorage.setItem("postCommentsMap", JSON.stringify(updated));
+  // --- የአስተያየት ላይክ መቆጣጠሪያ (Delegate to FeedContext) ---
+  const handleToggleCommentLike = (postId: string, commentId: number) => {
+    toggleCommentLike(postId, commentId);
   };
 
-  // --- የአስተያየት ምላሽ (Add replies inside a comment) ---
-  const handleAddReply = (postId: number, commentId: number, text: string) => {
-    if (!text.trim()) return;
-    const list = commentsMap[postId] || [];
-    const updatedComments = list.map((c) => {
-      if (c.id === commentId) {
-        const reply = {
-          id: Date.now(),
-          username: profile.username,
-          avatar: profile.photo || null,
-          text: text.trim(),
-          timestamp: new Date().toISOString(),
-        };
-        return { ...c, replies: [...(c.replies || []), reply] };
-      }
-      return c;
-    });
-
-    const updated = { ...commentsMap, [postId]: updatedComments };
-    setCommentsMap(updated);
-    localStorage.setItem("postCommentsMap", JSON.stringify(updated));
+  // --- የአስተያየት ምላሽ (Delegate to FeedContext) ---
+  const handleAddReply = (postId: string, commentId: number, text: string) => {
+    addReply(postId, commentId, text, profile.username, profile.photo || null);
   };
 
   // --- የአስተያየት ማጥፊያ ማረጋገጫ (Comment deletion trigger) ---
-  const handleDeleteComment = (postId: number, commentId: number) => {
+  const handleDeleteComment = (postId: string, commentId: number) => {
     setDeleteConfirmState({
       isOpen: true,
       type: "comment",
@@ -568,7 +413,7 @@ export default function Profile({
   const compressImage = (
     base64Str: string,
     quality: number,
-    maxWidth: number
+    maxWidth: number,
   ): Promise<string> => {
     return new Promise((resolve) => {
       const img = new Image();
@@ -591,7 +436,11 @@ export default function Profile({
       const reader = new FileReader();
       reader.onload = async (ev) => {
         if (ev.target?.result) {
-          const compressed = await compressImage(ev.target.result as string, 0.6, 400);
+          const compressed = await compressImage(
+            ev.target.result as string,
+            0.6,
+            400,
+          );
           const updated = { ...profile, photo: compressed };
           setProfile(updated);
           localStorage.setItem("userProfile", JSON.stringify(updated));
@@ -607,7 +456,11 @@ export default function Profile({
       const reader = new FileReader();
       reader.onload = async (ev) => {
         if (ev.target?.result) {
-          const compressed = await compressImage(ev.target.result as string, 0.6, 800);
+          const compressed = await compressImage(
+            ev.target.result as string,
+            0.6,
+            800,
+          );
           const updated = { ...profile, cover: compressed };
           setProfile(updated);
           localStorage.setItem("userProfile", JSON.stringify(updated));
@@ -621,19 +474,14 @@ export default function Profile({
   const executeDeleteAction = async () => {
     if (!deleteConfirmState) return;
     const { type, postId, commentId } = deleteConfirmState;
-
     if (type === "post") {
       try {
-        await deleteMediaFile(postId);
-        if (mediaUrls[postId]) {
-          URL.revokeObjectURL(mediaUrls[postId]);
-          const updatedUrls = { ...mediaUrls };
-          delete updatedUrls[postId];
-          setMediaUrls(updatedUrls);
+        // Legacy numeric IndexedDB keys ብቻ ናቸው blob ያላቸው (mock posts string id ላይ ይዘለላል)
+        const numericId = Number(postId);
+        if (!Number.isNaN(numericId)) {
+          await deleteMediaFile(numericId);
         }
-        const updated = posts.filter((p) => p.id !== postId);
-        setPosts(updated);
-        localStorage.setItem("userPostsMeta", JSON.stringify(updated));
+        removePost(postId);
         if (selectedPost?.id === postId) {
           handleClosePlayer();
         }
@@ -641,25 +489,17 @@ export default function Profile({
         console.error("Failed to delete post:", err);
       }
     } else if (type === "comment" && commentId !== undefined) {
-      const list = commentsMap[postId] || [];
-      const updatedComments = list.filter((c) => c.id !== commentId);
-      const updated = { ...commentsMap, [postId]: updatedComments };
-      setCommentsMap(updated);
-      localStorage.setItem("postCommentsMap", JSON.stringify(updated));
+      deleteComment(postId, commentId);
     }
     setDeleteConfirmState(null);
   };
 
-  // --- ፖስት ማጋሪያ መቆጣጠሪያ (Increase share counts of posts) ---
-  const handleIncrementShare = (postId: number) => {
-    const current = shareCounts[postId] || 0;
-    const updated = { ...shareCounts, [postId]: current + 1 };
-    setShareCounts(updated);
-    localStorage.setItem("postShareCounts", JSON.stringify(updated));
+  // --- ፖስት ማጋሪያ መቆጣጠሪያ (Delegate to FeedContext) ---
+  const handleIncrementShare = (postId: string) => {
+    incrementShare(postId);
   };
-
-  const handleSharePost = (postId: number) => {
-    const found = posts.find((p) => p.id === postId) || null;
+  const handleSharePost = (postId: string) => {
+    const found = feedPosts.find((p) => p.id === postId) || null;
     setShareModalPost(found);
   };
 
@@ -696,7 +536,11 @@ export default function Profile({
       const r = new FileReader();
       r.onload = async (ev) => {
         if (ev.target?.result) {
-          const compressed = await compressImage(ev.target.result as string, 0.6, 400);
+          const compressed = await compressImage(
+            ev.target.result as string,
+            0.6,
+            400,
+          );
           setEditPhotoPreview(compressed);
         }
       };
@@ -710,7 +554,11 @@ export default function Profile({
       const r = new FileReader();
       r.onload = async (ev) => {
         if (ev.target?.result) {
-          const compressed = await compressImage(ev.target.result as string, 0.6, 800);
+          const compressed = await compressImage(
+            ev.target.result as string,
+            0.6,
+            800,
+          );
           setEditCoverPreview(compressed);
         }
       };
@@ -746,24 +594,6 @@ export default function Profile({
     try {
       await saveMediaFile(postId, uploadFile);
       const hashtags = uploadDescription.match(/#\w+/g) || [];
-      const newPost: PostMeta = {
-        id: postId,
-        isVideo: uploadIsVideo,
-        fileName: uploadFile.name,
-        title: uploadFile.name.split(".")[0],
-        description: uploadDescription.trim(),
-        hashtags,
-        username: profile.username,
-        avatar: profile.photo || null,
-        views: 0,
-        likes: 0,
-        liked: false,
-        saves: 0,
-        saved: false,
-        timestamp: new Date().toISOString(),
-        thumbnail: uploadThumbnail || undefined,
-      };
-
       const feedPost: FeedPost = {
         id: String(postId),
         userId: user?.username || "me",
@@ -771,7 +601,7 @@ export default function Profile({
         userAvatar: profile.photo || "",
         type: uploadIsVideo ? "video" : "photo",
         mediaUrls: [URL.createObjectURL(uploadFile)],
-        caption: uploadDescription,
+        caption: uploadDescription.trim(),
         hashtags,
         likesCount: 0,
         commentsCount: 0,
@@ -779,12 +609,10 @@ export default function Profile({
         savesCount: 0,
         viewsCount: 0,
         createdAt: new Date().toISOString(),
+        liked: false,
+        saved: false,
       };
-
       addPost(feedPost);
-      const updatedPosts = [newPost, ...posts];
-      setPosts(updatedPosts);
-      localStorage.setItem("userPostsMeta", JSON.stringify(updatedPosts));
 
       setIsUploadModalOpen(false);
       setUploadFile(null);
@@ -796,7 +624,7 @@ export default function Profile({
     }
   };
 
-  const handleDeletePost = (postId: number, e?: React.MouseEvent) => {
+  const handleDeletePost = (postId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     setDeleteConfirmState({
       isOpen: true,
@@ -811,36 +639,45 @@ export default function Profile({
     return num.toString();
   };
 
-  const activePostsToRender = viewMode === "me" ? posts : otherProfile?.posts || [];
+  const activePostsToRender: FeedPost[] =
+    viewMode === "me" ? myPosts : otherProfile?.posts || [];
   const filteredPosts = activePostsToRender.filter((post) => {
     if (activeTab === "posts") return true;
-    if (activeTab === "video") return post.isVideo;
+    if (activeTab === "video") return post.type === "video";
     if (activeTab === "likes") return post.liked;
     return true;
   });
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-y-auto bg-gray-50 pb-20 md:pb-6" id="profile-container">
-      
+    <div
+      className="flex-1 flex flex-col h-full overflow-y-auto bg-bodey-bg pb-20 md:pb-6"
+      id="profile-container"
+    >
       {/* 1. Header Navigation banner */}
-      <header className="sticky top-0 left-0 right-0 h-16 bg-gradient-to-r hidden md:block bg-slate-900 shadow-md z-40 flex items-center justify-between px-4 md:px-8 shrink-0">
-        <div className="flex items-center gap-3">
-          {onBackToCommunity && (
-            <button
-              onClick={onBackToCommunity}
-              className="p-1.5 hover:bg-white/10 rounded-lg transition-colors mr-1"
-              title="Back to Community"
-            >
-              <ArrowLeft className="w-5 h-5 text-white" />
-            </button>
-          )}
-        </div>
-      </header>
+      <header className="sticky top-0 left-0 right-0 h-16 bg-gradient-to-r hidden md:block bg-bodey-bg shadow-md z-40 flex items-center justify-between px-4 md:px-8 shrink-0"></header>
 
       {/* Hidden File inputs */}
-      <input type="file" ref={fileInputRef} onChange={handleFileSelect} accept="video/*,image/*" className="hidden" />
-      <input type="file" ref={directPhotoInputRef} onChange={handleDirectPhotoChange} accept="image/*" className="hidden" />
-      <input type="file" ref={directCoverInputRef} onChange={handleDirectCoverChange} accept="image/*" className="hidden" />
+      <input
+        type="file"
+        ref={fileInputRef}
+        onChange={handleFileSelect}
+        accept="video/*,image/*"
+        className="hidden"
+      />
+      <input
+        type="file"
+        ref={directPhotoInputRef}
+        onChange={handleDirectPhotoChange}
+        accept="image/*"
+        className="hidden"
+      />
+      <input
+        type="file"
+        ref={directCoverInputRef}
+        onChange={handleDirectCoverChange}
+        accept="image/*"
+        className="hidden"
+      />
 
       {/* 2. Top Profile Header & bio info */}
       <UserProfile
@@ -849,7 +686,7 @@ export default function Profile({
         viewMode={viewMode}
         followersCount={followersCount}
         starsCount={starsCount}
-        postsCount={posts.length}
+        postsCount={myPosts.length}
         otherPostsCount={otherProfile?.posts?.length || 0}
         isBioExpanded={isBioExpanded}
         setIsBioExpanded={setIsBioExpanded}
@@ -869,7 +706,6 @@ export default function Profile({
       <div className="max-w-4xl w-full mx-auto px-4 md:px-8 mb-6">
         <ProfileVideo
           filteredPosts={filteredPosts}
-          mediaUrls={mediaUrls}
           viewMode={viewMode}
           handleOpenPlayer={handleOpenPlayer}
           handleDeletePost={handleDeletePost}
@@ -882,21 +718,35 @@ export default function Profile({
           ======================================================== */}
       {isEditModalOpen && (
         <div className="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto border border-gray-100 flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
-              <h3 className="text-lg font-black tracking-tight text-gray-900">Edit Profile</h3>
-              <button onClick={() => setIsEditModalOpen(false)} className="p-1.5 hover:bg-gray-100 text-gray-400 rounded-xl">
+          <div className="bg-bodey-bg rounded-3xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto border border-input-border flex flex-col">
+            <div className="px-6 py-4 border-b border-input-border flex items-center justify-between sticky top-0 bg-bodey-bg z-10">
+              <h3 className="text-lg font-black tracking-tight text-text">
+                Edit Profile
+              </h3>
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="p-1.5 hover:bg-hover-input text-text rounded-xl"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-6 space-y-5">
               <div>
-                <span className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-2">Cover Photo Banner</span>
-                <div onClick={() => coverInputRef.current?.click()} className="w-full h-28 rounded-xl bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group">
+                <span className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-2">
+                  Cover Photo Banner
+                </span>
+                <div
+                  onClick={() => coverInputRef.current?.click()}
+                  className="w-full h-28 rounded-xl bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group"
+                >
                   {editCoverPreview ? (
                     <>
-                      <img src={editCoverPreview} alt="Cover preview" className="w-full h-full object-cover" />
+                      <img
+                        src={editCoverPreview}
+                        alt="Cover preview"
+                        className="w-full h-full object-cover"
+                      />
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <Camera className="w-6 h-6 text-white" />
                       </div>
@@ -904,18 +754,33 @@ export default function Profile({
                   ) : (
                     <div className="flex flex-col items-center text-gray-400">
                       <Camera className="w-6 h-6 mb-1 text-gray-300" />
-                      <span className="text-xs font-semibold">Change Banner Cover</span>
+                      <span className="text-xs font-semibold">
+                        Change Banner Cover
+                      </span>
                     </div>
                   )}
                 </div>
-                <input type="file" ref={coverInputRef} onChange={handleCoverUploadChange} accept="image/*" className="hidden" />
+                <input
+                  type="file"
+                  ref={coverInputRef}
+                  onChange={handleCoverUploadChange}
+                  accept="image/*"
+                  className="hidden"
+                />
               </div>
 
               <div className="flex items-center gap-4">
-                <div onClick={() => photoInputRef.current?.click()} className="w-16 h-16 rounded-full bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer overflow-hidden relative group shrink-0">
+                <div
+                  onClick={() => photoInputRef.current?.click()}
+                  className="w-16 h-16 rounded-full bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer overflow-hidden relative group shrink-0"
+                >
                   {editPhotoPreview ? (
                     <>
-                      <img src={editPhotoPreview} alt="Avatar preview" className="w-full h-full object-cover" />
+                      <img
+                        src={editPhotoPreview}
+                        alt="Avatar preview"
+                        className="w-full h-full object-cover"
+                      />
                       <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <Camera className="w-4 h-4 text-white" />
                       </div>
@@ -925,33 +790,77 @@ export default function Profile({
                   )}
                 </div>
                 <div className="flex-1">
-                  <span className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-1">Avatar</span>
-                  <button onClick={() => photoInputRef.current?.click()} className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-xs font-bold rounded-lg text-gray-700">
+                  <span className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-1">
+                    Avatar
+                  </span>
+                  <button
+                    onClick={() => photoInputRef.current?.click()}
+                    className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-xs font-bold rounded-lg text-gray-700"
+                  >
                     Select New Picture
                   </button>
-                  <input type="file" ref={photoInputRef} onChange={handlePhotoUploadChange} accept="image/*" className="hidden" />
+                  <input
+                    type="file"
+                    ref={photoInputRef}
+                    onChange={handlePhotoUploadChange}
+                    accept="image/*"
+                    className="hidden"
+                  />
                 </div>
               </div>
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-1.5">Display Name</label>
-                  <input type="text" value={editName} onChange={(e) => setEditName(e.target.value.slice(0, 10))} className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold" />
+                  <label className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-1.5">
+                    Display Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value.slice(0, 10))}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-1.5">Username</label>
-                  <input type="text" value={editUsername} onChange={(e) => setEditUsername(e.target.value.slice(0, 30))} className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold" />
+                  <label className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-1.5">
+                    Username
+                  </label>
+                  <input
+                    type="text"
+                    value={editUsername}
+                    onChange={(e) =>
+                      setEditUsername(e.target.value.slice(0, 30))
+                    }
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold"
+                  />
                 </div>
                 <div>
-                  <label className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-1.5">Professional Bio</label>
-                  <textarea value={editBio} onChange={(e) => setEditBio(e.target.value.slice(0, 150))} rows={3} className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold resize-none" />
+                  <label className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-1.5">
+                    Professional Bio
+                  </label>
+                  <textarea
+                    value={editBio}
+                    onChange={(e) => setEditBio(e.target.value.slice(0, 150))}
+                    rows={3}
+                    className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold resize-none"
+                  />
                 </div>
               </div>
             </div>
 
             <div className="px-6 py-4 border-t border-gray-100 flex gap-3 justify-end sticky bottom-0 bg-white">
-              <button onClick={() => setIsEditModalOpen(false)} className="px-4 py-2 bg-gray-100 text-xs font-bold text-gray-700 rounded-xl">Cancel</button>
-              <button onClick={handleSaveProfile} className="px-5 py-2 bg-blue-600 text-xs font-bold text-white rounded-xl shadow-md">Save Profile</button>
+              <button
+                onClick={() => setIsEditModalOpen(false)}
+                className="px-4 py-2 bg-gray-100 text-xs font-bold text-gray-700 rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveProfile}
+                className="px-5 py-2 bg-blue-600 text-xs font-bold text-white rounded-xl shadow-md"
+              >
+                Save Profile
+              </button>
             </div>
           </div>
         </div>
@@ -965,9 +874,14 @@ export default function Profile({
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto border border-gray-100 flex flex-col">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
               <h3 className="text-lg font-black tracking-tight text-gray-900">
-                {uploadIsVideo ? "🎬 Compose New Video Post" : "🖼 Compose New Photo Post"}
+                {uploadIsVideo
+                  ? "🎬 Compose New Video Post"
+                  : "🖼 Compose New Photo Post"}
               </h3>
-              <button onClick={() => setIsUploadModalOpen(false)} className="p-1.5 hover:bg-gray-100 text-gray-400 rounded-xl">
+              <button
+                onClick={() => setIsUploadModalOpen(false)}
+                className="p-1.5 hover:bg-gray-100 text-gray-400 rounded-xl"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -975,17 +889,29 @@ export default function Profile({
             <div className="p-6 space-y-5">
               <div className="w-full aspect-video bg-black rounded-2xl overflow-hidden flex items-center justify-center">
                 {uploadIsVideo ? (
-                  <video src={uploadPreviewUrl} controls className="w-full h-full object-contain" />
+                  <video
+                    src={uploadPreviewUrl}
+                    controls
+                    className="w-full h-full object-contain"
+                  />
                 ) : (
-                  <img src={uploadPreviewUrl} alt="Upload preview" className="w-full h-full object-contain" />
+                  <img
+                    src={uploadPreviewUrl}
+                    alt="Upload preview"
+                    className="w-full h-full object-contain"
+                  />
                 )}
               </div>
 
               <div className="space-y-2">
-                <label className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase">Write Caption Description</label>
+                <label className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase">
+                  Write Caption Description
+                </label>
                 <textarea
                   value={uploadDescription}
-                  onChange={(e) => setUploadDescription(e.target.value.slice(0, 500))}
+                  onChange={(e) =>
+                    setUploadDescription(e.target.value.slice(0, 500))
+                  }
                   placeholder="Enter a cool caption. Include #hashtags like #programming, #vlog..."
                   rows={4}
                   className="w-full px-4 py-3 bg-gray-50 border focus:border-blue-500 rounded-2xl text-sm font-semibold"
@@ -994,8 +920,18 @@ export default function Profile({
             </div>
 
             <div className="px-6 py-4 border-t border-gray-100 flex gap-3 justify-end bg-white">
-              <button onClick={() => setIsUploadModalOpen(false)} className="px-4 py-2 bg-gray-100 text-xs font-bold text-gray-700 rounded-xl">Cancel</button>
-              <button onClick={handlePostMedia} className="px-5 py-2 bg-emerald-600 text-xs font-bold text-white rounded-xl shadow-md">Post Now ➤</button>
+              <button
+                onClick={() => setIsUploadModalOpen(false)}
+                className="px-4 py-2 bg-gray-100 text-xs font-bold text-gray-700 rounded-xl"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handlePostMedia}
+                className="px-5 py-2 bg-emerald-600 text-xs font-bold text-white rounded-xl shadow-md"
+              >
+                Post Now ➤
+              </button>
             </div>
           </div>
         </div>
@@ -1008,7 +944,6 @@ export default function Profile({
         <ViewVideo
           selectedPost={selectedPost}
           commentsMap={commentsMap}
-          shareCounts={shareCounts}
           profile={profile}
           otherUsers={otherUsers}
           viewMode={viewMode}
@@ -1049,15 +984,23 @@ export default function Profile({
         <div className="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-[60] p-4">
           <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl max-h-[80vh] overflow-hidden border border-gray-100 flex flex-col">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-slate-50">
-              <h3 className="text-base font-black tracking-tight text-gray-900">Explore</h3>
-              <button onClick={() => setIsOthersModalOpen(false)} className="p-1.5 hover:bg-gray-100 text-gray-400 rounded-xl">
+              <h3 className="text-base font-black tracking-tight text-gray-900">
+                Explore
+              </h3>
+              <button
+                onClick={() => setIsOthersModalOpen(false)}
+                className="p-1.5 hover:bg-gray-100 text-gray-400 rounded-xl"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-4 overflow-y-auto divide-y divide-gray-100 space-y-3">
               {otherUsers.map((creator, idx) => (
-                <div key={creator.id} className="flex items-center justify-between pt-3 pb-1 first:pt-0">
+                <div
+                  key={creator.id}
+                  className="flex items-center justify-between pt-3 pb-1 first:pt-0"
+                >
                   <div
                     onClick={() => {
                       setSelectedOtherUser(idx);
@@ -1066,12 +1009,18 @@ export default function Profile({
                     }}
                     className="flex items-center gap-3 cursor-pointer group flex-1 mr-4 min-w-0"
                   >
-                    <div className={`w-11 h-11 rounded-full bg-gradient-to-tr ${creator.gradient} flex items-center justify-center text-white text-sm font-black`}>
+                    <div
+                      className={`w-11 h-11 rounded-full bg-gradient-to-tr ${creator.gradient} flex items-center justify-center text-white text-sm font-black`}
+                    >
                       {creator.name.charAt(0).toUpperCase()}
                     </div>
                     <div className="flex flex-col min-w-0">
-                      <span className="text-sm font-black text-gray-900 group-hover:text-blue-600 transition-colors truncate">{creator.name}</span>
-                      <span className="text-xs text-gray-400">@{creator.username}</span>
+                      <span className="text-sm font-black text-gray-900 group-hover:text-blue-600 transition-colors truncate">
+                        {creator.name}
+                      </span>
+                      <span className="text-xs text-gray-400">
+                        @{creator.username}
+                      </span>
                     </div>
                   </div>
 
@@ -1109,25 +1058,33 @@ export default function Profile({
             </div>
 
             <h3 className="text-lg font-black text-slate-800 mb-2">
-              {deleteConfirmState.type === "post" ? "Delete Post?" : "Delete Comment?"}
+              {deleteConfirmState.type === "post"
+                ? "Delete Post?"
+                : "Delete Comment?"}
             </h3>
 
             <p className="text-xs text-slate-500 font-semibold mb-6">
-              Are you sure you want to delete this permanently? This action cannot be undone.
+              Are you sure you want to delete this permanently? This action
+              cannot be undone.
             </p>
 
             <div className="flex gap-3">
-              <button onClick={() => setDeleteConfirmState(null)} className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-black text-slate-500 transition-all">
+              <button
+                onClick={() => setDeleteConfirmState(null)}
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-black text-slate-500 transition-all"
+              >
                 Cancel
               </button>
-              <button onClick={executeDeleteAction} className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black text-white shadow-lg transition-all">
+              <button
+                onClick={executeDeleteAction}
+                className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black text-white shadow-lg transition-all"
+              >
                 Delete
               </button>
             </div>
           </div>
         </div>
       )}
-
     </div>
   );
 }

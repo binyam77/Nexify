@@ -15,21 +15,24 @@ interface ShareData {
 export function useShare(data: ShareData) {
   const { message, visible, showToast } = useToast();
 
-  async function share() {
+  async function share(): Promise<boolean> {
     if (navigator.share) {
       try {
         await navigator.share(data);
         showToast('Shared successfully!');
+        return true;
       } catch {
         // user closed the native share sheet — nothing to do
       }
-      return;
+      return false;
     }
     try {
       await navigator.clipboard.writeText(data.url);
       showToast('Link copied! 🔗');
+      return true;
     } catch {
       showToast('Could not copy the link. Please try again.');
+      return false;
     }
   }
 

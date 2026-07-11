@@ -63,6 +63,8 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
         savesCount: 0,
         viewsCount: 0,
         createdAt: new Date().toISOString(),
+        liked:false,
+        saved:false,
       };
 
       try {

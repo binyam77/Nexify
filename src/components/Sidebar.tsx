@@ -103,12 +103,12 @@ export default function Sidebar(props: SidebarProps) {
     <aside
       // 1. hideOnMobile እዚህ ጋ ጥቅም ላይ ውሏል
       className={cn(
-        "hidden h-screen w-[280px] shrink-0 flex-col justify-between border-r border-slate-200 bg-input px-5 py-6 md:flex",
+        "hidden h-screen w-[280px] shrink-0 flex-col justify-between border-r border-input-border bg-bodey-bg px-5 py-6 md:flex",
         hideOnMobile && "md:hidden",
       )}
     >
       <div className="flex flex-col gap-5">
-        <h1 className="flex items-center gap-3 text-3xl font-extrabold text-slate-900">
+        <h1 className="flex items-center gap-3 text-3xl font-extrabold text-text">
           <img
             src={logo}
             alt="Nexify logo"
@@ -127,7 +127,7 @@ export default function Sidebar(props: SidebarProps) {
         >
           <MagnifyingGlass
             size={14}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"
+            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink"
           />
 
           <input
@@ -136,12 +136,12 @@ export default function Sidebar(props: SidebarProps) {
             onChange={(e) => handleSearch(e.target.value)}
             placeholder="Search..."
             className="w-full rounded-md border border-input-border
-            placeholder:placeholder-input-placeholder bg-input shadow-input py-3 pl-10 pr-3 text-sm text-slate-700
+            placeholder:placeholder-placeholder bg-input shadow-input py-3 pl-10 pr-3 text-sm text-ink
              outline-none focus:border-input-focus"
           />
           {searchResults.length > 0 && (
             <div
-              className="absolute top-full left-0 right-0 mt-1 bg-input border border-slate-200
+              className="absolute top-full left-0 right-0 mt-1 bg-input border border-input-border
              roundedlg shawdow-lg z-50 overflow-hidden"
             >
               {searchResults.map(({ label, to, icon: Icon }) => (
@@ -152,7 +152,7 @@ export default function Sidebar(props: SidebarProps) {
                     setQuery("");
                     setSearchResults([]);
                   }}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50"
+                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-text hover:bg-slate-50"
                 >
                   <Icon size={16} />
                   {label}
@@ -172,8 +172,8 @@ export default function Sidebar(props: SidebarProps) {
               onClick={() => setActiveTab?.(tab)}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center justify-between rounded-lg px-4 py-3.5 text-lg font-bold text-slate-700 transition-colors hover:bg-slate-100",
-                  (isActive || activeTab === tab) && "bg-slate-100",
+                  "flex items-center justify-between rounded-lg px-4 py-3.5 text-lg font-bold text-text transition-colors hover:bg-hover-input",
+                  (isActive || activeTab === tab) && "bg-hover-input",
                 )
               }
             >
@@ -184,7 +184,7 @@ export default function Sidebar(props: SidebarProps) {
 
               {/* 3. unreadCommunityCount እዚህ ጋ ጥቅም ላይ ውሏል */}
               {badge > 0 && (
-                <span className="bg-rose-500 text-input text-xs px-2 py-0.5 rounded-full font-bold">
+                <span className="bg-rose-500 text-one-text text-xs px-2 py-0.5 rounded-full font-bold">
                   {badge}
                 </span>
               )}
@@ -194,7 +194,7 @@ export default function Sidebar(props: SidebarProps) {
           {/* 4. onUploadClick እዚህ ጋ ጥቅም ላይ ውሏል */}
           <button
             onClick={onUploadClick}
-            className="mt-4 w-full bg-brand text-input py-2.5 rounded-lg font-bold text-sm hover:bg-brand-dark shadow-input transition-colors"
+            className="mt-4 w-full bg-brand text-one-text py-2.5 rounded-lg font-bold text-sm hover:bg-brand-dark shadow-input transition-colors"
           >
             Upload New
           </button>

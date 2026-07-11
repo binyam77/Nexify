@@ -13,11 +13,11 @@ import {
   Send,
   X,
 } from "lucide-react";
-import type { PostMeta, CommentItem } from "../types";
+import type { FeedPost, CommentItem } from "../types";
 
 // Left.tsx የProp ዓይነቶች መግለጫ (Props Interface for Left.tsx)
 interface LeftProps {
-  selectedPost: PostMeta;
+  selectedPost: FeedPost;
   comments: CommentItem[];
   shares: number;
   isOwnPost: boolean;
@@ -45,14 +45,15 @@ interface LeftProps {
   setReplyInputText: (text: string) => void;
   
   // ተፅዕኖ ፈጣሪ ተግባራት (Interactive event handlers)
-  handleToggleLikePost: (postId: number) => void;
-  handleToggleSavePost: (postId: number) => void;
-  handleSharePost: (postId: number) => void;
-  handleDeletePost: (postId: number, e?: React.MouseEvent) => void;
-  handleToggleCommentLike: (postId: number, commentId: number) => void;
-  handleAddComment: (postId: number, text: string) => void;
-  handleDeleteComment: (postId: number, commentId: number) => void;
-  handleAddReply: (postId: number, commentId: number, text: string) => void;
+  handleToggleLikePost: (postId: string) => void;
+  handleToggleSavePost: (postId: string) => void;
+  handleSharePost: (postId: string) => void;
+  handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
+  handleToggleCommentLike: (postId: string, commentId: number) => void;
+  handleAddComment: (postId: string, text: string) => void;
+  handleDeleteComment: (postId: string, commentId: number) => void;
+  handleAddReply: (postId: string, commentId: number, text: string) => void;
+
   handleNavigateToUserProfile: (username: string) => void;
   toggleFollowUser: (index: number) => void;
   authorIndex: number;
@@ -117,7 +118,7 @@ export default function Left({
               </span>
             </div>
             <span className="text-[11px] text-slate-400 mt-1">
-              {new Date(selectedPost.timestamp).toLocaleDateString(undefined, {
+              {new Date(selectedPost.createdAt).toLocaleDateString(undefined, {
                 month: "short",
                 day: "numeric",
                 year: "numeric",
@@ -151,7 +152,7 @@ export default function Left({
 
       {/* 2. Caption/Description Area */}
       <section className="px-5 py-3 text-sm text-slate-700 leading-relaxed shrink-0 break-words max-h-24 overflow-y-auto">
-        {selectedPost.description.split(/(\s+)/).map((word, i) => {
+        {selectedPost.caption.split(/(\s+)/).map((word, i) => {
           if (word.startsWith("#")) {
             return (
               <span
@@ -179,7 +180,7 @@ export default function Left({
           <Heart
             className={`w-5 h-5 ${selectedPost.liked ? "fill-rose-500 text-rose-500" : ""}`}
           />
-          <span>{formatCount(selectedPost.likes)}</span>
+          <span>{formatCount(selectedPost.likesCount)}</span>
         </button>
 
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 select-none">
@@ -198,7 +199,7 @@ export default function Left({
           <Bookmark
             className={`w-5 h-5 ${selectedPost.saved ? "fill-amber-500 text-amber-500" : ""}`}
           />
-          <span>{formatCount(selectedPost.saves)}</span>
+          <span>{formatCount(selectedPost.savesCount)}</span>
         </button>
 
         <button
