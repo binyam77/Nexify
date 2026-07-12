@@ -37,7 +37,7 @@ export default function Profile({
   onStartChat,
 }: ProfileProps) {
   // --- መለያ ፍቃድ መቆጣጠሪያ (Auth System Hooks) ---
-  const { user, login, updateFollowCount } = useAuth();
+  const { user, login,updateUser, updateFollowCount } = useAuth();
   const navigate = useNavigate();
   const {
     posts: feedPosts,
@@ -62,13 +62,19 @@ export default function Profile({
   );
 
   // --- የተጠቃሚ መገለጫ ሁኔታ መቆጣጠሪያ (Profile Information States) ---
-  const [profile, setProfile] = useState({
-    name: user?.username || "User",
+  const profile:{
+    name:string;
+    username:string;
+    bio:string;
+    photo:string;
+    cover:string;
+  } ={
+    name: user?.name || user?.username || "User",
     username: user?.username || "username",
-    bio: "",
-    photo: "/default_avatar.jpg",
-    cover: "",
-  });
+    bio: user?.bio || "",
+    photo: user?.photo || "/default_avatar.jpg",
+    cover: user?.cover || "",
+  };
 
   // --- የእይታ ሁኔታ መቆጣጠሪያ ('me' = እኔ/My profile, 'other' = ሌላ ባለሙያ/Other developer) ---
   const [viewMode, setViewMode] = useState<"me" | "other">("me");
@@ -263,51 +269,45 @@ export default function Profile({
     );
   };
 
-  // --- የተጠቃሚ መገለጫ መረጃ መጫኛ (Load profile metadata from LocalStorage) ---
-  useEffect(() => {
-    const savedProfile = localStorage.getItem("userProfile");
-    if (savedProfile) {
-      try {
-        const parsed = JSON.parse(savedProfile);
-        setProfile({
-          name: parsed.name || user?.username || "User",
-          username: parsed.username || user?.username || "username",
-          bio: parsed.bio || user?.bio || "",
-          photo: parsed.photo || user?.photo || "/default_avatar.jpg",
-          cover: parsed.cover || "",
-        });
-      } catch (e) {
-        console.error("Error loading profile:", e);
-      }
-    } else {
-      const defaultData = {
-        name: user?.username || "User",
-        username: user?.username || "username",
-        bio: "Lead Fullstack Developer at Nexify. Passionate about beautiful interfaces, responsive layouts, and clean code architectures.",
-        photo: "/default_avatar.jpg",
-        cover: "",
-      };
-      setProfile(defaultData);
-      localStorage.setItem("userProfile", JSON.stringify(defaultData));
-    }
 
-    // Followers system configuration
-    const savedIsFollowing = localStorage.getItem("isFollowing") === "true";
+
+
+
+
+
+
+
+
+
+
+
+
+
+  // --- የተጠቃሚ መገለጫ መረጃ መጫኛ (Load profile metadata from LocalStorage) ---
+  useEffect(()=>{
+    const savedIsFollowing =localStorage.getItem("isFollowing") === "true";
     const savedCountF = localStorage.getItem("countF");
     setIsFollowing(savedIsFollowing);
-    if (savedCountF !== null) {
+    if(savedCountF !== null){
       setFollowersCount(parseInt(savedCountF, 10));
-    } else {
+    }else {
       setFollowersCount(152); // Default count
-    }
 
-    const savedCountS = localStorage.getItem("countS");
-    if (savedCountS !== null) {
+    }
+    const savedCountS=localStorage.getItem("countS");
+    if(savedCountS !== null){
       setStarsCount(parseInt(savedCountS, 10));
-    } else {
-      setStarsCount(84); // Default Following count
+    }else{
+      setStarsCount(84); // Default Following count 
     }
   }, []);
+
+
+
+
+
+
+
   // --- ውጫዊ ሚዲያ መጫኛ መቆጣጠሪያ (Manage background uploads from outside) ---
   useEffect(() => {
     if (triggerGlobalUpload && fileInputRef.current) {
@@ -430,6 +430,13 @@ export default function Profile({
     });
   };
 
+
+
+
+
+
+
+
   const handleDirectPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -441,14 +448,23 @@ export default function Profile({
             0.6,
             400,
           );
-          const updated = { ...profile, photo: compressed };
-          setProfile(updated);
-          localStorage.setItem("userProfile", JSON.stringify(updated));
+  updateUser({photo:compressed});
         }
       };
       reader.readAsDataURL(file);
     }
   };
+
+
+
+
+
+
+
+
+
+
+
 
   const handleDirectCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -461,14 +477,27 @@ export default function Profile({
             0.6,
             800,
           );
-          const updated = { ...profile, cover: compressed };
-          setProfile(updated);
-          localStorage.setItem("userProfile", JSON.stringify(updated));
+        updateUser({ cover: compressed });
         }
       };
       reader.readAsDataURL(file);
     }
   };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // --- ልጥፍ እና አስተያየቶችን ማጥፊያ ማረጋገጫ (Execute deletion verified in custom modal) ---
   const executeDeleteAction = async () => {
@@ -518,15 +547,19 @@ export default function Profile({
       alert("Name can't be empty!");
       return;
     }
-    const updated = {
+    // Security: username ን lowercase/alphanumeric/underscore ብቻ እናደርገዋለን- Community chat matching 
+    //በዚህ unique handle ልይ ስለሚመሰረት፤ ንቱህ ያልሆነ ግብዐት ቢገባ ግጥሚያ/routing ላይ ችግር ይፈጥራል
+    const sanitizedUsername =
+    editUsername.trim().toLowerCase().replace(/[^a-z0-9_]/g, "") ||
+    user?.username || "username";
+
+    updateUser( {
       name: editName.trim(),
-      username: editUsername.trim().toLowerCase(),
+      username: sanitizedUsername,
       bio: editBio.trim(),
       photo: editPhotoPreview,
       cover: editCoverPreview,
-    };
-    setProfile(updated);
-    localStorage.setItem("userProfile", JSON.stringify(updated));
+    });
     setIsEditModalOpen(false);
   };
 

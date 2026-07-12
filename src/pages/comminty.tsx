@@ -8,7 +8,7 @@ import { CheckCircle } from "lucide-react";
 import Sidebar from "../components/Sidebar";
 import ChatsSidebar from "../components/ChatsSidebar";
 import MessageArea from "../components/MessageArea";
-import NewGroupModal from "../components/NewGroupModal";
+import NewChannelModal from "../components/NewChannelModal";
 import Profile from "./profile";
 import { useAuth } from "../context/AuthContext";
 import type { Chat, Message, NavTab } from "../types";
@@ -23,14 +23,16 @@ import { useLocation } from "react-router-dom";
 export default function Community() {
   const [activeTab, setActiveTab] = useState<NavTab>("community");
   const [globalUploadTrigger, setGlobalUploadTrigger] = useState(false);
-  const [activeChatId, setActiveChatId] = useState<string | null>("chat-1"); // መጀመሪያ ላይ Nexify Developers የተመረጠ ይሁን
-  const [isNewGroupOpen, setIsNewGroupOpen] = useState(false);
+  const [activeChatId, setActiveChatId] = useState<string | null>(
+    "channel-demo-1",
+  ); // መጀመሪያ ላይ Channel Demo የተመረጠ ይሁን
+  const [isNewChannelOpen, setIsNewChannelOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // User profile details (Current member profile loaded dynamically from localStorage)
   const { user } = useAuth();
   const userProfile = {
-    name: user?.username || "User",
+    name: user?.name || user?.username || "User",
     role: user?.bio?.split(".")[0] || "Developer",
     avatar: user?.photo || "",
     username: user?.username || "username",
@@ -49,85 +51,30 @@ export default function Community() {
     }
     return [
       {
-        id: "chat-1",
-        name: "Nexify Developers",
-        lastMsgText: "Yonas: I have finished the new CSS layout...",
-        lastMsgSender: "Yonas",
+        id: "channel-demo-1",
+        name: "Nexify Announcements",
+        lastMsgText: "System: Welcome to our official announcements channel!",
+        lastMsgSender: "System",
         lastMsgTime: "10:42 AM",
-        unreadCount: 3,
+        unreadCount: 1,
         avatarLabel: "NX",
         bgGradient: "bg-gradient-1",
         membersCount: 1420,
-        onlineCount: 45,
+        onlineCount: 0,
         isJoined: true,
-        type: "group",
+        type: "channel",
+        isCreatedByMe: true,
       },
       {
         id: "chat-2",
         name: "Abel T. (UI/UX Designer)",
+        participantUsername: "abel_codes",
         lastMsgText: "Abel: The mobile screen version looks amazing!",
         lastMsgSender: "Abel",
         lastMsgTime: "09:15 AM",
         unreadCount: 0,
         avatarLabel: "AT",
         bgGradient: "bg-gradient-2",
-        membersCount: 2,
-        onlineCount: 1,
-        isJoined: true,
-        type: "chat",
-        isOnline: true,
-      },
-      {
-        id: "chat-3",
-        name: "Ethiopian Tech Community",
-        lastMsgText: "Natnael: Who will participate in tomorrow's workshop?",
-        lastMsgSender: "Natnael",
-        lastMsgTime: "Yesterday",
-        unreadCount: 0,
-        avatarLabel: "ET",
-        bgGradient: "bg-gradient-3",
-        membersCount: 4120,
-        onlineCount: 198,
-        isJoined: true,
-        type: "group",
-      },
-      {
-        id: "chat-4",
-        name: "Business & Startup Group",
-        lastMsgText: "Kia: I have sent the updated financial model.",
-        lastMsgSender: "Kia",
-        lastMsgTime: "Sunday",
-        unreadCount: 0,
-        avatarLabel: "BS",
-        bgGradient: "bg-gradient-4",
-        membersCount: 650,
-        onlineCount: 8,
-        isJoined: true,
-        type: "group",
-      },
-      {
-        id: "chat-5",
-        name: "Open Source Pioneers",
-        lastMsgText: "Welcome! Join this public room to collaborate.",
-        lastMsgSender: "System",
-        lastMsgTime: "08:00 AM",
-        unreadCount: 0,
-        avatarLabel: "OS",
-        bgGradient: "bg-gradient-2",
-        membersCount: 2310,
-        onlineCount: 34,
-        isJoined: false,
-        type: "group",
-      },
-      {
-        id: "chat-6",
-        name: "Mahlet Dev (Frontend Pioneer)",
-        lastMsgText: "Explore indexing, relational tables and schemas.",
-        lastMsgSender: "System",
-        lastMsgTime: "3 days ago",
-        unreadCount: 0,
-        avatarLabel: "MD",
-        bgGradient: "bg-gradient-4",
         membersCount: 2,
         onlineCount: 1,
         isJoined: true,
@@ -149,25 +96,11 @@ export default function Community() {
         }
       }
       return {
-        "chat-1": [
+        "channel-demo-1": [
           {
             id: "m1",
-            senderName: "Yonas",
-            text: "Hello everyone! I just finished designing the new Nexify community page. Please take a look and share your feedback.",
-            time: "10:38 AM",
-            isSentByMe: false,
-          },
-          {
-            id: "m2",
-            senderName: "Me",
-            text: "Wow! This looks clean! Making the mobile view look and feel exactly like Telegram is going to make it very user-friendly.",
-            time: "10:40 AM",
-            isSentByMe: true,
-          },
-          {
-            id: "m3",
-            senderName: "Helen",
-            text: "Looks great! The top search feature and the sidebar navigation icons are perfectly aligned. Keep it up!",
+            senderName: "System",
+            text: "Welcome to our official announcements channel! Only the channel owner can post here — subscribers can react with emoji.",
             time: "10:42 AM",
             isSentByMe: false,
           },
@@ -175,45 +108,9 @@ export default function Community() {
         "chat-2": [
           {
             id: "m2_1",
-            senderName: "Almaz",
+            senderName: "Abel",
             text: "The mobile screen version looks amazing! I used Inter for buttons and Outfit for display headers.",
             time: "09:15 AM",
-            isSentByMe: false,
-          },
-        ],
-        "chat-3": [
-          {
-            id: "m3_1",
-            senderName: "Natnael",
-            text: "Who will participate in tomorrow's workshop? It will cover scalable Express routers in backend services.",
-            time: "Yesterday",
-            isSentByMe: false,
-          },
-        ],
-        "chat-4": [
-          {
-            id: "m4_1",
-            senderName: "Kia",
-            text: "I have sent the updated financial model. Let me know if we need adjustments for cloud hosting budgets.",
-            time: "Sunday",
-            isSentByMe: false,
-          },
-        ],
-        "chat-5": [
-          {
-            id: "m5_1",
-            senderName: "System",
-            text: 'Welcome to Open Source Pioneers! This group is viewable by all. Click the "Join Community Chat" button below to fully participate.',
-            time: "08:00 AM",
-            isSentByMe: false,
-          },
-        ],
-        "chat-6": [
-          {
-            id: "m6_1",
-            senderName: "System",
-            text: "PostgreSQL discussions feed. Ask indexing, migration, and clustering questions here.",
-            time: "3 days ago",
             isSentByMe: false,
           },
         ],
@@ -556,20 +453,20 @@ export default function Community() {
     // });
   };
 
-  // Create new group/room logic
-  const handleCreateGroup = (newChat: Chat) => {
+  // Create new channel logic
+  const handleCreateChannel = (newChat: Chat) => {
     setChats((prev) => [newChat, ...prev]);
     setMessagesDb((prev) => ({
       ...prev,
       [newChat.id]: [],
     }));
     setActiveChatId(newChat.id);
-    triggerToast(`🚀 Community "${newChat.name}" created successfully!`);
+    triggerToast(`📢 Channel "${newChat.name}" created successfully!`);
 
     // ==========================================
-    // FUTURE: Save newly created community in PostgreSQL using INSERT query:
+    // FUTURE: Save newly created channel in PostgreSQL using INSERT query:
     // ==========================================
-    // fetch('/api/communities/create', {
+    // fetch('/api/channels/create', {
     //   method: 'POST',
     //   headers: { 'Content-Type': 'application/json' },
     //   body: JSON.stringify(newChat)
@@ -582,9 +479,10 @@ export default function Community() {
     username: string;
     photo: string;
   }) => {
-    // Check if we already have a direct chat with this developer
+    // Security:exact username match ብቻ (name substring matching broken  access control risk ነበረው -
+    // ተመሳሳይ/ተመሳሳይ ስም ያላቸው 2 ተተካሚዎች ቢኖሩም የተሳሳተ ፕሪቫተ ችሃት ይከፍት ነበረ)
     const existingChat = chats.find(
-      (c) => c.type === "chat" && c.name.includes(user.name),
+      (c) => c.type === "chat" && c.participantUsername === user.username,
     );
 
     if (existingChat) {
@@ -603,6 +501,7 @@ export default function Community() {
       const newChat: Chat = {
         id: newChatId,
         name: `${user.name} (@${user.username})`,
+        participantUsername: user.username,
         lastMsgText: "Welcome! Start your conversation here.",
         lastMsgSender: user.name,
         lastMsgTime: new Date().toLocaleTimeString([], {
@@ -686,7 +585,7 @@ export default function Community() {
                 chats={chats}
                 activeChatId={activeChatId}
                 onSelectChat={handleSelectChat}
-                onCreateGroupClick={() => setIsNewGroupOpen(true)}
+                onCreateChannelClick={() => setIsNewChannelOpen(true)}
                 onNewPostClick={() => {
                   setActiveTab("profile");
                   setGlobalUploadTrigger(true);
@@ -724,11 +623,11 @@ export default function Community() {
         />
       )}
 
-      {/* 3. NEW GROUP MODAL (Create new group/room dialog window) */}
-      <NewGroupModal
-        isOpen={isNewGroupOpen}
-        onClose={() => setIsNewGroupOpen(false)}
-        onCreateGroup={handleCreateGroup}
+      {/* 3. NEW CHANNEL MODAL (Create new Channel dialog window) */}
+      <NewChannelModal
+        isOpen={isNewChannelOpen}
+        onClose={() => setIsNewChannelOpen(false)}
+        onCreateChannel={handleCreateChannel}
       />
     </div>
   );

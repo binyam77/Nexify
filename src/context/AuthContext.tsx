@@ -3,9 +3,11 @@ import type { ReactNode } from "react";
 
 export interface User {
   username: string;
+  name?:string;
   email: string;
   bio?: string;
   photo?: string;
+  cover?:string;
   followersCount?:number;
   followingCount?:number;
   // ✅ backend ሲመጣ ሌሎች fields እዚህ ጨምር (id, avatar, etc.)

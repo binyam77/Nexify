@@ -11,7 +11,7 @@ interface ChatsSidebarProps {
   chats: Chat[];
   activeChatId: string | null;
   onSelectChat: (chatId: string) => void;
-  onCreateGroupClick: () => void;
+  onCreateChannelClick: () => void;
   onNewPostClick?: () => void;
 }
 
@@ -21,7 +21,7 @@ export default function ChatsSidebar({
   chats,
   activeChatId,
   onSelectChat,
-  onCreateGroupClick,
+  onCreateChannelClick,
   onNewPostClick,
 }: ChatsSidebarProps) {
   const [searchQuery, setSearchQuery] = useState('');
@@ -58,6 +58,15 @@ export default function ChatsSidebar({
             Rooms
           </h2>
         </div>
+        <button
+          type="button"
+          onClick={onCreateChannelClick}
+          className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all shrink-0"
+          aria-label="Create new channel"
+          title="Create Channel"
+        >
+          <PlusCircle className="w-6 h-6" />
+        </button>
       </header>
 
       {/* የፍለጋ ሳጥን (Search Bar) */}

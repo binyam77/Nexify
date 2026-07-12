@@ -4,37 +4,34 @@
  */
 
 import React, { useState, useRef } from 'react';
-import { X, Plus, Sparkles, MessageSquare, Radio, Upload, Trash2, Camera } from 'lucide-react';
+import { X, Plus, Sparkles, Radio, Upload, Trash2, Camera } from 'lucide-react';
 import type { Chat } from '../types';
 
-interface NewGroupModalProps {
+interface NewChannelModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateGroup: (newChat: Chat) => void;
+  onCreateChannel: (newChat: Chat) => void;
 }
 
-// Title: NewGroupModal Component (New community creation form)
-// A clean form that opens when the user wants to create a new Community Chat/Channel room.
-// Based on user requirements:
-// 1. Can create a chat group or channel.
-// 2. In a channel, regular members cannot write (Read-only channel); only the creator can post.
-// 3. Both support custom photo/avatar upload.
-export default function NewGroupModal({
+const MAX_NAME_LENGTH = 60;
+const MAX_DESCRIPTION_LENGTH = 300;
+
+// Title: NewChannelModal Component (New channel creation form)
+// ተጠቃሚዎች Channel ብቻ መፍጠር ይችላሉ (Group feature ተነስቷል)።
+// Channel ውስጥ creator ብቻ ይለጥፋል፤ subscribers ደግሞ emoji reaction ብቻ ማድረግ ይችላሉ (posting የለም)።
+export default function NewChannelModal({
   isOpen,
   onClose,
-  onCreateGroup,
-}: NewGroupModalProps) {
+  onCreateChannel,
+}: NewChannelModalProps) {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [avatarUrl, setAvatarUrl] = useState<string>('');
   const [gradientIndex, setGradientIndex] = useState(1);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const roomType = 'group';
-
   if (!isOpen) return null;
 
-  // Four types of gradient colors for the initials avatar (Avatar Background - default)
   const gradients = [
     { label: 'Sunset Red', class: 'bg-gradient-1' },
     { label: 'Ocean Blue', class: 'bg-gradient-2' },
@@ -42,12 +39,16 @@ export default function NewGroupModal({
     { label: 'Purple Dream', class: 'bg-gradient-4' },
   ];
 
-  // Image file loader for profile photo upload
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // file size limit: 5MB
+    // Security: MIME type ማረጋገጫ — extension ብቻ ሳይሆን actual file type
+    if (!file.type.startsWith('image/')) {
+      alert('Please select a valid image file!');
+      return;
+    }
+
     if (file.size > 5 * 1024 * 1024) {
       alert('File size must be under 5MB!');
       return;
@@ -57,10 +58,12 @@ export default function NewGroupModal({
     reader.onloadend = () => {
       setAvatarUrl(reader.result as string);
     };
+    reader.onerror = () => {
+      alert('Failed to read the selected image. Please try another file.');
+    };
     reader.readAsDataURL(file);
   };
 
-  // Remove uploaded profile photo
   const handleRemoveAvatar = () => {
     setAvatarUrl('');
     if (fileInputRef.current) {
@@ -70,34 +73,33 @@ export default function NewGroupModal({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
 
-    // Extract first initials from room name to display on the avatar badge
-    const words = name.trim().split(' ');
+    const words = trimmedName.split(' ');
     const avatarLabel = words.length > 1
       ? (words[0][0] + words[1][0]).toUpperCase()
-      : name.trim().slice(0, 2).toUpperCase();
+      : trimmedName.slice(0, 2).toUpperCase();
 
     const newChat: Chat = {
-      id: `chat-${Date.now()}`,
-      name: name.trim(),
-      lastMsgText: 'Welcome to our new community chat group!',
+      id: `channel-${Date.now()}`,
+      name: trimmedName,
+      lastMsgText: 'Welcome to this new channel! Stay tuned for updates.',
       lastMsgSender: 'System',
       lastMsgTime: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       unreadCount: 0,
-      avatarLabel: avatarLabel,
+      avatarLabel,
       bgGradient: gradients[gradientIndex - 1]?.class || 'bg-gradient-1',
-      membersCount: 1, // Only creator initially
-      onlineCount: 1,
-      isJoined: true, // Auto join creator
-      type: 'group',
-      avatarUrl: avatarUrl || undefined, // Attached image data
-      isCreatedByMe: true, // Created by me flag
+      membersCount: 1, // creator ራሱ የመጀመሪያው subscriber
+      onlineCount: 0, // Channel ላይ "online" ጽንሰ-ሀሳብ አይተገበርም
+      isJoined: true, // creator ራሱ በራሱ subscribed ነው
+      type: 'channel',
+      avatarUrl: avatarUrl || undefined,
+      isCreatedByMe: true,
     };
 
-    onCreateGroup(newChat);
-    
-    // Clear the form fields
+    onCreateChannel(newChat);
+
     setName('');
     setDescription('');
     setAvatarUrl('');
@@ -109,12 +111,11 @@ export default function NewGroupModal({
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-gray-100 animate-in fade-in zoom-in duration-200">
-        
-        {/* Modal Header */}
+
         <header className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-white shrink-0">
           <div className="flex items-center gap-2">
-            <Sparkles className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-extrabold text-gray-900 tracking-tight">Create New Chat Group</h3>
+            <Radio className="w-5 h-5 text-blue-600" />
+            <h3 className="text-lg font-extrabold text-gray-900 tracking-tight">Create New Channel</h3>
           </div>
           <button
             onClick={onClose}
@@ -125,18 +126,16 @@ export default function NewGroupModal({
           </button>
         </header>
 
-        {/* Modal Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4 max-h-[80vh] overflow-y-auto custom-scrollbar">
-          
-          {/* Room Profile Photo (Photo Upload Input) */}
+
           <div>
             <label className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5">
-              Room Profile Photo
+              Channel Profile Photo
             </label>
             <div className="flex items-center gap-4 bg-gray-50 border border-gray-100 p-3.5 rounded-xl">
               <div className="relative w-14 h-14 rounded-xl bg-gray-200 overflow-hidden shrink-0 flex items-center justify-center border border-gray-100">
                 {avatarUrl ? (
-                  <img src={avatarUrl} alt="Room" className="w-full h-full object-cover" />
+                  <img src={avatarUrl} alt="Channel" className="w-full h-full object-cover" />
                 ) : (
                   <div className={`w-full h-full flex items-center justify-center text-white font-black text-sm ${gradients[gradientIndex - 1]?.class || 'bg-gradient-1'}`}>
                     {name ? (name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || '?') : '?'}
@@ -186,38 +185,37 @@ export default function NewGroupModal({
             </div>
           </div>
 
-          {/* 3. Community Name Input */}
           <div>
-            <label htmlFor="groupName" className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5">
-              Community Name *
+            <label htmlFor="channelName" className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5">
+              Channel Name *
             </label>
             <input
-              id="groupName"
+              id="channelName"
               type="text"
               required
+              maxLength={MAX_NAME_LENGTH}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Addis Ababa Tech Club"
+              placeholder="e.g. Nexify Announcements"
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-800 placeholder-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200"
             />
           </div>
 
-          {/* 4. Description/Purpose Input */}
           <div>
-            <label htmlFor="groupDesc" className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5">
+            <label htmlFor="channelDesc" className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5">
               Topic / Purpose / Description
             </label>
             <textarea
-              id="groupDesc"
+              id="channelDesc"
               rows={2}
+              maxLength={MAX_DESCRIPTION_LENGTH}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe what this community is about..."
+              placeholder="Describe what this channel is about..."
               className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-800 placeholder-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200 resize-none"
             />
           </div>
 
-          {/* 5. Fallback Background Color Grid (if no image is uploaded) */}
           {!avatarUrl && (
             <div>
               <span className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-2.5">
@@ -248,7 +246,6 @@ export default function NewGroupModal({
             </div>
           )}
 
-          {/* Action Buttons */}
           <div className="pt-4 flex items-center justify-end gap-3 border-t border-gray-100 mt-6">
             <button
               type="button"
@@ -263,7 +260,7 @@ export default function NewGroupModal({
               className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600 text-white text-sm font-extrabold rounded-xl transition-all flex items-center gap-1.5 shadow-md shadow-blue-200"
             >
               <Plus className="w-4 h-4" />
-              <span>Launch Community</span>
+              <span>Launch Channel</span>
             </button>
           </div>
         </form>

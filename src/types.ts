@@ -66,6 +66,7 @@ export interface Chat {
   onlineCount: number; // አሁን መስመር ላይ ያሉ አባላት ብዛት (Current number of online members)
   isJoined: boolean; // ተጠቃሚው ይህን ግሩፕ የተቀላቀለ መሆኑን ማሳያ (Whether the current user has joined this room)
   type?: 'group' | 'chat' | 'channel'; // የቻቱ አይነት፦ ግሩፕ፣ የግል ቻት ወይም ቻናል (Type of room: group, private direct chat, or public channel)
+  participantUsername?:string;//1:1 chat ብቻ፤ ተነጋጋሪው ልዩ (unique) - ስም፟ ተኮር matching ደህንነት ችግር ስለፈጠረ
   avatarUrl?: string; // የአምሳያ ምስል ሊንክ (Optional image URL or Base64 data URL for avatar)
   isCreatedByMe?: boolean; // በኔ የተፈጠረ መሆኑን ማሳያ (True if created by the current user to authorize posts)
   isOnline?: boolean; // መስመር ላይ መሆን አለመሆኑን ማሳያ - ለግል ቻት (Online status for direct private chats)

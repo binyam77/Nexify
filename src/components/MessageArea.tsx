@@ -100,16 +100,23 @@ export default function MessageArea({
     }
   }, [inputText]);
 
+
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [selectedOptionsMessage, setSelectedOptionsMessage] =
     useState<Message | null>(null);
 
-  // Timer references for long-press gesture (አጥብቆ መጫን)
+    //ፎቶ ሲነካ ሙሉ፟ገት ለማሳየት ( options modal ካልሆነ የተለየ )
+    const [viewingMedia, setViewingMedia]=useState<string | null>(null);
+
+  // Timer references for long-press gesture -ብቻ hold options modal ይከፈታል ፈታን ንኪኪ አይደለም 
   const pressTimerRef = useRef<any>(null);
+  const longPressFiredRef= useRef(false);
 
   const startPressTimer = (msg: Message) => {
     if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
+    longPressFiredRef.current=false;
     pressTimerRef.current = setTimeout(() => {
+      longPressFiredRef.current =true;
       setSelectedOptionsMessage(msg);
     }, 450); // 450ms matches normal press-and-hold (አጥብቆ ሲነካው)
   };
@@ -120,7 +127,15 @@ export default function MessageArea({
       pressTimerRef.current = null;
     }
   };
-
+//ፎቶ  ሲነካ ማየት እንጂ options box  መክፈት የለበትም: long-press ገና ከተነሳ ግን  ችላ እንል (double-trigger መከላከያ)
+const handleImageClick =(e: React.MouseEvent, url?:string)=>{
+  e.stopPropagation();
+  if(longPressFiredRef.current){
+    longPressFiredRef.current =false;
+    return;
+  }
+  if(url)setViewingMedia(url);
+};
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
   const [isSearchingMessages, setIsSearchingMessages] = useState(false);
   const [showMediaSelector, setShowMediaSelector] = useState(false);
@@ -134,7 +149,9 @@ export default function MessageArea({
     if (!messageSearchQuery) return true;
     return msg.text.toLowerCase().includes(messageSearchQuery.toLowerCase());
   });
-
+//Channel subscriber (creator ያልሆነ መታፍ አይችልም _ emoji reaction only)
+const  isChannelSubscriberOnly= chat ? chat.type === "channel" && !chat.isCreatedByMe : false;
+const canCompose = !!chat && !isChannelSubscriberOnly && (chat.isJoined || chat.type === "chat"); 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -251,7 +268,7 @@ export default function MessageArea({
             >
               {chat.name}
             </h2>
-            {chat.type === "group" ? (
+           {chat.type === "group" ? (
               <span
                 className="text-[11px] md:text-xs text-input font-bold tracking-wide 
               flex items-center gap-1 leading-none mt-0.5"
@@ -259,6 +276,14 @@ export default function MessageArea({
               >
                 <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse"></span>
                 <span>{chat.onlineCount} online</span>
+              </span>
+            ) : chat.type === "channel" ? (
+              <span
+                className="text-[11px] md:text-xs text-input font-bold tracking-wide 
+              flex items-center gap-1 leading-none mt-0.5"
+                id="channel-subscriber-status"
+              >
+                <span>📢 {chat.membersCount} subscribers</span>
               </span>
             ) : chat.isOnline !== false ? (
               <span
@@ -383,7 +408,6 @@ export default function MessageArea({
                         e.preventDefault();
                         setSelectedOptionsMessage(msg);
                       }}
-                      onClick={() => setSelectedOptionsMessage(msg)}
                       className="bg-[#2481cc] text-white px-4 py-2.5 rounded-[18px] rounded-br-[3px] relative shadow-sm flex flex-col gap-1 min-w-0 max-w-full break-words cursor-pointer select-none hover:brightness-105 active:scale-[0.99] transition-all"
                       title="Click or hold for options"
                     >
@@ -434,6 +458,7 @@ export default function MessageArea({
                             <img
                               src={msg.mediaUrl}
                               alt="message media"
+                              onClick={(e) => handleImageClick(e, msg.mediaUrl)}
                               className="max-h-60 object-cover w-full"
                               referrerPolicy="no-referrer"
                             />
@@ -469,8 +494,8 @@ export default function MessageArea({
                         </div>
                       </div>
 
-                      {/* reactions display inside bubble */}
-                      {chat.type === "group" &&
+                      {/* reactions display inside bubble - only Channel */}
+                      {chat.type === "channel" &&
                         !chat.isCreatedByMe &&
                         (msg.reactions || []).length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2.5">
@@ -488,8 +513,9 @@ export default function MessageArea({
                         )}
                     </article>
 
-                    {/* Current user's dynamic profile avatar shown on the right side of their own messages */}
-                    {currentUserProfile?.avatar ? (
+                    {/* Current user's avatar - private chat ("chat" type) ላይ አይታይም፤ ሳጥኑ ንቻ ይታያል */}
+                    {chat.type !== "chat" && 
+                    (currentUserProfile?.avatar ? (
                       <img
                         src={currentUserProfile.avatar}
                         alt={currentUserProfile.name}
@@ -502,7 +528,7 @@ export default function MessageArea({
                           ? currentUserProfile.name.charAt(0).toUpperCase()
                           : "M"}
                       </div>
-                    )}
+          ))}
                   </div>
                 </div>
               );
@@ -535,14 +561,15 @@ export default function MessageArea({
                   className="w-full flex justify-start pl-2 md:pl-4 min-w-0"
                 >
                   <div className="max-w-[85%] md:max-w-[70%] flex justify-start items-end gap-3 animate-in fade-in slide-in-from-left-1 duration-200 min-w-0">
-                    {/* Sender user avatar badge */}
+                    {/* Sender user avatar badge- private chat ("chat" type )ላይ አይታይም */}
+                    {chat.type !== "chat" &&(
                     <div
                       className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-sm border border-white hover:scale-105 active:scale-95 transition-all select-none ${avatarBg}`}
                       title={msg.senderName}
                     >
                       {initials}
                     </div>
-
+                    )}
                     <article
                       onMouseDown={() => startPressTimer(msg)}
                       onTouchStart={() => startPressTimer(msg)}
@@ -553,7 +580,6 @@ export default function MessageArea({
                         e.preventDefault();
                         setSelectedOptionsMessage(msg);
                       }}
-                      onClick={() => setSelectedOptionsMessage(msg)}
                       className="bg-[#f1f3f4] text-gray-900 px-4 py-2.5 rounded-[18px] rounded-bl-[3px] relative shadow-sm flex flex-col gap-1 flex-1 min-w-0 break-words cursor-pointer select-none hover:bg-gray-200/80 active:scale-[0.99] transition-all"
                       title="Click or hold for options"
                     >
@@ -608,7 +634,8 @@ export default function MessageArea({
                             <img
                               src={msg.mediaUrl}
                               alt="message media"
-                              className="max-h-60 object-cover w-full"
+                              onClick={(e)=> handleImageClick(e, msg.mediaUrl)}
+                              className="max-h-60 object-cover w-full cursor-zoom-in"
                               referrerPolicy="no-referrer"
                             />
                           )}
@@ -640,8 +667,8 @@ export default function MessageArea({
                             <EllipsisVertical className="w-3 h-3" />
                           </button>
 
-                          {/* Quick Emoji Reaction Action on Hover - essential list */}
-                          {chat.type === "group" && !chat.isCreatedByMe && (
+                          {/* Quick Emoji Reaction Action on Hover - only channel */}
+                          {chat.type === "channel" && !chat.isCreatedByMe && (
                             <div className="flex items-center gap-1 text-[11px] ml-1">
                               {["👍", "❤️", "😂", "😆", "😭", "😡"].map(
                                 (emoji) => (
@@ -662,8 +689,8 @@ export default function MessageArea({
                         </div>
                       </div>
 
-                      {/* Reactions display underneath bubble */}
-                      {chat.type === "group" &&
+                      {/* Reactions display underneath bubble - only Channel*/}
+                      {chat.type === "channel" &&
                         !chat.isCreatedByMe &&
                         (msg.reactions || []).length > 0 && (
                           <div className="flex flex-wrap gap-1 mt-2">
@@ -691,8 +718,8 @@ export default function MessageArea({
 
       {/* 3. የመልዕክት መጻፊያ ወይም የመቀላቀያ (Join) አዝራር */}
       <footer className="border-t border-gray-100 bg-white px-4 pt-4 pb-20 md:pb-4 shrink-0 relative select-none">
-        {chat.isJoined || chat.type === "chat" ? (
-          // ተጠቃሚው ግሩፑን ተቀላቅሏል ወይም የራሱ የግል ቻት ነው፡ መጻፊያ ሳጥኑ ይታያል
+        {canCompose ? (
+          // መታፍ ይችላል:private chat; channel creator ወይም የተከላከለው group
           <div className="relative">
             {/* Editing and Media previews */}
             {editingMessageId && (
@@ -857,22 +884,32 @@ export default function MessageArea({
               </button>
             </form>
           </div>
+        ) : isChannelSubscriberOnly && chat.isJoined ? (
+          // Subscribe አድርጓል ግን creator ስላልሆነ መጻፍ አይችልም — emoji reaction ብቻ
+          <div className="text-center py-3">
+            <p className="text-xs text-gray-400 font-semibold">
+              📢 Only the channel owner can post here. You can react to posts
+              with emoji.
+            </p>
+          </div>
         ) : (
-          // Not joined room: show the Join room layout call to action
+          // Not joined/subscribed: show the Join/Subscribe call to action
           <div className="flex flex-col sm:flex-row items-center justify-between gap-4 py-2 px-1">
             <div className="text-center sm:text-left">
               <h4 className="text-xs md:text-sm font-bold text-blue-600">
                 You are in preview mode!
               </h4>
               <p className="text-[11px] md:text-xs text-gray-400 font-semibold leading-relaxed">
-                Join this room to send messages and keep track of group news.
+                {chat.type === "channel"
+                  ? "Subscribe to this channel to receive updates."
+                  : "Join this room to send messages and keep track of group news."}
               </p>
             </div>
             <button
               onClick={() => onJoinChat(chat.id)}
               className="w-full sm:w-auto px-6 py-2.5 bg-[#2481cc] hover:bg-[#2075b8] hover:scale-[1.02] text-white text-xs md:text-sm font-extrabold rounded-xl transition-all shadow-md shadow-blue-200 shrink-0 uppercase tracking-wider"
             >
-              Join group
+              {chat.type === "channel" ? "Subscribe" : "Join group"}
             </button>
           </div>
         )}
@@ -964,6 +1001,27 @@ export default function MessageArea({
               </button>
             </div>
           </div>
+        </div>
+      )}
+      {/* 5. Full-screen Image Viewer (ፎቶ ተነክቶ ሲታይ) */}
+      {viewingMedia && (
+        <div
+          className="fixed inset-0 bg-black/90 z-[120] flex items-center justify-center p-4 animate-in fade-in duration-150"
+          onClick={() => setViewingMedia(null)}
+        >
+          <button
+            onClick={() => setViewingMedia(null)}
+            className="absolute top-4 right-4 p-2 text-white/80 hover:text-white bg-white/10 hover:bg-white/20 rounded-full transition-all"
+            aria-label="Close viewer"
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img
+            src={viewingMedia}
+            alt="Full size media"
+            className="max-h-[90vh] max-w-full object-contain rounded-lg"
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
 
