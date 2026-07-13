@@ -76,7 +76,7 @@ export default function Settings() {
       const reader = new FileReader();
       reader.onloadend = () => {
         setProfilePic(reader.result as string);
-        showAlert("success", "የፕሮፋይል ምስልዎ ተቀይሯል!");
+        showAlert("success", "Your profile picture has changed!");
       };
       reader.readAsDataURL(file);
     }
@@ -100,32 +100,32 @@ export default function Settings() {
     e.preventDefault();
     showAlert(
       "success",
-      `የግላዊነት ምርጫዎ ወደ [${privacy === "public" ? "ሁሉም ሰው ማየት ይችላል" : "ተከታዮች ብቻ ማየት ይችላሉ"}] ተቀይሯል!`,
+      `Your privacy choice to  [${privacy === "public" ? "Everyone can see" : "Only followers can see"}] It's changed!`,
     );
   };
 
   // 4. የማስታወቂያ ምርጫዎችን ለማስቀመጥ (Save Notification Settings)
   const handleNotificationsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    showAlert("success", "የማስታወቂያ ምርጫዎችዎ በስኬት ተቀምጠዋል!");
+    showAlert("success", "Your advertising choices are saved successfully!");
   };
 
   // 5. የይለፍ ቃል ለመቀየር (Change Password Verification)
   const handleSecuritySubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newPassword || !confirmPassword) {
-      showAlert("error", "እባክዎ ሁለቱንም የይለፍ ቃል ሳጥኖች ይሙሉ!");
+      showAlert("error", "Please fill in both password boxes!");
       return;
     }
     if (newPassword.length < 8) {
-      showAlert("error", "የይለፍ ቃል ቢያንስ 8 ቁምፊዎች መሆን አለበት!");
+      showAlert("error", "Password must be at least 8 characters!");
       return;
     }
     if (newPassword !== confirmPassword) {
-      showAlert("error", "የይለፍ ቃላቱ አይዛመዱም! እባክዎ እንደገና ይሞክሩ።");
+      showAlert("error", "The password do not match! Please try again.");
       return;
     }
-    showAlert("success", "የይለፍ ቃልዎ በስኬት ተቀይሯል!");
+    showAlert("success", "Your password has been successfully changed!");
     setNewPassword("");
     setConfirmPassword("");
   };
@@ -153,7 +153,7 @@ export default function Settings() {
   };
 
   return (
-    <main className="flex-grow w-full max-w-4xl mx-auto px-4 py-8 sm:py-12 flex flex-col gap-8 bg-bodey-bg++ text-text overflow-y-auto h-screen">
+    <main className="flex-grow w-full max-w-4xl mx-auto px-4 py-8 sm:py-12 flex flex-col gap-8 bg-bodey-bg text-text overflow-y-auto h-screen">
       {/* 🔔 የተጠቃሚ መልዕክቶች ማሳያ (Toast Alert Banner) */}
       {alertMessage && (
         <div
@@ -199,12 +199,12 @@ export default function Settings() {
       {/* ==========================================================================
           1. የአካውንት መረጃ ክፍል (Account Info Section)
           ========================================================================== */}
-      <section className="bg-bodey-bg border border-input-border rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
+      <section className="bg-surface border border-border rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
         <h2 className="text-xl font-bold text-text-h2 mb-6 pb-2 border-b-2 border-slate-100 flex items-center gap-2">
           Account Info
         </h2>
         <form onSubmit={handleAccountSubmit} className="flex flex-col gap-5">
-          <div className="flex flex-col gap-1.5">
+          <div className="flex flex-col gap-1.5 ">
             <label className="text-sm font-medium text-small-text">
               Edit username
             </label>
@@ -259,7 +259,7 @@ export default function Settings() {
       {/* ==========================================================================
           2. የፕሮፋይል ክፍል (Profile Section)
           ========================================================================== */}
-      <section className="bg-bodey-bg border border-input-border rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
+      <section className="bg-surface border border-input-border rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
         <h2 className="text-xl font-bold text-text-h2 mb-6 pb-2 border-b-2 border-slate-100">
           Profile
         </h2>
@@ -301,7 +301,7 @@ export default function Settings() {
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Bio..."
-              className="w-full max-w-lg px-4 py-2.5 bg-input border border-input-border rounded-lg text-input-text focus:border-input-focus focus:outline-none transition-all text-sm resize-y min-h-[100px]"
+              className="w-full max-w-lg px-4 py-2.5 bg-surface-raised border border-input-border rounded-lg text-input-text focus:border-input-focus focus:outline-none transition-all text-sm resize-y min-h-[100px]"
             />
           </div>
 
@@ -319,17 +319,17 @@ export default function Settings() {
       {/* ==========================================================================
           3. የግላዊነት ክፍል (Privacy Section)
           ========================================================================== */}
-      <section className="bg-bodey-bg border border-input-border rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
+      <section className="bg-surface border border-border rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
         <h2 className="text-xl font-bold text-text-h2 mb-6 pb-2 border-b-2 border-slate-100">
           Privacy
         </h2>
         <form onSubmit={handlePrivacySubmit} className="flex flex-col gap-5">
-          <fieldset className="border border-input-border rounded-lg p-5 flex flex-col gap-4">
-            <legend className="px-2.5 text-sm font-semibold text-small-text">
+          <fieldset className="border border-input-border bg-surface-raised rounded-lg p-5 flex flex-col gap-4">
+            <legend className="px-2.5 text-sm font-semibold  text-small-text">
               Who can see my profile?
             </legend>
 
-            <div className="flex items-center gap-2.5 cursor-pointer">
+            <div className="flex items-center  gap-2.5 cursor-pointer">
               <input
                 type="radio"
                 id="public"
@@ -341,7 +341,7 @@ export default function Settings() {
               />
               <label
                 htmlFor="public"
-                className="text-sm text-small-text cursor-pointer"
+                className="text-sm text-text cursor-pointer"
               >
                 Public (Everyone)
               </label>
@@ -355,11 +355,11 @@ export default function Settings() {
                 value="private"
                 checked={privacy === "private"}
                 onChange={() => setPrivacy("private")}
-                className="w-4 h-4 text-[#0185E5] focus:ring-[#0185E5]"
+                className="w-4 h-4 bg-brand-dark"
               />
               <label
                 htmlFor="private"
-                className="text-sm text-small-text cursor-pointer"
+                className="text-sm text-text cursor-pointer"
               >
                 Private (Only Followers/Members)
               </label>
@@ -379,16 +379,16 @@ export default function Settings() {
       {/* ==========================================================================
           4. የማስታወቂያዎች ክፍል (Notifications Section)
           ========================================================================== */}
-      <section className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
-        <h2 className="text-xl font-bold text-slate-900 mb-6 pb-2 border-b-2 border-slate-100">
+      <section className="bg-surface border border-border rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
+        <h2 className="text-xl font-bold text-text-h2 mb-6 pb-2 border-b-2 border-slate-100">
           Notifications
         </h2>
         <form
           onSubmit={handleNotificationsSubmit}
           className="flex flex-col gap-5"
         >
-          <fieldset className="border border-slate-300 rounded-lg p-5 flex flex-col gap-4">
-            <legend className="px-2.5 text-sm font-semibold text-slate-700">
+          <fieldset className="border border-border rounded-lg p-5 flex flex-col gap-4 bg-surface-raised">
+            <legend className="px-2.5 text-sm font-semibold text-small-text">
               Manage Notifications
             </legend>
             <div className="flex flex-col gap-3">
@@ -404,11 +404,11 @@ export default function Settings() {
                       likes: e.target.checked,
                     })
                   }
-                  className="w-4 h-4 text-[#0185E5] rounded focus:ring-[#0185E5]"
+                  className="w-4 h-4 text-[#0071e3] rounded focus:ring-[#0071e3] "
                 />
                 <label
                   htmlFor="likes"
-                  className="text-sm text-slate-700 cursor-pointer"
+                  className="text-sm text-text cursor-pointer"
                 >
                   Like
                 </label>
@@ -430,7 +430,7 @@ export default function Settings() {
                 />
                 <label
                   htmlFor="comment"
-                  className="text-sm text-slate-700 cursor-pointer"
+                  className="text-sm text-text cursor-pointer"
                 >
                   Comments
                 </label>
@@ -452,7 +452,7 @@ export default function Settings() {
                 />
                 <label
                   htmlFor="follows"
-                  className="text-sm text-slate-700 cursor-pointer"
+                  className="text-sm text-text cursor-pointer"
                 >
                   New Follows
                 </label>
@@ -473,18 +473,18 @@ export default function Settings() {
       {/* ==========================================================================
           5. የደህንነት ክፍል (Security Section)
           ========================================================================== */}
-      <section className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
-        <h2 className="text-xl font-bold text-slate-900 mb-6 pb-2 border-b-2 border-slate-100">
+      <section className="bg-surface border border-border rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
+        <h2 className="text-xl font-bold text-text-h2 mb-6 pb-2 border-b-2 border-slate-100">
           Security
         </h2>
         <form onSubmit={handleSecuritySubmit} className="flex flex-col gap-5">
-          <fieldset className="border border-slate-300 rounded-lg p-5 flex flex-col gap-4">
-            <legend className="px-2.5 text-sm font-semibold text-slate-700">
+          <fieldset className="bg-surface-raised  border border-border rounded-lg p-5 flex flex-col gap-4">
+            <legend className="px-2.5 text-sm font-semibold text-small-text">
               Change Your Password
             </legend>
             <div className="flex flex-col gap-4">
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-slate-600">
+                <label className="text-sm font-medium text-small-text">
                   New password
                 </label>
                 <input
@@ -494,13 +494,13 @@ export default function Settings() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="New password"
-                  className="w-full max-w-lg px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-800 focus:border-[#0185E5] focus:ring-2 focus:ring-[#0185E5]/20 focus:outline-none transition-all text-sm"
+                  className="w-full max-w-lg px-4 py-2.5 bg-input border border-input-border rounded-lg text-input-text focus:border-input-focus focus:outline-none transition-all text-sm"
                   required
                 />
               </div>
 
               <div className="flex flex-col gap-1.5">
-                <label className="text-sm font-medium text-slate-600">
+                <label className="text-sm font-medium text-small-text">
                   Confirm password
                 </label>
                 <input
@@ -510,7 +510,7 @@ export default function Settings() {
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Confirm password"
-                  className="w-full max-w-lg px-4 py-2.5 bg-white border border-slate-300 rounded-lg text-slate-800 focus:border-[#0185E5] focus:ring-2 focus:ring-[#0185E5]/20 focus:outline-none transition-all text-sm"
+                  className="w-full max-w-lg px-4 py-2.5 bg-input border border-input-border rounded-lg text-input-text focus:border-input-focus focus:outline-none transition-all text-sm"
                   required
                 />
               </div>
@@ -530,62 +530,26 @@ export default function Settings() {
       {/* ==========================================================================
           6. አካውንት መውጫ እና ማጥፊያ ክፍል (Account Action Section)
           ========================================================================== */}
-      <section className="bg-white border border-slate-200 rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
-        <h2 className="text-xl font-bold text-slate-900 mb-6 pb-2 border-b-2 border-slate-100 flex items-center gap-2">
+      <section className="bg-surface border border-border rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
+        <h2 className="text-xl font-bold text-text-h2 mb-6 pb-2 border-b-2 border-slate-100 flex items-center gap-2">
           <ShieldAlert className="w-5 h-5 text-rose-500" /> Account Action
         </h2>
         <div className="flex items-center gap-4 flex-wrap">
           <button
             id="logoutBtn"
             onClick={handleLogout}
-            className="bg-[#dc2626] hover:bg-[#b91c1c] text-white font-semibold rounded-lg px-6 py-2.5 shadow-md transition-colors text-sm flex items-center gap-2 cursor-pointer"
+            className="bg-danger hover:bg-danger-hover text-one-text font-semibold rounded-lg px-6 py-2.5 shadow-md transition-colors text-sm flex items-center gap-2 cursor-pointer"
           >
             <LogOut className="w-4 h-4" /> Logout
           </button>
           <button
             onClick={handleAccountDelete}
-            className="bg-[#dc2626] hover:bg-[#b91c1c] text-white font-semibold rounded-lg px-6 py-2.5 shadow-md transition-colors text-sm flex items-center gap-2 cursor-pointer"
+            className="bg-danger hover:bg-danger-hover text-text font-semibold rounded-lg px-6 py-2.5 shadow-md transition-colors text-sm flex items-center gap-2 cursor-pointer"
           >
             <Trash2 className="w-4 h-4" /> Delete Account
           </button>
         </div>
       </section>
-
-      {/* ==========================================================================
-          7. የግርጌ ማሳያ (Footer Section)
-          ========================================================================== */}
-      <footer className="mt-8 pt-6 border-t border-slate-200 text-xs text-slate-400 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="font-semibold text-slate-500">&copy; Nexify</div>
-        <div className="flex items-center gap-4 flex-wrap">
-          <span
-            onClick={() => navigate("./footer/about")}
-            className="hover:text-[#0185e5] transition-colors cursor-pointer"
-          >
-            About
-          </span>
-
-          <span
-            onClick={() => navigate("./footer/privacy")}
-            className="hover:text-[#0185e5] transition-colors cursor-pointer"
-          >
-            Privacy
-          </span>
-
-          <span
-            onClick={() => navigate("./footer/terms")}
-            className="hover:text-[#0185e5] transition-colors cursor-pointer"
-          >
-            Terms
-          </span>
-
-          <span
-            onClick={() => navigate("./footer/contact")}
-            className="hover:text-[#0185e5] transition-colors cursor-pointer"
-          >
-            Contact
-          </span>
-        </div>
-      </footer>
     </main>
   );
 }

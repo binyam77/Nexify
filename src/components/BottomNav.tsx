@@ -39,7 +39,7 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white shadow-input border-t border-input-border flex items-center h-16 px-2">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface shadow-input border-t border-input-border flex items-center h-16 px-2">
       {/* Left: Home + Community */}
       <div className="flex flex-1 items-center justify-around">
         {leftItems.map(({ label, to, icon: Icon }) => (
@@ -50,7 +50,7 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
             className={({ isActive }) =>
               cn(
                 "flex flex-col items-center  gap-0.5 px-3 py-1  transition-colors",
-                isActive ? "text-brand-dark" : "text-slate-800"  ,
+                isActive ? "text-brand-dark" : "text-text"  ,
               )
             }
           >
@@ -85,7 +85,7 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
             className={({ isActive }) =>
               cn(
                 "flex flex-col items-center gap-0.5 px-3  py-1  transition-colors",
-                isActive ? "text-brand-dark" : "text-slate-800",
+                isActive ? "text-brand-dark" : "text-text",
               )
             }
           >

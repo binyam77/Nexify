@@ -84,62 +84,7 @@ export default function Profile({
   // --- የሌሎች ተጠቃሚዎች መረጃ ዳታቤዝ (Other Creators Database for browsing) ---
 
   const [otherUsers, setOtherUsers] = useState<OtherCreator[]>([
-    {
-      id: 1,
-      name: "Abel T.",
-      username: "abel_codes",
-      photo: "",
-      gradient: "from-emerald-500 to-teal-600",
-      isFollowing: false,
-      followersCount: 1540,
-      followingCount: 320,
-      bio: "Passionate Fullstack Developer at Nexify. Passionate about beautiful interfaces, responsive layouts, and cloud architectures. 🚀💻",
-      loginsCount: 14,
-      posts: [
-        {
-          id: "mock-o-1001",
-          userId: "abel_codes",
-          username: "abel_codes",
-          userAvatar: "",
-          type: "video",
-          mediaUrls: [
-            "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80",
-          ],
-          caption:
-            "Focus on your goals, everything else is just a distraction 🎬🔥 #goals #motivation #growth",
-          hashtags: ["#goals", "#motivation", "#growth"],
-          likesCount: 125,
-          commentsCount: 0,
-          sharesCount: 0,
-          savesCount: 45,
-          viewsCount: 342,
-          createdAt: new Date().toISOString(),
-          liked: false,
-          saved: false,
-        },
-        {
-          id: "mock-o-1002",
-          userId: "abel_codes",
-          username: "abel_codes",
-          userAvatar: "",
-          type: "photo",
-          mediaUrls: [
-            "https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=400&q=80",
-          ],
-          caption:
-            "Rate my custom multi-monitor development workspace setup! 💻🔥 #workstation #developer #desksetup",
-          hashtags: ["#workstation", "#developer", "#desksetup"],
-          likesCount: 412,
-          commentsCount: 0,
-          sharesCount: 0,
-          savesCount: 85,
-          viewsCount: 1204,
-          createdAt: new Date().toISOString(),
-          liked: false,
-          saved: false,
-        },
-      ],
-    },
+    
     {
       id: 2,
       name: "Betty Dev",
@@ -429,14 +374,6 @@ export default function Profile({
       img.src = base64Str;
     });
   };
-
-
-
-
-
-
-
-
   const handleDirectPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -454,18 +391,6 @@ export default function Profile({
       reader.readAsDataURL(file);
     }
   };
-
-
-
-
-
-
-
-
-
-
-
-
   const handleDirectCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -483,21 +408,6 @@ export default function Profile({
       reader.readAsDataURL(file);
     }
   };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
   // --- ልጥፍ እና አስተያየቶችን ማጥፊያ ማረጋገጫ (Execute deletion verified in custom modal) ---
   const executeDeleteAction = async () => {
@@ -750,15 +660,15 @@ export default function Profile({
           MODAL: EDIT PROFILE FORM
           ======================================================== */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-bodey-bg rounded-3xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto border border-input-border flex flex-col">
-            <div className="px-6 py-4 border-b border-input-border flex items-center justify-between sticky top-0 bg-bodey-bg z-10">
-              <h3 className="text-lg font-black tracking-tight text-text">
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-surface rounded-3xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto border border-border flex flex-col">
+            <div className="px-6 py-4 border border-border flex items-center justify-between sticky top-0 bg-surface z-10">
+              <h3 className="text-lg font-black tracking-tight text-text-h2">
                 Edit Profile
               </h3>
               <button
                 onClick={() => setIsEditModalOpen(false)}
-                className="p-1.5 hover:bg-hover-input text-text rounded-xl"
+                className="p-1.5 hover:bg-danger-hover text-one-text rounded-xl"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -766,12 +676,12 @@ export default function Profile({
 
             <div className="p-6 space-y-5">
               <div>
-                <span className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-2">
+                <span className="block text-xs font-extrabold tracking-wider text-text uppercase mb-2">
                   Cover Photo Banner
                 </span>
                 <div
                   onClick={() => coverInputRef.current?.click()}
-                  className="w-full h-28 rounded-xl bg-gray-50 border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group"
+                  className="w-full h-28 rounded-xl bg-surface-raised border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group"
                 >
                   {editCoverPreview ? (
                     <>
@@ -823,7 +733,7 @@ export default function Profile({
                   )}
                 </div>
                 <div className="flex-1">
-                  <span className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-1">
+                  <span className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1">
                     Avatar
                   </span>
                   <button
@@ -844,18 +754,18 @@ export default function Profile({
 
               <div className="space-y-4">
                 <div>
-                  <label className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-1.5">
+                  <label className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1.5">
                     Display Name
                   </label>
                   <input
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value.slice(0, 10))}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold"
+                    className="w-full px-4 py-2.5 bg-input border border-input-border focus:border-input-focus focus:bg-surface-raised rounded-xl text-sm font-semibold"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-1.5">
+                  <label className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1.5">
                     Username
                   </label>
                   <input
@@ -864,24 +774,24 @@ export default function Profile({
                     onChange={(e) =>
                       setEditUsername(e.target.value.slice(0, 30))
                     }
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold"
+                    className="w-full px-4 py-2.5 bg-input border border-input-border focus:border-input-focus focus:bg-surface-raised rounded-xl text-sm font-semibold"
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase mb-1.5">
+                  <label className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1.5">
                     Professional Bio
                   </label>
                   <textarea
                     value={editBio}
                     onChange={(e) => setEditBio(e.target.value.slice(0, 150))}
                     rows={3}
-                    className="w-full px-4 py-2.5 bg-gray-50 border border-transparent focus:border-blue-500 focus:bg-white rounded-xl text-sm font-semibold resize-none"
+                    className="w-full px-4 py-2.5 bg-surface-raised border border-input-border focus:border-blue-500 focus:bg-surface-raised rounded-xl text-sm font-semibold resize-none"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-100 flex gap-3 justify-end sticky bottom-0 bg-white">
+            <div className="px-6 py-4 border-t border-gray-100 flex gap-3 justify-end sticky bottom-0  bg-surface">
               <button
                 onClick={() => setIsEditModalOpen(false)}
                 className="px-4 py-2 bg-gray-100 text-xs font-bold text-gray-700 rounded-xl"
@@ -906,7 +816,7 @@ export default function Profile({
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto border border-gray-100 flex flex-col">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
-              <h3 className="text-lg font-black tracking-tight text-gray-900">
+              <h3 className="text-lg font-black tracking-tight text-text">
                 {uploadIsVideo
                   ? "🎬 Compose New Video Post"
                   : "🖼 Compose New Photo Post"}

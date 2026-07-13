@@ -32,7 +32,7 @@ const MOCK_NOTIFICATIONS: AppNotification[] = [
   {
     id: 'n1',
     type: 'like',
-    actorUsername: 'abel_codes',
+    actorUsername: 'abel_fan',
     actorAvatar: '',
     message: 'liked your post',
     postId: 'mock-1',
@@ -42,7 +42,7 @@ const MOCK_NOTIFICATIONS: AppNotification[] = [
   {
     id: 'n2',
     type: 'follow',
-    actorUsername: 'mahlet_dev',
+    actorUsername: 'mahlet',
     actorAvatar: '',
     message: 'started following you',
     isRead: false,
@@ -51,7 +51,7 @@ const MOCK_NOTIFICATIONS: AppNotification[] = [
   {
     id: 'n3',
     type: 'comment',
-    actorUsername: 'fitsum_backend',
+    actorUsername: 'fitsum_big',
     actorAvatar: '',
     message: 'commented on your post',
     postId: 'mock-2',
@@ -61,7 +61,7 @@ const MOCK_NOTIFICATIONS: AppNotification[] = [
   {
     id: 'n4',
     type: 'mention',
-    actorUsername: 'eden_creates',
+    actorUsername: 'eden_smart',
     actorAvatar: '',
     message: 'mentioned you in a comment',
     postId: 'mock-3',

@@ -26,12 +26,12 @@ export default function ProfileVideo({
   return (
     <div className="min-h-48">
       {filteredPosts.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-14 bg-white border border-gray-100 rounded-3xl text-center px-4 animate-fade-in">
+        <div className="flex flex-col items-center justify-center py-14 bg-surface-raised border border-border rounded-3xl text-center px-4 animate-fade-in">
           <span className="text-4xl mb-3">🎬</span>
-          <h3 className="text-base font-extrabold text-gray-800 mb-1">
+          <h3 className="text-base font-extrabold text-text mb-1">
             No content published in Posts
           </h3>
-          <p className="text-xs text-gray-400 max-w-xs mb-5">
+          <p className="text-xs text-small-text max-w-xs mb-5">
             Select a file and publish your very first picture or video stream with hashtags!
           </p>
         </div>

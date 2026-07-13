@@ -10,7 +10,7 @@ export default function Layout() {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-100">
       <Sidebar onUploadClick={() => setIsUploadOpen(true)} />
-      <main className="relative flex-1 overflow-hidden ">
+      <main className="relative flex-1 overflow-hidden bg-bodey-bg ">
         <Outlet />
       </main>
       <BottomNav onUploadClick={() => setIsUploadOpen(true)} />
