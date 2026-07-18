@@ -4,8 +4,17 @@
  */
 
 import React from "react";
-import { Camera, Edit, Users, MessageCircle, ChevronUp, ChevronDown, Grid } from "lucide-react";
-
+import {
+  Camera,
+  Edit,
+  Users,
+  MessageCircle,
+  ChevronUp,
+  ChevronDown,
+  Grid,
+  Settings,
+} from "lucide-react";
+import { Link } from "react-router-dom";
 // UserProfile.tsx የProp ዓይነቶች መግለጫ (Props Interface for UserProfile.tsx)
 interface UserProfileProps {
   profile: {
@@ -33,11 +42,16 @@ interface UserProfileProps {
   setIsBioExpanded: (expanded: boolean) => void;
   activeTab: "posts" | "video" | "likes";
   setActiveTab: (tab: "posts" | "video" | "likes") => void;
-  
+
   // ተፅዕኖ ፈጣሪ ተግባራት (Action handler callbacks)
   handleOpenEditModal: () => void;
   setIsOthersModalOpen: (open: boolean) => void;
-  handleMessageUser: (user: { name: string; username: string; photo: string }) => void;
+  handleMessageUser: (user: {
+    name: string;
+    username: string;
+    photo: string;
+    bio?:string;
+  }) => void;
   toggleFollowUser: (index: number) => void;
   selectedOtherUser: number;
   directPhotoInputRef: React.RefObject<HTMLInputElement | null>;
@@ -68,7 +82,6 @@ export default function UserProfile({
 }: UserProfileProps) {
   return (
     <div className="w-full flex flex-col shrink-0">
-      
       {/* 1. Banner/Cover Photo (የላይኛው ባነር ገጽ) */}
       <div className="w-full relative shrink-0">
         {viewMode === "me" ? (
@@ -123,15 +136,20 @@ export default function UserProfile({
       {/* 2. User Stats & Avatar Row (የመገለጫ ፎቶ እና ዝርዝር መረጃዎች) */}
       <div className="max-w-4xl w-full mx-auto px-4 md:px-8 relative -mt-4 sm:-mt-12 mb-6">
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-5">
-          
           <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3.5 sm:gap-4.5">
             <div
-              onClick={() => viewMode === "me" && directPhotoInputRef.current?.click()}
+              onClick={() =>
+                viewMode === "me" && directPhotoInputRef.current?.click()
+              }
               className={`w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-white shadow-xl overflow-hidden shrink-0 bg-blue-100 flex items-center justify-center relative group ${viewMode === "me" ? "cursor-pointer" : ""}`}
             >
               {viewMode === "me" ? (
                 profile.photo ? (
-                  <img src={profile.photo} alt={profile.name} className="w-full h-full object-cover" />
+                  <img
+                    src={profile.photo}
+                    alt={profile.name}
+                    className="w-full h-full object-cover"
+                  />
                 ) : (
                   <div className="w-full h-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold tracking-wider">
                     {profile.name
@@ -145,13 +163,17 @@ export default function UserProfile({
                   </div>
                 )
               ) : otherProfile?.photo ? (
-                <img src={otherProfile.photo} alt={otherProfile.name} className="w-full h-full object-cover" />
+                <img
+                  src={otherProfile.photo}
+                  alt={otherProfile.name}
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <div className="w-full h-full bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white text-3xl font-bold tracking-wider">
                   AT
                 </div>
               )}
-              
+
               {viewMode === "me" && (
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
                   <Camera className="w-6 h-6 text-white animate-pulse" />
@@ -173,7 +195,9 @@ export default function UserProfile({
           <div className="flex gap-6 md:gap-8 self-start sm:self-end bg-surface-raised border border-gray-100 shadow-md shadow-gray-100/30 px-5 py-3 rounded-2xl">
             <div className="flex flex-col items-center">
               <span className="text-lg font-black text-text tracking-tight">
-                {viewMode === "me" ? formatCount(followersCount) : formatCount(otherProfile?.followersCount ?? 0)}
+                {viewMode === "me"
+                  ? formatCount(followersCount)
+                  : formatCount(otherProfile?.followersCount ?? 0)}
               </span>
               <span className="text-xs text-small-text font-bold tracking-wide uppercase">
                 Followers
@@ -181,7 +205,9 @@ export default function UserProfile({
             </div>
             <div className="flex flex-col items-center border-x border-gray-100 px-6 md:px-8">
               <span className="text-lg font-black text-text tracking-tight">
-                {viewMode === "me" ? formatCount(postsCount) : formatCount(otherPostsCount)}
+                {viewMode === "me"
+                  ? formatCount(postsCount)
+                  : formatCount(otherPostsCount)}
               </span>
               <span className="text-xs text-small-text font-bold tracking-wide uppercase">
                 Posts
@@ -189,14 +215,15 @@ export default function UserProfile({
             </div>
             <div className="flex flex-col items-center">
               <span className="text-lg font-black text-text tracking-tight flex items-center gap-1">
-                {viewMode === "me" ? formatCount(starsCount) : formatCount(otherProfile?.followingCount ?? 0)}
+                {viewMode === "me"
+                  ? formatCount(starsCount)
+                  : formatCount(otherProfile?.followingCount ?? 0)}
               </span>
               <span className="text-xs text-small-text font-bold tracking-wide uppercase">
                 Following
               </span>
             </div>
           </div>
-
         </div>
 
         {/* 3. Action Buttons (የማስተካከያ እና የመልእክት ቁልፎች) */}
@@ -220,6 +247,15 @@ export default function UserProfile({
                 <Users className="w-4 h-4 text-text" />
                 <span>others</span>
               </button>
+
+              <Link
+                to="/settings"
+                className="px-4 py-2.5 rounded-xl bg-surface sm:hidden border border-border hover:bg-surface-raised hover:text-brand-dark 
+ text-text font-black text-xs uppercase tracking-wider transition-all shadow-sm flex items-center gap-2 shrink-0"
+              >
+                <Settings size={16} strokeWidth={2.5} />
+                <span>SETTINGS</span>
+              </Link>
             </>
           ) : (
             <>
@@ -279,7 +315,9 @@ export default function UserProfile({
                   : otherProfile?.bio}
             </p>
 
-            {(viewMode === "me" ? profile.bio.length : (otherProfile?.bio ?? "").length) > 80 && (
+            {(viewMode === "me"
+              ? profile.bio.length
+              : (otherProfile?.bio ?? "").length) > 80 && (
               <button
                 onClick={() => setIsBioExpanded(!isBioExpanded)}
                 className="mt-2 text-xs font-extrabold text-blue-600 hover:text-indigo-600 flex items-center gap-1 transition-colors"
@@ -316,7 +354,6 @@ export default function UserProfile({
             </button>
           </div>
         </div>
-
       </div>
     </div>
   );

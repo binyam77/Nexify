@@ -6,11 +6,11 @@ export type NotificationType = 'like' | 'comment' | 'follow' | 'mention' | 'syst
 
 export interface AppNotification {
   id: string;
-  type: NotificationType;
+  type: NotificationType ;
   actorUsername: string;   // PostgreSQL: users.username JOIN
   actorAvatar: string;     // PostgreSQL: users.avatar
   message: string;
-  postId?: string;         // PostgreSQL: posts.id (nullable)
+  postId?: string;        // PostgreSQL: posts.id (nullable)
   commentId?: string;      // PostgreSQL: comments.id (nullable)
   isRead: boolean;
   createdAt: string;

@@ -71,6 +71,9 @@ export interface Chat {
   isCreatedByMe?: boolean; // በኔ የተፈጠረ መሆኑን ማሳያ (True if created by the current user to authorize posts)
   isOnline?: boolean; // መስመር ላይ መሆን አለመሆኑን ማሳያ - ለግል ቻት (Online status for direct private chats)
   lastSeen?: string; // በመጨረሻ የታየበት ሰዓት (Last seen timestamp)
+  cover?:string;// Channel/chat detail-view ላይ የሚታይ cover banner(Based64/URL)
+  description?:string;//Channel ርእስ/ መግለጫ
+  bio?:string;//1:1 only chat:speak bio(Profile identity single source of truth)
 }
 
 export interface Message {

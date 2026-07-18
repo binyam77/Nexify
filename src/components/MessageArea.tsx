@@ -25,6 +25,8 @@ import {
   Check,
   Mic,
 } from "lucide-react";
+import ChannelInfoModal from "./ChannelInfoModal";
+import ChatInfoModal from "./ChatInfoModal";
 import type { Chat, Message } from "../types";
 
 interface MessageAreaProps {
@@ -100,23 +102,28 @@ export default function MessageArea({
     }
   }, [inputText]);
 
-
   const [editingMessageId, setEditingMessageId] = useState<string | null>(null);
   const [selectedOptionsMessage, setSelectedOptionsMessage] =
     useState<Message | null>(null);
 
-    //ፎቶ ሲነካ ሙሉ፟ገት ለማሳየት ( options modal ካልሆነ የተለየ )
-    const [viewingMedia, setViewingMedia]=useState<string | null>(null);
+  //ፎቶ ሲነካ ሙሉ፟ገት ለማሳየት ( options modal ካልሆነ የተለየ )
+  const [viewingMedia, setViewingMedia] = useState<string | null>(null);
 
-  // Timer references for long-press gesture -ብቻ hold options modal ይከፈታል ፈታን ንኪኪ አይደለም 
+  // Channel header ተነክቶ ሲከፈት (Cover/create name/Empty detail view)
+  const [isChannelInfoOpen, setChannelInfoOpen] = useState(false);
+
+  // Private chat header ተነክቶ ሲከፈት (Cover/photo /name/Stories/Empty detail view)
+  const [isChatInfoOpen, setIsChatInfoOpen] = useState(false);
+
+  // Timer references for long-press gesture -ብቻ hold options modal ይከፈታል ፈታን ንኪኪ አይደለም
   const pressTimerRef = useRef<any>(null);
-  const longPressFiredRef= useRef(false);
+  const longPressFiredRef = useRef(false);
 
   const startPressTimer = (msg: Message) => {
     if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
-    longPressFiredRef.current=false;
+    longPressFiredRef.current = false;
     pressTimerRef.current = setTimeout(() => {
-      longPressFiredRef.current =true;
+      longPressFiredRef.current = true;
       setSelectedOptionsMessage(msg);
     }, 450); // 450ms matches normal press-and-hold (አጥብቆ ሲነካው)
   };
@@ -127,15 +134,15 @@ export default function MessageArea({
       pressTimerRef.current = null;
     }
   };
-//ፎቶ  ሲነካ ማየት እንጂ options box  መክፈት የለበትም: long-press ገና ከተነሳ ግን  ችላ እንል (double-trigger መከላከያ)
-const handleImageClick =(e: React.MouseEvent, url?:string)=>{
-  e.stopPropagation();
-  if(longPressFiredRef.current){
-    longPressFiredRef.current =false;
-    return;
-  }
-  if(url)setViewingMedia(url);
-};
+  //ፎቶ  ሲነካ ማየት እንጂ options box  መክፈት የለበትም: long-press ገና ከተነሳ ግን  ችላ እንል (double-trigger መከላከያ)
+  const handleImageClick = (e: React.MouseEvent, url?: string) => {
+    e.stopPropagation();
+    if (longPressFiredRef.current) {
+      longPressFiredRef.current = false;
+      return;
+    }
+    if (url) setViewingMedia(url);
+  };
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
   const [isSearchingMessages, setIsSearchingMessages] = useState(false);
   const [showMediaSelector, setShowMediaSelector] = useState(false);
@@ -149,9 +156,14 @@ const handleImageClick =(e: React.MouseEvent, url?:string)=>{
     if (!messageSearchQuery) return true;
     return msg.text.toLowerCase().includes(messageSearchQuery.toLowerCase());
   });
-//Channel subscriber (creator ያልሆነ መታፍ አይችልም _ emoji reaction only)
-const  isChannelSubscriberOnly= chat ? chat.type === "channel" && !chat.isCreatedByMe : false;
-const canCompose = !!chat && !isChannelSubscriberOnly && (chat.isJoined || chat.type === "chat"); 
+  //Channel subscriber (creator ያልሆነ መታፍ አይችልም _ emoji reaction only)
+  const isChannelSubscriberOnly = chat
+    ? chat.type === "channel" && !chat.isCreatedByMe
+    : false;
+  const canCompose =
+    !!chat &&
+    !isChannelSubscriberOnly &&
+    (chat.isJoined || chat.type === "chat");
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -209,15 +221,13 @@ const canCompose = !!chat && !isChannelSubscriberOnly && (chat.isJoined || chat.
   // Display welcome interface if no chat room is selected
   if (!chat) {
     return (
-      <div className="flex-1 hidden md:flex flex-col items-center justify-center p-8 bg-white text-center">
+      <div className="flex-1 hidden  md:flex flex-col items-center justify-center p-8 bg-white text-center">
         <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mb-4 animate-bounce">
           <Users className="w-8 h-8" />
         </div>
-        <h3 className="text-xl font-bold text-gray-900">
-          Welcome to Nexify Community
-        </h3>
+        <h3 className="s-bold text-gray-900">Welcome to Nexify Community</h3>
         <p className="text-gray-500 text-sm max-w-sm mt-1.5 leading-relaxed">
-          Select or join one of the developer community chats in the sidebar to
+          Select or join one of the creator community chats in the sidebar to
           start exchanging direct messages and feedback!
         </p>
       </div>
@@ -244,67 +254,75 @@ const canCompose = !!chat && !isChannelSubscriberOnly && (chat.isJoined || chat.
             <ArrowLeft className="w-5 h-5 " />
           </button>
 
-          {/* Custom Avatar label initials or photo */}
-          {chat.avatarUrl ? (
-            <img
-              src={chat.avatarUrl}
-              alt={chat.name}
-              className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-sm border border-input-border"
-              referrerPolicy="no-referrer"
-            />
-          ) : (
-            <div
-              className={`w-10 h-10 rounded-xl bg-success flex items-center justify-center
-             font-bold text-sm text-white shrink-0 shadow-sm ${chat.bgGradient}`}
-            >
-              {chat.avatarLabel}
-            </div>
-          )}
+          {/* Channel ብቻ ተነክቶ Detail view ይከፈታል*/}
 
-          <div className="min-w-0 ">
-            <h2
-              className="text-[19px] md:text-base font-bold text-input 
-            truncate tracking-tight"
-            >
-              {chat.name}
-            </h2>
-           {chat.type === "group" ? (
-              <span
-                className="text-[11px] md:text-xs text-input font-bold tracking-wide 
-              flex items-center gap-1 leading-none mt-0.5"
-                id="group-online-status"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse"></span>
-                <span>{chat.onlineCount} online</span>
-              </span>
-            ) : chat.type === "channel" ? (
-              <span
-                className="text-[11px] md:text-xs text-input font-bold tracking-wide 
-              flex items-center gap-1 leading-none mt-0.5"
-                id="channel-subscriber-status"
-              >
-                <span>📢 {chat.membersCount} subscribers</span>
-              </span>
-            ) : chat.isOnline !== false ? (
-              <span
-                className="text-[11px] md:text-xs text-gray-100 font-extrabold tracking-wider flex items-center gap-1 px-2 py-0.5 rounded-md mt-0.5"
-                id="chat-online-status"
-              >
-                <span className="w-1.5 h-1.5 rounded-full bg-success inline-block"></span>
-                <span>online</span>
-              </span>
+          <div
+            onClick={() => {
+              if (chat.type === "channel") setChannelInfoOpen(true);
+              else if (chat.type === "chat") setIsChatInfoOpen(true);
+            }}
+            className={`flex items-center gap-3.5 min-w-0 ${chat.type === "channel" || chat.type === "chat" ? "cursor-pointer" : ""}`}
+          >
+            {chat.avatarUrl ? (
+              <img
+                src={chat.avatarUrl}
+                alt={chat.name}
+                className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-sm border border-input-border"
+                referrerPolicy="no-referrer"
+              />
             ) : (
-              <span
-                className="text-[11px] md:text-xs text-gray-500  flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded-md mt-0.5 animate-in fade-in duration-200"
-                id="chat-online-status"
+              <div
+                className={`w-10 h-10 rounded-xl bg-success flex items-center justify-center
+                font-bold text-sm text-white shrink-0 shadow-sm ${chat.bgGradient}`}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-gray-400 inline-block animate-pulse"></span>
-                <span>last seen {chat.lastSeen || "recently"}</span>
-              </span>
+                {chat.avatarLabel}
+              </div>
             )}
+            <div className="min-w-0">
+              <h2
+                className="text-[19px] md:text-base font-bold text-input
+              truncate tracking-tight"
+              >
+                {chat.name}
+              </h2>
+
+              {chat.type === "group" ? (
+                <span
+                  className="text-[11px] md:text-xs text-input font-bold tracking-wide 
+              flex items-center gap-1 leading-none mt-0.5"
+                  id="group-online-status"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse"></span>
+                  <span>{chat.onlineCount} online</span>
+                </span>
+              ) : chat.type === "channel" ? (
+                <span
+                  className="text-[11px] md:text-xs text-input font-bold tracking-wide 
+              flex items-center gap-1 leading-none mt-0.5"
+                  id="channel-subscriber-status"
+                >
+                  <span>📢 {chat.membersCount} subscribers</span>
+                </span>
+              ) : chat.isOnline !== false ? (
+                <span
+                  className="text-[11px] md:text-xs text-gray-100 font-extrabold tracking-wider flex items-center gap-1 px-2 py-0.5 rounded-md mt-0.5"
+                  id="chat-online-status"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-success inline-block"></span>
+                  <span>online</span>
+                </span>
+              ) : (
+                <span
+                  className="text-[11px] md:text-xs text-gray-500  flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded-md mt-0.5 animate-in fade-in duration-200"
+                  id="chat-online-status"
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-gray-400 inline-block animate-pulse"></span>
+                  <span>last seen {chat.lastSeen || "recently"}</span>
+                </span>
+              )}
+            </div>
           </div>
         </div>
-
         {/* Top-right action buttons (Search & Options) */}
         <div className="flex items-center gap-1">
           <button
@@ -375,11 +393,57 @@ const canCompose = !!chat && !isChannelSubscriberOnly && (chat.isJoined || chat.
       {/* 2. Messages conversation stream with a clean plain solid background */}
       <div className="flex-1 min-h-0 px-5 py-6 md:px-10 md:py-8 overflow-y-auto space-y-6 md:space-y-7 bg-gray-50">
         {messages.length === 0 ? (
-          <div className="text-center py-12 animate-in fade-in duration-300">
-            <p className="text-xs text-gray-500 font-bold bg-gray-50 border border-gray-100 rounded-full px-4.5 py-1.5 inline-block shadow-sm">
-              No messages here yet. Say Hi! 👋
-            </p>
-          </div>
+          chat.type === "channel" ? (
+            <div className="flex flex-col items-center justify-center py-16 animate-in fade-in duration-300 px-6 text-center gap-2">
+              <div className="w-14 h-14 rounded-2xl overflow-hidden shadow-sm border border-gray-100 bg-gray-100 flex items-center justify-cenetr shrink-0">
+                {chat.avatarUrl ? (
+                  <img
+                    src={chat.avatarUrl}
+                    alt={chat.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className={`w-full h-full ${chat.bgGradient} flex items-center justify-center text-white font-black`}
+                  >
+                    {chat.avatarLabel}
+                  </div>
+                )}
+              </div>
+              <h4 className="text-sm font-black text-gray-800 mt-1 ">
+                {chat.name}
+              </h4>
+              <p className="text-xs text-gray-400 max-w-xs">
+                {chat.description ||
+                  (chat.isCreatedByMe
+                    ? "You haven't posted anything yet."
+                    : "The channel owner hasn't posted anything yet.")}
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 animate-in fade-in duration-300 gap-3 px-6 text-center">
+              <div className="w-16 h-16 rounded-full overflow-hidden shadow-sm border-gray-100 bg-gray-100 flex items-center justify-center shrink-0">
+                {chat.avatarUrl ? (
+                  <img
+                    src={chat.avatarUrl}
+                    alt={chat.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div
+                    className={`w-full h-full ${chat.bgGradient} flex items-cenetr justify-center text-white font-black text-lg`}
+                  >
+                    {chat.avatarLabel}
+                  </div>
+                )}
+              </div>
+              <h4 className="text-sm font-black text-gray-800">{chat.name}</h4>
+              <p className="text-xs text-gray-400 max-w-xs">
+                No messages here yet - send the first one to start the
+                conversation!👋
+              </p>
+            </div>
+          )
         ) : filteredMessages.length === 0 ? (
           <div className="text-center py-12 animate-in fade-in duration-300">
             <p className="text-xs text-gray-500 font-bold bg-gray-50 border border-gray-100 rounded-full px-4.5 py-1.5 inline-block shadow-sm">
@@ -513,22 +577,23 @@ const canCompose = !!chat && !isChannelSubscriberOnly && (chat.isJoined || chat.
                         )}
                     </article>
 
-                    {/* Current user's avatar - private chat ("chat" type) ላይ አይታይም፤ ሳጥኑ ንቻ ይታያል */}
-                    {chat.type !== "chat" && 
-                    (currentUserProfile?.avatar ? (
-                      <img
-                        src={currentUserProfile.avatar}
-                        alt={currentUserProfile.name}
-                        className="w-9 h-9 rounded-full object-cover border border-white shadow-sm shrink-0 hover:scale-105  active:scale-95 transition-all select-none"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-b from-[#019BE5] to-[#0071E3] text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm border border-white hover:scale-105 active:scale-95 transition-all select-none">
-                        {currentUserProfile?.name
-                          ? currentUserProfile.name.charAt(0).toUpperCase()
-                          : "M"}
-                      </div>
-          ))}
+                    {/* Current user's avatar - private chat ("chat" type) ላይ አይታይም፤ (Channel = broadcast-only, ፎቶ አያስፈልገውም) */}
+                    {chat.type !== "chat" &&
+                      chat.type !== "channel" &&
+                      (currentUserProfile?.avatar ? (
+                        <img
+                          src={currentUserProfile.avatar}
+                          alt={currentUserProfile.name}
+                          className="w-9 h-9 rounded-full object-cover border border-white shadow-sm shrink-0 hover:scale-105  active:scale-95 transition-all select-none"
+                          referrerPolicy="no-referrer"
+                        />
+                      ) : (
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-b from-[#019BE5] to-[#0071E3] text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm border border-white hover:scale-105 active:scale-95 transition-all select-none">
+                          {currentUserProfile?.name
+                            ? currentUserProfile.name.charAt(0).toUpperCase()
+                            : "M"}
+                        </div>
+                      ))}
                   </div>
                 </div>
               );
@@ -561,14 +626,14 @@ const canCompose = !!chat && !isChannelSubscriberOnly && (chat.isJoined || chat.
                   className="w-full flex justify-start pl-2 md:pl-4 min-w-0"
                 >
                   <div className="max-w-[85%] md:max-w-[70%] flex justify-start items-end gap-3 animate-in fade-in slide-in-from-left-1 duration-200 min-w-0">
-                    {/* Sender user avatar badge- private chat ("chat" type )ላይ አይታይም */}
-                    {chat.type !== "chat" &&(
-                    <div
-                      className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-sm border border-white hover:scale-105 active:scale-95 transition-all select-none ${avatarBg}`}
-                      title={msg.senderName}
-                    >
-                      {initials}
-                    </div>
+                    {/* Sender user avatar badge- private chat/channel ላይ አይታይም */}
+                    {chat.type !== "chat" && chat.type !== "channel" && (
+                      <div
+                        className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-sm border border-white hover:scale-105 active:scale-95 transition-all select-none ${avatarBg}`}
+                        title={msg.senderName}
+                      >
+                        {initials}
+                      </div>
                     )}
                     <article
                       onMouseDown={() => startPressTimer(msg)}
@@ -634,7 +699,7 @@ const canCompose = !!chat && !isChannelSubscriberOnly && (chat.isJoined || chat.
                             <img
                               src={msg.mediaUrl}
                               alt="message media"
-                              onClick={(e)=> handleImageClick(e, msg.mediaUrl)}
+                              onClick={(e) => handleImageClick(e, msg.mediaUrl)}
                               className="max-h-60 object-cover w-full cursor-zoom-in"
                               referrerPolicy="no-referrer"
                             />
@@ -913,6 +978,11 @@ const canCompose = !!chat && !isChannelSubscriberOnly && (chat.isJoined || chat.
             </button>
           </div>
         )}
+        {chat.type === "channel" && !chat.isJoined && (
+          <p className="text-[10px] text-gray-400 font-semibold text-center mt-2">
+            🔒 This is a private channel - only the owner can post.
+          </p>
+        )}
       </footer>
 
       {/* 4. Message Options Choice Modal */}
@@ -1024,7 +1094,17 @@ const canCompose = !!chat && !isChannelSubscriberOnly && (chat.isJoined || chat.
           />
         </div>
       )}
-
+      {/*6. Channel Info Detail View (Cover/ creator name / empty) */}
+      {isChannelInfoOpen && chat.type === "channel" && (
+        <ChannelInfoModal
+          chat={chat}
+          onClose={() => setChannelInfoOpen(false)}
+        />
+      )}
+      {/*7.  Private Chat Detail View (Cover/Photo/Name/Stories / Empty) */}
+      {isChatInfoOpen && chat.type === "chat" && (
+        <ChatInfoModal chat={chat} onClose={() => setIsChatInfoOpen(false)} />
+      )}
       {/* FUTURE: Code reference for persisting messages in PostgreSQL database using server proxy */}
       {/* // FUTURE: POST request to Express API: /api/messages with body { chatId: chat.id, text: inputText } */}
     </section>

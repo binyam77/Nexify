@@ -157,7 +157,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
                   mediaUrl = URL.createObjectURL(blob);
                   createdUrls.push(mediaUrl); // በኋላ ላይ ከ memory ለማጽዳት እዚህ እናስቀምጠዋለን
                 }
-              } catch (e) {
+              } catch (e) { 
                 console.error("Media file fetch error:", e);
               }
               return {

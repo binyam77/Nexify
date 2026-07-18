@@ -51,18 +51,17 @@ export default function CreateAccount({
     onSubmit(username, email);
   };
 
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="w-full max-w-md bg-white rounded-2xl shadow-input overflow-hidden border border-gray-200 p-8 sm:p-10"
+      className="w-full max-w-md bg-bodey-bg rounded-2xl shadow-card overflow-hidden border border-border p-8 sm:p-10"
       id="create-account-card"
     >
       <div className="text-center mb-8">
-        <h2 className="text-3xl font-bold text-gray-900 tracking-tight">
+        <h2 className="text-3xl font-bold text-text-h2 tracking-tight">
           Create Account
         </h2>
         <p className="text-gray-500 mt-2 text-sm sm:text-base">

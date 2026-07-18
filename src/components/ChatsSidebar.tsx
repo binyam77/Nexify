@@ -3,15 +3,29 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useRef } from 'react';
-import { SquarePen, Search, PlusCircle, Globe, Radio, MessageSquare, Image, Send, X } from 'lucide-react';
-import type { Chat } from '../types';
+import React, { useState, useRef } from "react";
+import {
+  SquarePen,
+  Search,
+  PlusCircle,
+  Globe,
+  Radio,
+  MessageSquare,
+  Image,
+  Send,
+  X,
+  Users,
+  Trash2,
+} from "lucide-react";
+import type { Chat } from "../types";
 
 interface ChatsSidebarProps {
   chats: Chat[];
   activeChatId: string | null;
   onSelectChat: (chatId: string) => void;
   onCreateChannelClick: () => void;
+  onCreateGroupClick: () => void;
+  onDeleteChat: (chatId: string) => void;
   onNewPostClick?: () => void;
 }
 
@@ -22,33 +36,68 @@ export default function ChatsSidebar({
   activeChatId,
   onSelectChat,
   onCreateChannelClick,
+  onCreateGroupClick,
+  onDeleteChat,
   onNewPostClick,
 }: ChatsSidebarProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
+  //Long-press to reveal delete confirmation (ልክ እንደ message options patterns)
+  const [confirmDeleteChat, setConfirmDeleteChat] = useState<Chat | null>(null);
+  const pressTimerRef = useRef<any>(null);
+  const longPressFiredRef = useRef(false);
 
+  const startPressTimer = (chat: Chat) => {
+    if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
+    longPressFiredRef.current = false;
+    pressTimerRef.current = setTimeout(() => {
+      longPressFiredRef.current = true;
+      setConfirmDeleteChat(chat);
+    }, 450);
+  };
+  const cancelPressTimer = () => {
+    if (pressTimerRef.current) {
+      clearTimeout(pressTimerRef.current);
+      pressTimerRef.current = null;
+    }
+  };
+  const handleChatTap = (chats: Chat) => {
+    if (longPressFiredRef.current) {
+      longPressFiredRef.current = false;
+      return;
+    }
+    onSelectChat(chats.id);
+  };
   // መልዕክቶችን በስም ለመፈለግ
   const filteredChats = chats.filter((chat) => {
-    return chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           chat.lastMsgText.toLowerCase().includes(searchQuery.toLowerCase());
+    return (
+      chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      chat.lastMsgText.toLowerCase().includes(searchQuery.toLowerCase())
+    );
   });
-
+ 
   return (
-    <section className="w-full md:w-[350px] border-r border-gray-100 bg-gray-50 flex flex-col h-full shrink-0" aria-label="Chats List">
+    <section
+      className="w-full md:w-[350px] border-r border-gray-100 bg-gray-50 flex flex-col h-full shrink-0"
+      aria-label="Chats List"
+    >
       {/* ራስጌ - የአርዕስት ክፍል */}
       <header className="p-5 bg-white border-b border-gray-50 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5">
           {/* Logo & Nexify Title: Visible only on mobile screens since desktop has the left Sidebar */}
-          <div className="flex items-center gap-2.5 md:hidden">
+          <div className="flex items-center gap-2.5 ">
             <img
               src="/logo.png"
               alt="Nexify"
               className="w-8 h-8 object-contain shrink-0"
               onError={(e) => {
                 // Graceful fallback if logo.png cannot be resolved in runtime
-                e.currentTarget.style.display = 'none';
+                e.currentTarget.style.display = "none";
               }}
             />
-            <h1 className="text-xl font-black tracking-tight text-gray-900" id="brand-header-title">
+            <h1
+              className="text-xl font-black tracking-tight text-gray-900"
+              id="brand-header-title"
+            >
               Nexify
             </h1>
           </div>
@@ -58,15 +107,26 @@ export default function ChatsSidebar({
             Rooms
           </h2>
         </div>
-        <button
-          type="button"
-          onClick={onCreateChannelClick}
-          className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all shrink-0"
-          aria-label="Create new channel"
-          title="Create Channel"
-        >
-          <PlusCircle className="w-6 h-6" />
-        </button>
+        <div className="flex items-center gap-1 ">
+          <button
+            type="button"
+            onClick={onCreateGroupClick}
+            className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all shrink-0"
+            aria-label="Create new group"
+            title="Create Group"
+          >
+            <Users className="w-6 h-6" />
+          </button>
+          <button
+            type="button"
+            onClick={onCreateChannelClick}
+            className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all shrink-0"
+            aria-label="Create new channel"
+            title="Create Channel"
+          >
+            <PlusCircle className="w-6 h-6" />
+          </button>
+        </div>
       </header>
 
       {/* የፍለጋ ሳጥን (Search Bar) */}
@@ -89,7 +149,9 @@ export default function ChatsSidebar({
         {filteredChats.length === 0 ? (
           <div className="flex flex-col items-center justify-center p-8 text-center h-full">
             <Globe className="w-10 h-10 text-gray-300 mb-3" />
-            <p className="text-sm font-semibold text-gray-600">No rooms found</p>
+            <p className="text-sm font-semibold text-gray-600">
+              No rooms found
+            </p>
             <p className="text-xs text-gray-400 mt-1 max-w-[200px]">
               Try searching with another keyword.
             </p>
@@ -100,11 +162,20 @@ export default function ChatsSidebar({
             return (
               <article
                 key={chat.id}
-                onClick={() => onSelectChat(chat.id)}
-                className={`flex items-center gap-3.5 px-4.5 py-4 cursor-pointer transition-all duration-200 relative ${
+                onMouseDown={() => startPressTimer(chat)}
+                onTouchStart={() => startPressTimer(chat)}
+                onMouseUp={cancelPressTimer}
+                onMouseLeave={cancelPressTimer}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setConfirmDeleteChat(chat);
+                }}
+                onClick={() => handleChatTap(chat)}
+                title="Hold for options"
+                className={`flex items-center gap-3.5 px-4.5 py-4 cursor-pointer select-none transition-all duration-200 relative ${
                   isActive
-                    ? 'bg-blue-50/70 border-l-3 border-brand'
-                    : 'bg-input hover:bg-gray-50/60 '
+                    ? "bg-blue-50/70 border-l-3 border-brand"
+                    : "bg-input hover:bg-gray-50/60 "
                 }`}
               >
                 {/* Chat Avatar (colorful circular initials or photo) */}
@@ -136,10 +207,12 @@ export default function ChatsSidebar({
                       {chat.lastMsgTime}
                     </time>
                   </div>
-                  
+
                   <div className="flex items-center justify-between gap-2">
                     <p className="text-xs text-gray-500 truncate font-medium">
-                      <span className="text-gray-700 font-semibold">{chat.lastMsgSender}: </span>
+                      <span className="text-gray-700 font-semibold">
+                        {chat.lastMsgSender}:{" "}
+                      </span>
                       {chat.lastMsgText}
                     </p>
 
@@ -155,10 +228,54 @@ export default function ChatsSidebar({
             );
           })
         )}
+      
       </div>
 
       {/* FUTURE: This footer code will be useful for dynamically loading new groups from the server side */}
       {/* // FUTURE: Load and pull rooms from PostgreSQL on page scroll using dynamic paging queries */}
+
+      {/*Delete Confirmation Modal (Channel/Group/Chat ሁልም ላይ ተመሳሳይ) */}
+      {confirmDeleteChat && (
+        <div
+          className="fixed inset-0 bg/black/60 backdrop-blur-sm flex items-center justify-center z-[110] 
+        p-4 animate-in fade-in duration-200"
+          onClick={() => setConfirmDeleteChat(null)}
+        >
+          <div
+            className="bg-white w-full max-w-xs rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in 
+          zoom-in-95 duration-200 p-5 text-center"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-cener mx-auto mb-3 text-rose-500">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-base font-black text-slate-800 mb-1">
+              Delete "{confirmDeleteChat.name}" ?
+            </h3>
+            <p className="text-xs text-slate-500 font-semibold mb-5">
+              This action cannot be undone. All messages will be permanently
+              removed.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmDeleteChat(null)}
+                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-black text-slate-500 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  onDeleteChat(confirmDeleteChat.id);
+                  setConfirmDeleteChat(null);
+                }}
+                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black text-white shadow-md transition-all"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </section>
   );
 }

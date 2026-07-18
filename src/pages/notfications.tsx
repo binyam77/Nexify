@@ -22,7 +22,7 @@ function iconBg(type: NotificationType) {
   switch (type) {
     case 'like':    return 'bg-input';
     case 'comment': return 'bg-input';
-    case 'follow':  return 'bg-input';
+    case 'follow':  return 'b-ginput';
     case 'mention': return 'bg-input';
     default:        return 'bg-slate-100';
   }
@@ -72,7 +72,7 @@ function NotifItem({ notif, onRead }: { notif: AppNotification; onRead: () => vo
           <span className="font-bold">{notif.actorUsername}</span>
           {' '}{notif.message}
         </p>
-        <p className="text-xs text-slate-400 mt-0.5">{formatTime(notif.createdAt)}</p>
+        <p className="text-xs text-small-text mt-0.5">{formatTime(notif.createdAt)}</p>
       </div>
 
       {/* Unread dot */}
@@ -91,20 +91,20 @@ export default function Notifications() {
   const read   = notifications.filter(n =>  n.isRead);
 
   return (
-    <div className="h-full w-full overflow-y-auto bg-white">
+    <div className="h-full w-full overflow-y-auto bg-bodey-bg">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-white border-b border-slate-100 px-4 py-4 flex items-center justify-between">
+      <div className="sticky top-0 z-10 bg-bodey-bg border-b border-slate-100 px-4 py-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-slate-900">Notifications</h1>
+          <h1 className="text-xl font-bold text-text-h1">Notifications</h1>
           {unreadCount > 0 && (
-            <p className="text-xs text-slate-400 mt-0.5">{unreadCount} new</p>
+            <p className="text-xs text-small-text mt-0.5">{unreadCount} new</p>
           )}
         </div>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
             <button
               onClick={markAllAsRead}
-              className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 px-3 py-1.5 rounded-lg hover:bg-blue-50 transition-colors"
+              className="flex items-center gap-1.5 text-xs font-semibold text-brand-dark hover:text-brand-light px-3 py-1.5 rounded-lg hover:bg-surface-raised transition-colors"
             >
               <CheckCheck className="w-3.5 h-3.5" />
               Mark all read
@@ -113,7 +113,7 @@ export default function Notifications() {
           {notifications.length > 0 && (
             <button
               onClick={clearAll}
-              className="flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-rose-500 px-3 py-1.5 rounded-lg hover:bg-rose-50 transition-colors"
+              className="flex items-center gap-1.5 text-xs font-semibold text-small-text hover:text-rose-500 px-3 py-1.5 rounded-lg hover:bg-surface-raised transition-colors"
             >
               <Trash2 className="w-3.5 h-3.5" />
               Clear
@@ -134,7 +134,7 @@ export default function Notifications() {
       {/* Unread */}
       {unread.length > 0 && (
         <div>
-          <p className="px-4 pt-4 pb-2 text-xs font-bold text-input-text uppercase tracking-wider">New</p>
+          <p className="px-4 pt-4 pb-2 text-xs font-bold text-text uppercase tracking-wider">New</p>
           <div className="divide-y divide-slate-100 bg-slate-300">
             {unread.map(n => (
               <NotifItem key={n.id} notif={n} onRead={() => markAsRead(n.id)} />

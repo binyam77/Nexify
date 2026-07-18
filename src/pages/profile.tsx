@@ -27,6 +27,7 @@ interface ProfileProps {
     name: string;
     username: string;
     photo: string;
+    bio?:string;
   }) => void;
 }
 
@@ -37,7 +38,7 @@ export default function Profile({
   onStartChat,
 }: ProfileProps) {
   // --- መለያ ፍቃድ መቆጣጠሪያ (Auth System Hooks) ---
-  const { user, login,updateUser, updateFollowCount } = useAuth();
+  const { user, login, updateUser, updateFollowCount } = useAuth();
   const navigate = useNavigate();
   const {
     posts: feedPosts,
@@ -62,13 +63,13 @@ export default function Profile({
   );
 
   // --- የተጠቃሚ መገለጫ ሁኔታ መቆጣጠሪያ (Profile Information States) ---
-  const profile:{
-    name:string;
-    username:string;
-    bio:string;
-    photo:string;
-    cover:string;
-  } ={
+  const profile: {
+    name: string;
+    username: string;
+    bio: string;
+    photo: string;
+    cover: string;
+  } = {
     name: user?.name || user?.username || "User",
     username: user?.username || "username",
     bio: user?.bio || "",
@@ -84,7 +85,6 @@ export default function Profile({
   // --- የሌሎች ተጠቃሚዎች መረጃ ዳታቤዝ (Other Creators Database for browsing) ---
 
   const [otherUsers, setOtherUsers] = useState<OtherCreator[]>([
-    
     {
       id: 2,
       name: "Betty Dev",
@@ -213,46 +213,23 @@ export default function Profile({
       }),
     );
   };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
   // --- የተጠቃሚ መገለጫ መረጃ መጫኛ (Load profile metadata from LocalStorage) ---
-  useEffect(()=>{
-    const savedIsFollowing =localStorage.getItem("isFollowing") === "true";
+  useEffect(() => {
+    const savedIsFollowing = localStorage.getItem("isFollowing") === "true";
     const savedCountF = localStorage.getItem("countF");
     setIsFollowing(savedIsFollowing);
-    if(savedCountF !== null){
+    if (savedCountF !== null) {
       setFollowersCount(parseInt(savedCountF, 10));
-    }else {
-      setFollowersCount(152); // Default count
-
+    } else {
+      setFollowersCount(0); // Default count
     }
-    const savedCountS=localStorage.getItem("countS");
-    if(savedCountS !== null){
+    const savedCountS = localStorage.getItem("countS");
+    if (savedCountS !== null) {
       setStarsCount(parseInt(savedCountS, 10));
-    }else{
-      setStarsCount(84); // Default Following count 
+    } else {
+      setStarsCount(0); // Default Following count
     }
   }, []);
-
-
-
-
-
-
-
   // --- ውጫዊ ሚዲያ መጫኛ መቆጣጠሪያ (Manage background uploads from outside) ---
   useEffect(() => {
     if (triggerGlobalUpload && fileInputRef.current) {
@@ -385,7 +362,7 @@ export default function Profile({
             0.6,
             400,
           );
-  updateUser({photo:compressed});
+          updateUser({ photo: compressed });
         }
       };
       reader.readAsDataURL(file);
@@ -402,7 +379,7 @@ export default function Profile({
             0.6,
             800,
           );
-        updateUser({ cover: compressed });
+          updateUser({ cover: compressed });
         }
       };
       reader.readAsDataURL(file);
@@ -457,13 +434,17 @@ export default function Profile({
       alert("Name can't be empty!");
       return;
     }
-    // Security: username ን lowercase/alphanumeric/underscore ብቻ እናደርገዋለን- Community chat matching 
+    // Security: username ን lowercase/alphanumeric/underscore ብቻ እናደርገዋለን- Community chat matching
     //በዚህ unique handle ልይ ስለሚመሰረት፤ ንቱህ ያልሆነ ግብዐት ቢገባ ግጥሚያ/routing ላይ ችግር ይፈጥራል
     const sanitizedUsername =
-    editUsername.trim().toLowerCase().replace(/[^a-z0-9_]/g, "") ||
-    user?.username || "username";
+      editUsername
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "") ||
+      user?.username ||
+      "username";
 
-    updateUser( {
+    updateUser({
       name: editName.trim(),
       username: sanitizedUsername,
       bio: editBio.trim(),
@@ -760,7 +741,7 @@ export default function Profile({
                   <input
                     type="text"
                     value={editName}
-                    onChange={(e) => setEditName(e.target.value.slice(0, 10))}
+                    onChange={(e) => setEditName(e.target.value.slice(0, 20))}
                     className="w-full px-4 py-2.5 bg-input border border-input-border focus:border-input-focus focus:bg-surface-raised rounded-xl text-sm font-semibold"
                   />
                 </div>

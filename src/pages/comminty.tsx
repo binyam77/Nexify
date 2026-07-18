@@ -5,14 +5,14 @@
 
 import React, { useState, useEffect } from "react";
 import { CheckCircle } from "lucide-react";
-import Sidebar from "../components/Sidebar";
+
 import ChatsSidebar from "../components/ChatsSidebar";
 import MessageArea from "../components/MessageArea";
 import NewChannelModal from "../components/NewChannelModal";
+import NewGroupModal from "../components/NewGroupModal";
 import Profile from "./profile";
 import { useAuth } from "../context/AuthContext";
 import type { Chat, Message, NavTab } from "../types";
-import { saveMediaFile } from "../lib/db";
 import { useLocation } from "react-router-dom";
 // ==========================================
 // Title: This is the primary Community.tsx file
@@ -23,10 +23,10 @@ import { useLocation } from "react-router-dom";
 export default function Community() {
   const [activeTab, setActiveTab] = useState<NavTab>("community");
   const [globalUploadTrigger, setGlobalUploadTrigger] = useState(false);
-  const [activeChatId, setActiveChatId] = useState<string | null>(
-    "channel-demo-1",
-  ); // መጀመሪያ ላይ Channel Demo የተመረጠ ይሁን
+  const [activeChatId, setActiveChatId] = useState<string | null>(null); // መጀመሪያ ላይ Rooms list ብቻ ይታይ፤ ምንም chat auto-select አይደረግም
+
   const [isNewChannelOpen, setIsNewChannelOpen] = useState(false);
+  const [isNewGroupOpen, setIsNewGroupOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // User profile details (Current member profile loaded dynamically from localStorage)
@@ -52,23 +52,39 @@ export default function Community() {
     return [
       {
         id: "channel-demo-1",
-        name: "Nexify Announcements",
-        lastMsgText: "System: Welcome to our official announcements channel!",
+        name: "Sniper trader",
+        description: "Weekly analsis  forex",
+        lastMsgText: "System: Subscribe to get our weekly digest!",
         lastMsgSender: "System",
-        lastMsgTime: "10:42 AM",
+        lastMsgTime: "Yesterdey",
         unreadCount: 1,
-        avatarLabel: "NX",
-        bgGradient: "bg-gradient-1",
-        membersCount: 1420,
+        avatarLabel: "ST",
+        bgGradient: "bg-gradient-3",
+        membersCount: 860,
         onlineCount: 0,
-        isJoined: true,
+        isJoined: false,
         type: "channel",
-        isCreatedByMe: true,
+        isCreatedByMe: false,
+      },
+      {
+        id: "group-demo-2",
+        name: "Nq emini tarders",
+        lastMsgText: "Sustem: Subscribe to get our weeky digest!",
+        lastMsgSender: "Binjamin",
+        lastMsgTime: "Yesterday",
+        unreadCount: 0,
+        avatarLabel: "NQ",
+        bgGradient: "bg-gradient-1",
+        membersCount: 1005,
+        onlineCount: 235,
+        isJoined: false,
+        type: "group",
       },
       {
         id: "chat-2",
         name: "Abel T. (UI/UX Designer)",
         participantUsername: "abel_codes",
+        bio: "Passionate UI/UX designer crafting clean, human-centered interfaces",
         lastMsgText: "Abel: The mobile screen version looks amazing!",
         lastMsgSender: "Abel",
         lastMsgTime: "09:15 AM",
@@ -77,7 +93,7 @@ export default function Community() {
         bgGradient: "bg-gradient-2",
         membersCount: 2,
         onlineCount: 1,
-        isJoined: true,
+        isJoined: false,
         type: "chat",
         isOnline: true,
       },
@@ -105,6 +121,15 @@ export default function Community() {
             isSentByMe: false,
           },
         ],
+        "group-demo-1": [
+          {
+            id: "m2",
+            senderName: "Nq emini tarders",
+            text: "Anyone up for pair programming this weekend?",
+            time: "Yesterdey",
+            isSentByMe: false,
+          },
+        ],
         "chat-2": [
           {
             id: "m2_1",
@@ -121,7 +146,12 @@ export default function Community() {
   // Profile >>Community chat redirect
   useEffect(() => {
     const state = location.state as {
-      openChatWith?: { name: string; username: string; photo: string };
+      openChatWith?: {
+        name: string;
+        username: string;
+        photo: string;
+        bio?: string;
+      };
     };
     if (state?.openChatWith) {
       handleStartChat(state.openChatWith);
@@ -164,6 +194,25 @@ export default function Community() {
   const triggerToast = (msg: string) => {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  // Delete chat/group/channel permanently (localStorage ውስጥ ካለው ሙሉ ይጠፋል፤ refresh/relogin ቢሆንም አይመለስም)
+  const handleDeleteChat = (chatId: string) => {
+    setChats((prev) => prev.filter((c) => c.id !== chatId));
+    setMessagesDb((prev) => {
+      const updated = { ...prev };
+      delete updated[chatId];
+      return updated;
+    });
+    if (activeChatId === chatId) {
+      setActiveChatId(null);
+    }
+    triggerToast("🗑️ Deleted successfully!");
+
+    // ==========================================
+    // FUTURE: Delete on backend too:
+    // ==========================================
+    // fetch(`/api/communities/${chatId}`, { method: 'DELETE' });
   };
 
   // Chat/Room selection handler
@@ -221,53 +270,6 @@ export default function Community() {
         return c;
       }),
     );
-  };
-
-  // Quick Post Creator: saves new community/feed posts directly from the Community tab
-  const handleQuickPostCreated = async (text: string, file: File | null) => {
-    const postId = Date.now();
-    let isVideo = false;
-    let fileName = "";
-
-    if (file) {
-      isVideo = file.type.startsWith("video/");
-      fileName = file.name;
-      try {
-        await saveMediaFile(postId, file);
-      } catch (err) {
-        console.error("Error saving media post file in IndexedDB:", err);
-      }
-    }
-
-    const hashtags = text.match(/#\w+/g) || [];
-    const newPost = {
-      id: postId,
-      isVideo,
-      fileName,
-      description: text.trim(),
-      hashtags,
-      username: userProfile.username,
-      avatar: userProfile.avatar || null,
-      views: 0,
-      likes: 0,
-      liked: false,
-      saves: 0,
-      saved: false,
-      timestamp: new Date().toISOString(),
-    };
-
-    const savedPosts = localStorage.getItem("userPostsMeta");
-    let postsList = [];
-    if (savedPosts) {
-      try {
-        postsList = JSON.parse(savedPosts);
-      } catch (e) {
-        console.error("Error loading posts list for quick creation:", e);
-      }
-    }
-    const updated = [newPost, ...postsList];
-    localStorage.setItem("userPostsMeta", JSON.stringify(updated));
-    triggerToast("🚀 አዲስ ልጥፍ ወደ ፕሮፋይልዎ በተሳካ ሁኔታ ተለጥፏል!");
   };
 
   // Edit message logic
@@ -452,6 +454,25 @@ export default function Community() {
     //   body: JSON.stringify({ chatId, userId: 'current_user_id' })
     // });
   };
+  // Create new group logic
+  const handleCreateGroup = (newChat: Chat) => {
+    setChats((prev) => [newChat, ...prev]);
+    setMessagesDb((prev) => ({
+      ...prev,
+      [newChat.id]: [],
+    }));
+    setActiveChatId(newChat.id);
+    triggerToast(`🚀 Group "${newChat.name}" created successfully!`);
+
+    // ==========================================
+    // FUTURE: Save newly created group in PostgreSQL using INSERT query:
+    // ==========================================
+    // fetch('/api/groups/create', {
+    //   method: 'POST',
+    //   headers: { 'Content-Type': 'application/json' },
+    //   body: JSON.stringify(newChat)
+    // });
+  };
 
   // Create new channel logic
   const handleCreateChannel = (newChat: Chat) => {
@@ -478,6 +499,7 @@ export default function Community() {
     name: string;
     username: string;
     photo: string;
+    bio?: string;
   }) => {
     // Security:exact username match ብቻ (name substring matching broken  access control risk ነበረው -
     // ተመሳሳይ/ተመሳሳይ ስም ያላቸው 2 ተተካሚዎች ቢኖሩም የተሳሳተ ፕሪቫተ ችሃት ይከፍት ነበረ)
@@ -502,6 +524,7 @@ export default function Community() {
         id: newChatId,
         name: `${user.name} (@${user.username})`,
         participantUsername: user.username,
+        bio: user.bio,
         lastMsgText: "Welcome! Start your conversation here.",
         lastMsgSender: user.name,
         lastMsgTime: new Date().toLocaleTimeString([], {
@@ -522,18 +545,7 @@ export default function Community() {
       setChats((prev) => [newChat, ...prev]);
       setMessagesDb((prev) => ({
         ...prev,
-        [newChatId]: [
-          {
-            id: `init-${Date.now()}`,
-            senderName: "System",
-            text: `👋 This is the start of your secure direct message channel with ${user.name}.`,
-            time: new Date().toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            }),
-            isSentByMe: false,
-          },
-        ],
+        [newChatId]: [],
       }));
       setActiveChatId(newChatId);
       setActiveTab("community");
@@ -555,22 +567,6 @@ export default function Community() {
         </div>
       )}
 
-      {/* 1. SIDEBAR (Left navigation bar) */}
-
-      <Sidebar
-        activeTab={activeTab}
-        setActiveTab={(tab: NavTab) => {
-          setActiveTab(tab);
-        }}
-        unreadCommunityCount={unreadTotal}
-        onUploadClick={() => {
-          setActiveTab("profile");
-
-          setGlobalUploadTrigger(true);
-        }}
-        hideOnMobile={activeTab === "community" && !!activeChatId}
-      />
-
       {/* Dynamic Tab Switching */}
       {activeTab === "community" && (
         /* Workspace View (Community Workspace Card) */
@@ -586,6 +582,8 @@ export default function Community() {
                 activeChatId={activeChatId}
                 onSelectChat={handleSelectChat}
                 onCreateChannelClick={() => setIsNewChannelOpen(true)}
+                onCreateGroupClick={() => setIsNewGroupOpen(true)}
+                onDeleteChat={handleDeleteChat}
                 onNewPostClick={() => {
                   setActiveTab("profile");
                   setGlobalUploadTrigger(true);
@@ -628,6 +626,12 @@ export default function Community() {
         isOpen={isNewChannelOpen}
         onClose={() => setIsNewChannelOpen(false)}
         onCreateChannel={handleCreateChannel}
+      />
+      {/*4. NEW GROUP MODAL (Create new Group dialog window)*/}
+      <NewGroupModal
+        isOpen={isNewGroupOpen}
+        onClose={() => setIsNewGroupOpen(false)}
+        onCreateGroup={handleCreateGroup}
       />
     </div>
   );

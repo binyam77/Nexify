@@ -9,6 +9,7 @@ import {
   LogOut,
   Trash2,
   ShieldAlert,
+  ArrowLeft,
 } from "lucide-react";
 import { useTheme } from "../context/ThemeContext";
 export default function Settings() {
@@ -171,7 +172,16 @@ export default function Settings() {
           <span className="text-sm font-medium">{alertMessage.text}</span>
         </div>
       )}
-
+      <div className="flex items-center gap-3 px-3 py-3 sticky top-0 z-10 md:hidden border-gray-100">
+        <button
+          onClick={() => navigate(-1)}
+          aria-label="Back"
+          className="flex items-center justify-center w-10 h-10 rounded-full 
+bg-white/90 active:bg-gray-200 transition-color"
+        >
+          <ArrowLeft size={22} strokeWidth={2.5} className="text-gray-900" />
+        </button>
+      </div>
       <button
         onClick={toggleTheme}
         role="switch"
