@@ -41,7 +41,6 @@ interface ViewVideoProps {
   handleToggleSavePost: (postId: string) => void;
   handleSharePost: (postId: string) => void;
   handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
-  handleToggleCommentLike: (postId: string, commentId: number) => void;
   handleAddComment: (postId: string, text: string) => void;
   handleDeleteComment: (postId: string, commentId: number) => void;
   handleAddReply: (postId: string, commentId: number, text: string) => void;
@@ -55,7 +54,6 @@ export default function ViewVideo({
   commentsMap,
   profile,
   otherUsers,
-  viewMode,
   followersCount,
   selectedMediaSrc,
   handleClosePlayer,
@@ -64,7 +62,6 @@ export default function ViewVideo({
   handleToggleSavePost,
   handleSharePost,
   handleDeletePost,
-  handleToggleCommentLike,
   handleAddComment,
   handleDeleteComment,
   handleAddReply,
@@ -128,6 +125,7 @@ export default function ViewVideo({
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- post ሲከየር UI ሁነታ reset ማድረግ ትክክለኛ pattern ነው
     setVideoPlaying(true);
     setVideoCurrentTime(0);
     setVideoDuration(0);
@@ -265,7 +263,6 @@ export default function ViewVideo({
           handleToggleSavePost={handleToggleSavePost}
           handleSharePost={handleSharePost}
          handleDeletePost ={handleDeletePost}
-          handleToggleCommentLike={handleToggleCommentLike}
           handleAddComment={handleAddComment}
           handleDeleteComment={handleDeleteComment}
           handleAddReply={handleAddReply}
@@ -521,21 +518,7 @@ export default function ViewVideo({
                               )}
                             </span>
 
-                            <button
-                              onClick={() =>
-                                handleToggleCommentLike(
-                                  selectedPost.id,
-                                  comment.id,
-                                )
-                              }
-                              className={`flex items-center gap-1 ${comment.liked ? "text-rose-500" : "text-slate-400"}`}
-                            >
-                              <Heart
-                                className={`w-3.5 h-3.5 ${comment.liked ? "fill-rose-500 text-rose-500" : ""}`}
-                              />
-                              <span>{comment.likesCount || 0}</span>
-                            </button>
-
+                         
                             <button
                               onClick={() => {
                                 if (activeReplyTo === comment.id) {

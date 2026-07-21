@@ -7,7 +7,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../routes";
-import { ArrowLeft, X, Camera, Trash2, Edit, Send } from "lucide-react";
+import {  X, Camera, Trash2 } from "lucide-react";
 import { saveMediaFile, deleteMediaFile } from "../lib/db";
 import ShareModal from "../components/ShareModal";
 import { useFeed } from "../context/FeedContext";
@@ -32,13 +32,13 @@ interface ProfileProps {
 }
 
 export default function Profile({
-  onBackToCommunity,
+  
   triggerGlobalUpload,
   onClearGlobalUpload,
   onStartChat,
 }: ProfileProps) {
   // --- መለያ ፍቃድ መቆጣጠሪያ (Auth System Hooks) ---
-  const { user, login, updateUser, updateFollowCount } = useAuth();
+  const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const {
     posts: feedPosts,
@@ -50,11 +50,10 @@ export default function Profile({
     toggleSave,
     incrementShare,
     addComment,
-    editComment,
+  
     deleteComment,
-    toggleCommentLike,
     addReply,
-    deleteReply,
+  
   } = useFeed();
   // Single source of truth: Profile የራሱ post copy አይይዝም፤ FeedContext ን filter ብቻ ያደርጋል
 
@@ -125,7 +124,6 @@ export default function Profile({
   const otherProfile = otherUsers[selectedOtherUser] || null;
 
   // --- ተከታታይ እና የሚከታተሏቸው ቁጥር ሁኔታዎች (Followers & Following counts) ---
-  const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [starsCount, setStarsCount] = useState(0); // starsCount represents Following count!
 
@@ -162,7 +160,7 @@ export default function Profile({
   const [uploadPreviewUrl, setUploadPreviewUrl] = useState<string>("");
   const [uploadIsVideo, setUploadIsVideo] = useState(false);
   const [uploadDescription, setUploadDescription] = useState("");
-  const [uploadThumbnail, setUploadThumbnail] = useState<string>("");
+  
 
   const [editName, setEditName] = useState("");
   const [editUsername, setEditUsername] = useState("");
@@ -174,7 +172,7 @@ export default function Profile({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
-  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  
 
   // --- በቀጥታ የሚዲያ መጫኛ ማጣቀሻዎች (Direct profile & cover upload refs) ---
   const directPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -215,9 +213,9 @@ export default function Profile({
   };
   // --- የተጠቃሚ መገለጫ መረጃ መጫኛ (Load profile metadata from LocalStorage) ---
   useEffect(() => {
-    const savedIsFollowing = localStorage.getItem("isFollowing") === "true";
+     /* eslint-disable react-hooks/set-state-in-effect -- localStorage initial load ትክክለኛ pattern ነው*/
     const savedCountF = localStorage.getItem("countF");
-    setIsFollowing(savedIsFollowing);
+   
     if (savedCountF !== null) {
       setFollowersCount(parseInt(savedCountF, 10));
     } else {
@@ -229,6 +227,7 @@ export default function Profile({
     } else {
       setStarsCount(0); // Default Following count
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
   }, []);
   // --- ውጫዊ ሚዲያ መጫኛ መቆጣጠሪያ (Manage background uploads from outside) ---
   useEffect(() => {
@@ -268,7 +267,7 @@ export default function Profile({
     );
     if (currentIndex === -1) return;
 
-    let nextIndex = currentIndex + (direction === "next" ? 1 : -1);
+    const nextIndex = currentIndex + (direction === "next" ? 1 : -1);
     if (nextIndex >= 0 && nextIndex < currentList.length) {
       const nextPost = currentList[nextIndex];
       setSelectedPostId(nextPost.id);
@@ -294,6 +293,7 @@ export default function Profile({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleNavigatePost በየ render ስለሚፈጠር
   }, [selectedPost, viewMode, myPosts, otherUsers]);
 
   // --- ላይክ ተግባራት (Toggle like actions) ---
@@ -311,11 +311,7 @@ export default function Profile({
     addComment(postId, text, profile.username, profile.photo || null);
   };
 
-  // --- የአስተያየት ላይክ መቆጣጠሪያ (Delegate to FeedContext) ---
-  const handleToggleCommentLike = (postId: string, commentId: number) => {
-    toggleCommentLike(postId, commentId);
-  };
-
+  
   // --- የአስተያየት ምላሽ (Delegate to FeedContext) ---
   const handleAddReply = (postId: string, commentId: number, text: string) => {
     addReply(postId, commentId, text, profile.username, profile.photo || null);
@@ -507,7 +503,6 @@ export default function Profile({
     setUploadIsVideo(isVideo);
     setUploadPreviewUrl(URL.createObjectURL(file));
     setUploadDescription("");
-    setUploadThumbnail("");
     setIsUploadModalOpen(true);
   };
 
@@ -541,7 +536,6 @@ export default function Profile({
       setIsUploadModalOpen(false);
       setUploadFile(null);
       setUploadDescription("");
-      setUploadThumbnail("");
     } catch (e) {
       console.error("Failed to post media:", e);
       alert("Failed to publish post. Try using a smaller file.");
@@ -633,7 +627,6 @@ export default function Profile({
           viewMode={viewMode}
           handleOpenPlayer={handleOpenPlayer}
           handleDeletePost={handleDeletePost}
-          formatCount={formatCount}
         />
       </div>
 
@@ -879,7 +872,6 @@ export default function Profile({
           handleToggleSavePost={handleToggleSavePost}
           handleSharePost={handleSharePost}
           handleDeletePost={handleDeletePost}
-          handleToggleCommentLike={handleToggleCommentLike}
           handleAddComment={handleAddComment}
           handleDeleteComment={handleDeleteComment}
           handleAddReply={handleAddReply}

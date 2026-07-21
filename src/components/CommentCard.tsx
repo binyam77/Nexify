@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Heart, Pencil, Trash2, Send } from "lucide-react";
+import {  Pencil, Trash2, Send } from "lucide-react";
 import EmojiPicker from "./EmojiPicker";
 import type { CommentItem, CommentReply } from "../types";
 
@@ -10,7 +10,6 @@ interface CommentCardProps {
   currentUsername: string;
   onDelete: (commentId: number) => void;
   onEdit: (commentId: number, newText: string) => void;
-  onToggleLike: (commentId: number) => void;
   onAddReply: (commentId: number, text: string) => void;
   onDeleteReply: (commentId: number, replyId: number) => void;
 }
@@ -20,7 +19,6 @@ export default function CommentCard({
   currentUsername,
   onDelete,
   onEdit,
-  onToggleLike,
   onAddReply,
   onDeleteReply,
 }: CommentCardProps) {
@@ -104,14 +102,7 @@ export default function CommentCard({
             <span className="text-[11px] text-slate-400">
               {comment.timestamp}
             </span>
-            <button
-              type="button"
-              onClick={() => onToggleLike(comment.id)}
-              className={`flex items-center gap-1 text-xs font-semibold hover:opacity-70 ${comment.liked ? "text-rose-600" : "text-slate-500"}`}
-            >
-              <Heart size={13} fill={comment.liked ? "currentColor" : "none"} />
-              <span>{comment.likesCount}</span>
-            </button>
+            
             <button
               type="button"
               onClick={() => setShowReplyInput((s) => !s)}

@@ -32,8 +32,6 @@ export interface CommentItem {
   username: string;
   avatar: string | null;
   timestamp: string;
-  likesCount: number;
-  liked: boolean;
   replies: CommentReply[];
 }
 

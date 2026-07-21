@@ -11,7 +11,7 @@ import {
   Share2,
   Trash2,
   Send,
-  X,
+  
 } from "lucide-react";
 import type { FeedPost, CommentItem } from "../types";
 
@@ -49,7 +49,6 @@ interface LeftProps {
   handleToggleSavePost: (postId: string) => void;
   handleSharePost: (postId: string) => void;
   handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
-  handleToggleCommentLike: (postId: string, commentId: number) => void;
   handleAddComment: (postId: string, text: string) => void;
   handleDeleteComment: (postId: string, commentId: number) => void;
   handleAddReply: (postId: string, commentId: number, text: string) => void;
@@ -79,7 +78,6 @@ export default function Left({
   handleToggleSavePost,
   handleSharePost,
   handleDeletePost,
-  handleToggleCommentLike,
   handleAddComment,
   handleDeleteComment,
   handleAddReply,
@@ -268,21 +266,7 @@ export default function Left({
                         })}
                       </span>
 
-                      <button
-                        onClick={() =>
-                          handleToggleCommentLike(selectedPost.id, comment.id)
-                        }
-                        className={`flex items-center gap-1 hover:text-rose-600 transition-all ${
-                          comment.liked ? "text-rose-500 scale-105" : "text-slate-400"
-                        }`}
-                        title="Like comment"
-                      >
-                        <Heart
-                          className={`w-3.5 h-3.5 ${comment.liked ? "fill-rose-500 text-rose-500" : ""}`}
-                        />
-                        <span>{comment.likesCount || 0}</span>
-                      </button>
-
+                      
                       <button
                         onClick={() => {
                           if (activeReplyTo === comment.id) {

@@ -4,8 +4,8 @@
  */
 
 import React from "react";
-import { Eye, Heart, Trash2 } from "lucide-react";
-import type{ FeedPost } from "../types";
+import { Trash2 } from "lucide-react";
+import type { FeedPost } from "../types";
 
 // ProfileVideo.tsx የProp ዓይነቶች መግለጫ (Props Interface for ProfileVideo.tsx)
 interface ProfileVideoProps {
@@ -13,7 +13,7 @@ interface ProfileVideoProps {
   viewMode: "me" | "other";
   handleOpenPlayer: (post: FeedPost) => void;
   handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
-  formatCount: (num: number) => string;
+  
 }
 
 export default function ProfileVideo({
@@ -21,7 +21,6 @@ export default function ProfileVideo({
   viewMode,
   handleOpenPlayer,
   handleDeletePost,
-  formatCount,
 }: ProfileVideoProps) {
   return (
     <div className="min-h-48">
@@ -32,7 +31,8 @@ export default function ProfileVideo({
             No content published in Posts
           </h3>
           <p className="text-xs text-small-text max-w-xs mb-5">
-            Select a file and publish your very first picture or video stream with hashtags!
+            Select a file and publish your very first picture or video stream
+            with hashtags!
           </p>
         </div>
       ) : (
@@ -75,40 +75,13 @@ export default function ProfileVideo({
                   </div>
                 )}
 
-                {/* 2. Engagement stats counts overlay badge (Always visible on mobile) */}
-                <div className="absolute bottom-2.5 right-2.5 bg-black/60 backdrop-blur-md text-white text-[10px] font-bold px-2 py-1 rounded-lg flex items-center gap-2.5 shadow-sm z-10 group-hover:opacity-0 transition-opacity duration-200 border border-white/5">
-                  <span className="flex items-center gap-1">
-                    <Eye className="w-3.5 h-3.5 text-white/95" />
-                    <span>{formatCount(post.viewsCount)}</span>
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Heart
-                      className={`w-3.5 h-3.5 ${post.liked ? "fill-rose-500 text-rose-500" : "text-white/95"}`}
-                    />
-                    <span>{formatCount(post.likesCount)}</span>
-                  </span>
-                </div>
-
                 {/* 3. Likes, Description and Trash/Delete Action on Hover (Desktop) */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-transparent flex flex-col justify-end p-4 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
                   <p className="text-xs text-white/90 font-medium line-clamp-2 leading-relaxed mb-3">
                     {post.caption}
                   </p>
 
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3 text-white text-xs font-bold">
-                      <span className="flex items-center gap-1">
-                        <Eye className="w-3.5 h-3.5 text-white/80" />{" "}
-                        {formatCount(post.viewsCount)}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Heart
-                          className={`w-3.5 h-3.5 ${post.liked ? "fill-rose-500 text-rose-500" : "text-white/80"}`}
-                        />{" "}
-                        {formatCount(post.likesCount)}
-                      </span>
-                    </div>
-
+                  <div className="flex items-center justify-end">
                     {viewMode === "me" && (
                       <button
                         onClick={(e) => handleDeletePost(post.id, e)}
@@ -120,7 +93,6 @@ export default function ProfileVideo({
                     )}
                   </div>
                 </div>
-
               </div>
             );
           })}

@@ -9,7 +9,22 @@ import type { ReactNode } from "react";
 import type { CommentItem, FeedPost } from "../types";
 // የ'import' ማስተካከያ ከላይ
 import { getMediaFile } from "../lib/db";
-
+// Legacy localStorage["userPostMeta"] shape (backend ሲመጣ ይሀ File ጨርሶ ይጠፋል)
+interface LegacyLocalPost {
+  id: number;
+  username?: string;
+  avatar?: string | null;
+  isVideo?: boolean;
+  thumbnail?: string;
+  description?: string;
+  hashtags?: string[];
+  likes?: number;
+  saves?: number;
+  views?: number;
+  timestamp?: string;
+  liked?:boolean;
+  saved?:boolean;
+}
 // Mock posts — otherUsers posts (algorithm ሲሰራ API ይተካዋል)
 const MOCK_FEED_POSTS: FeedPost[] = [
   {
@@ -91,7 +106,6 @@ interface FeedContextType {
   ) => void;
   editComment: (postId: string, commentId: number, newText: string) => void;
   deleteComment: (postId: string, commentId: number) => void;
-  toggleCommentLike: (postId: string, commentId: number) => void;
   addReply: (
     postId: string,
     commentId: number,
@@ -126,17 +140,6 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       }
     },
   );
-  const persistComments = useCallback(
-    (updated: Record<string, CommentItem[]>) => {
-      setCommentsMap(updated);
-      try {
-        localStorage.setItem("feedCommentsMap", JSON.stringify(updated));
-      } catch (e) {
-        console.error("Failed to persist comments: ", e);
-      }
-    },
-    [],
-  );
 
   useEffect(() => {
     // የፈጠርናቸውን object URLs ለመከታተል የሚጠቅም array
@@ -149,7 +152,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
         try {
           const parsed = JSON.parse(savedPosts);
           userPosts = await Promise.all(
-            parsed.map(async (p: any) => {
+            parsed.map(async (p: LegacyLocalPost) => {
               let mediaUrl = p.thumbnail || "";
               try {
                 const blob = await getMediaFile(Number(p.id));
@@ -157,7 +160,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
                   mediaUrl = URL.createObjectURL(blob);
                   createdUrls.push(mediaUrl); // በኋላ ላይ ከ memory ለማጽዳት እዚህ እናስቀምጠዋለን
                 }
-              } catch (e) { 
+              } catch (e) {
                 console.error("Media file fetch error:", e);
               }
               return {
@@ -261,8 +264,6 @@ export function FeedProvider({ children }: { children: ReactNode }) {
         username,
         avatar,
         timestamp: new Date().toISOString(),
-        likesCount: 0,
-        liked: false,
         replies: [],
       };
       setCommentsMap((prevMap) => {
@@ -324,30 +325,6 @@ export function FeedProvider({ children }: { children: ReactNode }) {
           : p,
       ),
     );
-  }, []);
-
-  const toggleCommentLike = useCallback((postId: string, commentId: number) => {
-    setCommentsMap((prevMap) => {
-      const list = prevMap[postId] || [];
-      const updatedList = list.map((c) =>
-        c.id === commentId
-          ? {
-              ...c,
-              liked: !c.liked,
-              likesCount: c.liked
-                ? Math.max(0, c.likesCount - 1)
-                : c.likesCount + 1,
-            }
-          : c,
-      );
-      const updated = { ...prevMap, [postId]: updatedList };
-      try {
-        localStorage.setItem("feedCommentsMap", JSON.stringify(updated));
-      } catch (e) {
-        console.error("Failed to persist comments:", e);
-      }
-      return updated;
-    });
   }, []);
 
   const addReply = useCallback(
@@ -429,7 +406,6 @@ export function FeedProvider({ children }: { children: ReactNode }) {
         addComment,
         editComment,
         deleteComment,
-        toggleCommentLike,
         addReply,
         deleteReply,
       }}
@@ -438,7 +414,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     </FeedContext.Provider>
   );
 }
-
+// eslint-disable-next-line react-refresh/only-export-components -- context+hook በ1 File ማድረግ የተለመደ pattern ነው
 export function useFeed() {
   const ctx = useContext(FeedContext);
   if (!ctx) throw new Error("useFeed must be used within FeedProvider");

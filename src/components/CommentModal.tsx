@@ -11,7 +11,6 @@ interface CommentModalProps {
   onPostComment: (text: string) => void;
   onDeleteComment: (id: number) => void;
   onEditComment: (id: number, text: string) => void;
-  onToggleLike: (id: number) => void;
   onAddReply: (id: number, text: string) => void;
   onDeleteReply: (commentId: number, replyId: number) => void;
 }
@@ -23,7 +22,6 @@ export default function CommentModal({
   onPostComment,
   onDeleteComment,
   onEditComment,
-  onToggleLike,
   onAddReply,
   onDeleteReply,
 }: CommentModalProps) {
@@ -81,7 +79,6 @@ export default function CommentModal({
               currentUsername={currentUsername}
               onDelete={onDeleteComment}
               onEdit={onEditComment}
-              onToggleLike={onToggleLike}
               onAddReply={onAddReply}
               onDeleteReply={onDeleteReply}
             />

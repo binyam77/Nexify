@@ -31,7 +31,6 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
     addComment,
     deleteComment,
     editComment,
-    toggleCommentLike,
     addReply,
     deleteReply,
   } = useFeed();
@@ -131,9 +130,11 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
     >
       {/*Share feedback toast - clipboard success/failure ተተካሚው እንዲያውክ */}
       {toastVisible && (
-        <div className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 bg-black/80 text-white text-xs
+        <div
+          className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 bg-black/80 text-white text-xs
         font-medium py-2 px-4 rounded-full backdrop-blur-sm shadow-lg animate-fade-in
-        pointer-events-none">
+        pointer-events-none"
+        >
           {toastMessage}
         </div>
       )}
@@ -178,6 +179,7 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
                 onChange={(e) => {
                   const val = Number(e.target.value);
                   setVolume(val);
+                  //eslint-disable-next-line react-hooks/immutability -- imperative video control ትክክለኛ ref pattern  ነው
                   if (videoRef.current) videoRef.current.volume = val;
                 }}
                 className="w-20 h-1 accent-white cursor-pointer"
@@ -190,6 +192,7 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
                 setIsMuted(next);
                 if (!videoRef.current) return;
                 try {
+                  // eslint-disable ract-hooks/immutability -- imperative video control ትክክለኛ ref pattern ነው
                   videoRef.current.muted = next;
                   videoRef.current.volume = next ? 0 : volume;
                   if (!videoRef.current.paused) {
@@ -385,9 +388,9 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
         />
         {/* Share */}
         <button
-          onClick={ async() => {
-           const success= await share();
-          if(success)  incrementShare(post.id);
+          onClick={async () => {
+            const success = await share();
+            if (success) incrementShare(post.id);
           }}
           className="flex flex-col items-center gap-1"
         >
@@ -422,7 +425,6 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
           onEditComment={(commentId, newText) =>
             editComment(post.id, commentId, newText)
           }
-          onToggleLike={(commentId) => toggleCommentLike(post.id, commentId)}
           onAddReply={(id, text) =>
             addReply(
               post.id,
