@@ -143,22 +143,18 @@ export default function Community() {
     },
   );
   const location = useLocation();
-  // Profile >>Community chat redirect
-  useEffect(() => {
-    const state = location.state as {
-      openChatWith?: {
-        name: string;
-        username: string;
-        photo: string;
-        bio?: string;
-      };
+  //Profile >> Community chat redirect
+  useEffect(()=>{
+    const state =location.state as{
+      openChatWith?:{name:string; username:string; photo:string; bio?:string};
+
     };
-    if (state?.openChatWith) {
+    if(state?.openChatWith){
       handleStartChat(state.openChatWith);
-      // State ተዳ ፟>> reload ሲሆን እንደገና እንዳይከፈት
       window.history.replaceState({}, "");
     }
-  }, []);
+    // eslint-disable react-hooks/exhastive-deps -- handleStartChat በየ render ስለሚፈጠር dependency ማድረግ loop ይፈጥራል
+  },[location.state]);
   // Save changes to localStorage on change
   useEffect(() => {
     localStorage.setItem("nexify_chats", JSON.stringify(chats));
@@ -169,6 +165,7 @@ export default function Community() {
   }, [messagesDb]);
 
   // Total unread messages count for active chats to display on the sidebar
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Sidebar's unreadCommunityCount prop ላይ ጥክም ላይ ይውላል
   const unreadTotal = chats.reduce(
     (sum, c) => sum + (c.isJoined ? c.unreadCount : 0),
     0,
@@ -584,10 +581,6 @@ export default function Community() {
                 onCreateChannelClick={() => setIsNewChannelOpen(true)}
                 onCreateGroupClick={() => setIsNewGroupOpen(true)}
                 onDeleteChat={handleDeleteChat}
-                onNewPostClick={() => {
-                  setActiveTab("profile");
-                  setGlobalUploadTrigger(true);
-                }}
               />
             </div>
 

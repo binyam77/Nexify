@@ -4,7 +4,7 @@
  */
 
 import React, { useState } from 'react';
-import { X, Copy, Check, Send, Share2 } from 'lucide-react';
+import { X, Copy, Check,  Share2 } from 'lucide-react';
 
 // --- የShareModalProps በይነገጽ (Props Interface) ---
 interface ShareModalProps {

@@ -1,8 +1,7 @@
-import { useNavigate } from 'react-router-dom';
+
 import { Heart, MessageCircle, UserPlus, AtSign, Bell, CheckCheck, Trash2 } from 'lucide-react';
 import { useNotifications } from '../context/NotificationContext';
 import type { AppNotification, NotificationType } from '../context/NotificationContext';
-import { ROUTES } from '../routes';
 import { cn } from '../utils';
 
 // Notification icon by type
@@ -85,7 +84,7 @@ function NotifItem({ notif, onRead }: { notif: AppNotification; onRead: () => vo
 
 export default function Notifications() {
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotifications();
-  const navigate = useNavigate();
+
 
   const unread = notifications.filter(n => !n.isRead);
   const read   = notifications.filter(n =>  n.isRead);

@@ -5,15 +5,9 @@
 
 import React, { useState, useRef } from "react";
 import {
-  SquarePen,
   Search,
   PlusCircle,
   Globe,
-  Radio,
-  MessageSquare,
-  Image,
-  Send,
-  X,
   Users,
   Trash2,
 } from "lucide-react";
@@ -26,7 +20,6 @@ interface ChatsSidebarProps {
   onCreateChannelClick: () => void;
   onCreateGroupClick: () => void;
   onDeleteChat: (chatId: string) => void;
-  onNewPostClick?: () => void;
 }
 
 // Title: ChatsSidebar Component (List directory of groups and chats)
@@ -38,12 +31,11 @@ export default function ChatsSidebar({
   onCreateChannelClick,
   onCreateGroupClick,
   onDeleteChat,
-  onNewPostClick,
 }: ChatsSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
   //Long-press to reveal delete confirmation (ልክ እንደ message options patterns)
   const [confirmDeleteChat, setConfirmDeleteChat] = useState<Chat | null>(null);
-  const pressTimerRef = useRef<any>(null);
+  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFiredRef = useRef(false);
 
   const startPressTimer = (chat: Chat) => {

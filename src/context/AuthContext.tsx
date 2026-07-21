@@ -28,10 +28,11 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
+ 
   useEffect(() => {
     // ⏳ ለጊዜው localStorage — backend ሲመጣ ይህን ብቻ ቀይር:
     // const res = await api.getMe(); setUser(res.data);
+   /*eslint-disable react-hooks/set-state-in-effect -- localStorage initial load ትክክለኛ pattern ነው */
     try {
       const stored = localStorage.getItem("authUser");
       if (stored) setUser(JSON.parse(stored));
@@ -94,7 +95,7 @@ const updateFollowCount=(type:'followers' | 'following', increment:boolean)=>{
     </AuthContext.Provider>
   );
 }
-
+//eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) throw new Error("useAuth ከ AuthProvider ውጪ ጥቅም ላይ ዋለ");

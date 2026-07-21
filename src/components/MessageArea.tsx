@@ -7,23 +7,16 @@ import React, { useState, useRef, useEffect } from "react";
 import {
   ArrowLeft,
   Send,
-  Paperclip,
   Smile,
   Search,
   EllipsisVertical,
   CheckCheck,
   Users,
-  HelpCircle,
   Pencil,
   Trash2,
-  Heart,
-  Image,
-  Video,
   X,
-  ThumbsUp,
   Plus,
   Check,
-  Mic,
 } from "lucide-react";
 import ChannelInfoModal from "./ChannelInfoModal";
 import ChatInfoModal from "./ChatInfoModal";
@@ -72,13 +65,7 @@ export default function MessageArea({
 
   const QUICK_EMOJIS = ["👍", "❤️", "😂", "😆", "😭", "😡"];
 
-  const mockGroupMembers = [
-    { name: "Yonas G.", bg: "bg-emerald-500", initial: "Y" },
-    { name: "Selam W.", bg: "bg-indigo-500", initial: "S" },
-    { name: "Abel K.", bg: "bg-amber-500", initial: "A" },
-    { name: "Aster T.", bg: "bg-pink-500", initial: "A" },
-    { name: "Michael B.", bg: "bg-violet-500", initial: "M" },
-  ];
+ 
 
   // Scroll to bottom when a new message is received or active chat changes
   useEffect(() => {
@@ -116,7 +103,7 @@ export default function MessageArea({
   const [isChatInfoOpen, setIsChatInfoOpen] = useState(false);
 
   // Timer references for long-press gesture -ብቻ hold options modal ይከፈታል ፈታን ንኪኪ አይደለም
-  const pressTimerRef = useRef<any>(null);
+  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFiredRef = useRef(false);
 
   const startPressTimer = (msg: Message) => {
@@ -145,7 +132,6 @@ export default function MessageArea({
   };
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
   const [isSearchingMessages, setIsSearchingMessages] = useState(false);
-  const [showMediaSelector, setShowMediaSelector] = useState(false);
   const [attachedMedia, setAttachedMedia] = useState<{
     url: string;
     type: "image" | "video" | "audio" | "pdf";
@@ -214,7 +200,7 @@ export default function MessageArea({
     submitMessage();
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+  const handleKeyDown = () => {
     // We let Enter function as standard newline insertion in the textarea on all platforms
     // to allow multi-line drafting. The user will use the explicit Send button to submit.
   };

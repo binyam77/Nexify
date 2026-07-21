@@ -7,7 +7,6 @@ import React, { useState, useRef } from "react";
 import {
   X,
   Plus,
-  Sparkles,
   Radio,
   Upload,
   Trash2,

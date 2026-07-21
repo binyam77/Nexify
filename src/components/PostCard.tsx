@@ -192,7 +192,7 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
                 setIsMuted(next);
                 if (!videoRef.current) return;
                 try {
-                  // eslint-disable ract-hooks/immutability -- imperative video control ትክክለኛ ref pattern ነው
+                  // eslint-disable-next-line react-hooks/immutability -- imperative video control ትክክለኛ ref pattern ነው
                   videoRef.current.muted = next;
                   videoRef.current.volume = next ? 0 : volume;
                   if (!videoRef.current.paused) {

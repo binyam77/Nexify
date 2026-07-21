@@ -19,7 +19,7 @@ import { cn } from "../utils";
 import { useNotifications } from "../context/NotificationContext";
 import logo from "../assets/logo.png";
 import type { NavTab } from "../types";
-import { ScissorsSquareDashedBottom } from "lucide-react";
+
 
 const footerLinks = [
   { label: "About", to: ROUTES.about },
