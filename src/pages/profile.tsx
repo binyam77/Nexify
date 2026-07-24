@@ -11,6 +11,7 @@ import {  X, Camera, Trash2 } from "lucide-react";
 import { saveMediaFile, deleteMediaFile } from "../lib/db";
 import ShareModal from "../components/ShareModal";
 import { useFeed } from "../context/FeedContext";
+import { useUI } from "../context/UIContext";
 import type { FeedPost, OtherCreator } from "../types";
 
 // ንዑስ ክፍሎች ማስመጫ (Importing child components)
@@ -138,7 +139,12 @@ export default function Profile({
         (p) => p.id === selectedPostId,
       ) || null
     : null;
-
+const {setFullscreenModalOpen}=useUI();
+useEffect(()=>{
+  setFullscreenModalOpen(!!selectedPost);
+  return ()=> setFullscreenModalOpen(false);
+  //eslint-disable-next-line react-hooks/exhaustive-deps
+}, [selectedPost]);
   // --- የተጠቃሚ ገፅ ሞዳሎች መቆጣጠሪያዎች (UI Dialog / Modals display togglers) ---
   const [activeTab, setActiveTab] = useState<"posts" | "video" | "likes">(
     "posts",

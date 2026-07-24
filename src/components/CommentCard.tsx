@@ -1,5 +1,5 @@
 import { useState } from "react";
-import {  Pencil, Trash2, Send } from "lucide-react";
+import { Pencil, Trash2, Send } from "lucide-react";
 import EmojiPicker from "./EmojiPicker";
 import type { CommentItem, CommentReply } from "../types";
 
@@ -48,142 +48,134 @@ export default function CommentCard({
     setReplyText("");
     setShowReplyInput(false);
   }
+return (
+    <div className="flex items-start gap-2.5">
+      <img
+        src={comment.avatar ?? undefined}
+        alt={comment.username}
+        className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-zinc-800"
+      />
 
-  return (
-    <div className="rounded-xl border-l-[3px] border-blue-600 bg-white p-3 shadow-sm transition-transform hover:translate-x-0.5">
-      <div className="flex items-start gap-2.5">
-        <img
-          src={comment.avatar ?? undefined}
-          alt={comment.username}
-          className="h-9 w-9 shrink-0 rounded-full border-2 border-blue-600 object-cover"
-        />
-
-        <div className="min-w-0 flex-1">
-          {!isEditing ? (
-            <p className="break-words text-sm leading-relaxed text-slate-700">
-              <span className="mr-1.5 font-bold text-blue-600">
-                {comment.username}
-              </span>
+      <div className="min-w-0 flex-1">
+        {!isEditing ? (
+          <div className="flex flex-col gap-0.5">
+            <span className="text-[13px] font-semibold text-white">
+              {comment.username}
+            </span>
+            <p className="break-words text-sm leading-snug text-zinc-100">
               {comment.text}
             </p>
-          ) : (
-            <div>
-              <input
-                value={editText}
-                maxLength={300}
-                onChange={(e) => setEditText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") saveEdit();
-                  if (e.key === "Escape") setIsEditing(false);
-                }}
-                className="w-full rounded-lg border-[1.5px] border-blue-600 bg-blue-50/40 px-3.5 py-2 text-sm text-slate-700 outline-none"
-                autoFocus
-              />
-              <div className="mt-2 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsEditing(false)}
-                  className="rounded-lg bg-slate-100 px-4 py-1 text-xs font-bold text-slate-500 hover:bg-slate-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={saveEdit}
-                  className="rounded-lg bg-blue-600 px-4 py-1 text-xs font-bold text-white hover:bg-blue-700"
-                >
-                  Save
-                </button>
-              </div>
-            </div>
-          )}
-
-          <div className="mt-1.5 flex items-center gap-3.5">
-            <span className="text-[11px] text-slate-400">
-              {comment.timestamp}
-            </span>
-            
-            <button
-              type="button"
-              onClick={() => setShowReplyInput((s) => !s)}
-              className="text-xs font-bold text-slate-500 hover:text-blue-600"
-            >
-              Reply
-            </button>
           </div>
-
-          {showReplyInput && (
-            <div className="mt-2 flex items-center gap-2 rounded-xl bg-blue-50/40 p-2">
-              <EmojiPicker
-                onSelect={(emoji) => setReplyText((t) => t + emoji)}
-              />
-              <input
-                value={replyText}
-                maxLength={300}
-                placeholder="Write a reply..."
-                onChange={(e) => setReplyText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && submitReply()}
-                className="flex-1 rounded-full border-[1.5px] border-slate-200 bg-white px-3.5 py-1.5 text-xs text-slate-700 outline-none focus:border-blue-600"
-              />
+        ) : (
+          <div>
+            <input
+              value={editText}
+              maxLength={300}
+              onChange={(e) => setEditText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") saveEdit();
+                if (e.key === "Escape") setIsEditing(false);
+              }}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-900 px-3.5 py-2 text-sm text-white outline-none"
+              autoFocus
+            />
+            <div className="mt-2 flex justify-end gap-2">
               <button
                 type="button"
-                onClick={submitReply}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-emerald-500 text-white hover:bg-emerald-600"
+                onClick={() => setIsEditing(false)}
+                className="rounded-lg bg-zinc-800 px-4 py-1 text-xs font-bold text-zinc-300 hover:bg-zinc-700"
               >
-                <Send size={14} />
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={saveEdit}
+                className="rounded-lg bg-brand px-4 py-1 text-xs font-bold text-white hover:brightness-110"
+              >
+                Save
               </button>
             </div>
-          )}
+          </div>
+        )}
 
-          {comment.replies.length > 0 && (
-            <div className="mt-2 flex flex-col gap-2 border-l-2 border-slate-100 pl-3">
-              {visibleReplies.map((reply) => (
-                <ReplyCard
-                  key={reply.id}
-                  reply={reply}
-                  isOwner={reply.username === currentUsername}
-                  onDelete={() => onDeleteReply(comment.id, reply.id)}
-                />
-              ))}
-              {!showAllReplies && hiddenCount > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setShowAllReplies(true)}
-                  className="block py-1 text-left text-xs font-bold text-blue-600 hover:underline"
-                >
-                  Show {hiddenCount} more{" "}
-                  {hiddenCount === 1 ? "reply" : "replies"}
-                </button>
-              )}
-            </div>
+        <div className="mt-1.5 flex items-center gap-3.5">
+          <span className="text-[11px] text-zinc-500">{comment.timestamp}</span>
+          <button
+            type="button"
+            onClick={() => setShowReplyInput((s) => !s)}
+            className="text-xs font-semibold text-zinc-400 hover:text-white"
+          >
+            Reply
+          </button>
+          {isOwner && (
+            <>
+              <button
+                type="button"
+                onClick={() => setIsEditing(true)}
+                className="text-zinc-500 hover:text-white"
+                aria-label="Edit comment"
+              >
+                <Pencil size={13} />
+              </button>
+              <button
+                type="button"
+                onClick={() => onDelete(comment.id)}
+                className="text-zinc-500 hover:text-rose-400"
+                aria-label="Delete comment"
+              >
+                <Trash2 size={13} />
+              </button>
+            </>
           )}
         </div>
 
-        {isOwner && (
-          <div className="flex shrink-0 gap-1">
+        {showReplyInput && (
+          <div className="mt-2 flex items-center gap-2 rounded-xl bg-zinc-900 p-2">
+            <EmojiPicker onSelect={(emoji) => setReplyText((t) => t + emoji)} />
+            <input
+              value={replyText}
+              maxLength={300}
+              placeholder="Write a reply..."
+              onChange={(e) => setReplyText(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && submitReply()}
+              className="flex-1 rounded-full border border-zinc-700 bg-black px-3.5 py-1.5 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-zinc-500"
+            />
             <button
               type="button"
-              onClick={() => setIsEditing(true)}
-              className="rounded-md p-1.5 text-slate-400 hover:bg-blue-50 hover:text-blue-600"
-              aria-label="Edit comment"
+              onClick={submitReply}
+              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-white hover:brightness-110"
             >
-              <Pencil size={14} />
+              <Send size={14} />
             </button>
-            <button
-              type="button"
-              onClick={() => onDelete(comment.id)}
-              className="rounded-md p-1.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
-              aria-label="Delete comment"
-            >
-              <Trash2 size={14} />
-            </button>
+          </div>
+        )}
+
+        {comment.replies.length > 0 && (
+          <div className="mt-2 flex flex-col gap-2 border-l-2 border-zinc-800 pl-3">
+            {visibleReplies.map((reply) => (
+              <ReplyCard
+                key={reply.id}
+                reply={reply}
+                isOwner={reply.username === currentUsername}
+                onDelete={() => onDeleteReply(comment.id, reply.id)}
+              />
+            ))}
+            {!showAllReplies && hiddenCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setShowAllReplies(true)}
+                className="block py-1 text-left text-xs font-semibold text-zinc-400 hover:text-white hover:underline"
+              >
+                Show {hiddenCount} more{" "}
+                {hiddenCount === 1 ? "reply" : "replies"}
+              </button>
+            )}
           </div>
         )}
       </div>
     </div>
   );
 }
-
 function ReplyCard({
   reply,
   isOwner,
@@ -194,26 +186,28 @@ function ReplyCard({
   onDelete: () => void;
 }) {
   return (
-    <div className="flex items-start gap-2 rounded-lg bg-blue-50/40 px-3 py-2">
+    <div className="flex items-start gap-2">
       <img
         src={reply.avatar ?? undefined}
         alt={reply.username}
-        className="h-6 w-6 shrink-0 rounded-full object-cover"
+        className="h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-zinc-800"
       />
       <div className="min-w-0 flex-1">
-        <p className="text-sm leading-relaxed text-slate-700">
-          <span className="mr-1.5 font-bold text-blue-600">
+        <div className="flex flex-col gap-0.5">
+          <span className="text-[12px] font-semibold text-white">
             {reply.username}
           </span>
-          {reply.text}
-        </p>
-        <p className="mt-1 text-[11px] text-slate-400">{reply.timestamp}</p>
+          <p className="text-sm leading-snug text-zinc-200">
+            {reply.text}
+          </p>
+        </div>
+        <p className="mt-1 text-[11px] text-zinc-500">{reply.timestamp}</p>
       </div>
       {isOwner && (
         <button
           type="button"
           onClick={onDelete}
-          className="shrink-0 rounded-md px-1.5 py-0.5 text-slate-400 hover:bg-rose-50 hover:text-rose-600"
+          className="shrink-0 text-zinc-500 hover:text-rose-400"
           aria-label="Delete reply"
         >
           <Trash2 size={13} />

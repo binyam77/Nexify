@@ -14,6 +14,7 @@ import Profile from "./profile";
 import { useAuth } from "../context/AuthContext";
 import type { Chat, Message, NavTab } from "../types";
 import { useLocation } from "react-router-dom";
+import { useUI } from "../context/UIContext";
 // ==========================================
 // Title: This is the primary Community.tsx file
 // ==========================================
@@ -143,7 +144,7 @@ export default function Community() {
     },
   );
   const location = useLocation();
- 
+
   // Save changes to localStorage on change
   useEffect(() => {
     localStorage.setItem("nexify_chats", JSON.stringify(chats));
@@ -538,23 +539,34 @@ export default function Community() {
       triggerToast(`💬 Secure conversation started with ${user.name}`);
     }
   };
- //Profile >> Community chat redirect
-  useEffect(()=>{
-    const state =location.state as{
-      openChatWith?:{name:string; username:string; photo:string; bio?:string};
-
+  //Profile >> Community chat redirect
+  useEffect(() => {
+    const state = location.state as {
+      openChatWith?: {
+        name: string;
+        username: string;
+        photo: string;
+        bio?: string;
+      };
     };
     /*eslint-disable react-hooks/set-state-in-effect -- location.state ን redirect trigger አድርገን መጠከም ትክክለኛ  pattern ነው*/
-    if(state?.openChatWith){
+    if (state?.openChatWith) {
       handleStartChat(state.openChatWith);
       window.history.replaceState({}, "");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps -- handleStartChat በየ render ስለሚፈጠር dependency ማድረግ loop ይፈጥራል
-  },[location.state]);
+  }, [location.state]);
   // Active selected room details
   const activeChat = chats.find((c) => c.id === activeChatId) || null;
   const activeMessages = activeChatId ? messagesDb[activeChatId] || [] : [];
 
+  // Channel/ Group/Chat  ውስጥ ሲገባ BottomNav መደበክ
+  const { setFullscreenModalOpen } = useUI();
+  useEffect(() => {
+    setFullscreenModalOpen(!!activeChatId);
+    return () => setFullscreenModalOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeChatId]);
   return (
     <div className="flex w-full h-screen overflow-hidden bg-gray-50 text-gray-900 font-sans md:relative">
       {/* Toast Notification */}

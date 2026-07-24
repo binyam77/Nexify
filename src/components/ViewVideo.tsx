@@ -16,7 +16,7 @@ import {
   Share2,
   Send,
 } from "lucide-react";
-import type { FeedPost, CommentItem,OtherCreator } from "../types";
+import type { FeedPost, CommentItem, OtherCreator } from "../types";
 import Left from "./Left";
 
 // ViewVideo.tsx የProp ዓይነቶች መግለጫ (Props Interface for ViewVideo.tsx)
@@ -233,7 +233,7 @@ export default function ViewVideo({
               </div>
             ) : (
               <img
-                src={ selectedMediaSrc || undefined}
+                src={selectedMediaSrc || undefined}
                 alt="Post photo content"
                 className="w-full h-full object-contain block bg-black"
               />
@@ -262,7 +262,7 @@ export default function ViewVideo({
           handleToggleLikePost={handleToggleLikePost}
           handleToggleSavePost={handleToggleSavePost}
           handleSharePost={handleSharePost}
-         handleDeletePost ={handleDeletePost}
+          handleDeletePost={handleDeletePost}
           handleAddComment={handleAddComment}
           handleDeleteComment={handleDeleteComment}
           handleAddReply={handleAddReply}
@@ -281,12 +281,12 @@ export default function ViewVideo({
               className="flex flex-col items-center justify-center active:scale-90 transition-all focus:outline-none"
             >
               <div
-                className={`w-11 h-11 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 ${
+                className={`w-14 h-14 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 ${
                   selectedPost.liked ? "text-rose-500" : "text-white"
                 }`}
               >
                 <Heart
-                  className={`w-5.5 h-5.5 ${selectedPost.liked ? "fill-rose-500 text-rose-500" : ""}`}
+                  className={`w-7 h-7 ${selectedPost.liked ? "fill-rose-500 text-rose-500" : ""}`}
                 />
               </div>
               <span className="text-[10px] font-bold text-white mt-1 drop-shadow-md bg-black/25 px-1.5 py-0.5 rounded-full select-none">
@@ -299,8 +299,8 @@ export default function ViewVideo({
               onClick={() => setMobileCommentsOpen(true)}
               className="flex flex-col items-center justify-center active:scale-90 transition-all focus:outline-none"
             >
-              <div className="w-11 h-11 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 text-white">
-                <MessageCircle className="w-5.5 h-5.5" />
+              <div className="w-14 h-14 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 text-white">
+                <MessageCircle className="w-7 h-7" />
               </div>
               <span className="text-[10px] font-bold text-white mt-1 drop-shadow-md bg-black/25 px-1.5 py-0.5 rounded-full select-none">
                 {formatCount(comments.length)}
@@ -313,12 +313,12 @@ export default function ViewVideo({
               className="flex flex-col items-center justify-center active:scale-90 transition-all focus:outline-none"
             >
               <div
-                className={`w-11 h-11 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 ${
+                className={`w-14 h-14 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 ${
                   selectedPost.saved ? "text-amber-400" : "text-white"
                 }`}
               >
                 <Bookmark
-                  className={`w-5.5 h-5.5 ${selectedPost.saved ? "fill-amber-400 text-amber-400" : ""}`}
+                  className={`w-7 h-7 ${selectedPost.saved ? "fill-amber-400 text-amber-400" : ""}`}
                 />
               </div>
               <span className="text-[10px] font-bold text-white mt-1 drop-shadow-md bg-black/25 px-1.5 py-0.5 rounded-full select-none">
@@ -331,8 +331,8 @@ export default function ViewVideo({
               onClick={() => handleSharePost(selectedPost.id)}
               className="flex flex-col items-center justify-center active:scale-90 transition-all focus:outline-none"
             >
-              <div className="w-11 h-11 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 text-white">
-                <Share2 className="w-5.5 h-5.5" />
+              <div className="w-14 h-14 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 text-white">
+                <Share2 className="w-7 h-7" />
               </div>
               <span className="text-[10px] font-bold text-white mt-1 drop-shadow-md bg-black/25 px-1.5 py-0.5 rounded-full select-none">
                 {shares > 0 ? formatCount(shares) : "Share"}
@@ -518,7 +518,6 @@ export default function ViewVideo({
                               )}
                             </span>
 
-                         
                             <button
                               onClick={() => {
                                 if (activeReplyTo === comment.id) {

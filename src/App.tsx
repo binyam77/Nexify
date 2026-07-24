@@ -1,5 +1,6 @@
 // src/App.tsx
 import { useAuth } from "./context/AuthContext";
+import { UIProvider } from "./context/UIContext";
 import { AnimatePresence } from "framer-motion";
 import { Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import Home from "./pages/home";
@@ -54,6 +55,7 @@ export default function App() {
   }
 
   return (
+    <UIProvider>
     <Routes>
       {/* FirstEntry ገጽ */}
       <Route path="/" element={<FirstEntry />} />
@@ -128,5 +130,6 @@ export default function App() {
       {/* በስህተት ለሚጻፍ Route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
+    </UIProvider>
   );
 }

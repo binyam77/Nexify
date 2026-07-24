@@ -157,6 +157,7 @@ export default function ChatsSidebar({
                 onMouseDown={() => startPressTimer(chat)}
                 onTouchStart={() => startPressTimer(chat)}
                 onMouseUp={cancelPressTimer}
+                onTouchEnd={cancelPressTimer}
                 onMouseLeave={cancelPressTimer}
                 onContextMenu={(e) => {
                   e.preventDefault();
@@ -229,7 +230,7 @@ export default function ChatsSidebar({
       {/*Delete Confirmation Modal (Channel/Group/Chat ሁልም ላይ ተመሳሳይ) */}
       {confirmDeleteChat && (
         <div
-          className="fixed inset-0 bg/black/60 backdrop-blur-sm flex items-center justify-center z-[110] 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] 
         p-4 animate-in fade-in duration-200"
           onClick={() => setConfirmDeleteChat(null)}
         >

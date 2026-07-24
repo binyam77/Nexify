@@ -11,6 +11,7 @@ import {
   Gear,
   MagnifyingGlass,
   Bell,
+  List,
 } from "@phosphor-icons/react";
 
 import { ROUTES } from "../routes";
@@ -19,7 +20,6 @@ import { cn } from "../utils";
 import { useNotifications } from "../context/NotificationContext";
 import logo from "../assets/logo.png";
 import type { NavTab } from "../types";
-
 
 const footerLinks = [
   { label: "About", to: ROUTES.about },
@@ -49,6 +49,24 @@ export default function Sidebar(props: SidebarProps) {
     hideOnMobile,
   } = props;
   const { unreadCount } = useNotifications();
+  const [isCollapsed, setIsCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem("sidebarCollapsed") === "true";
+    } catch {
+      return false;
+    }
+  });
+  const toggleCollapsed = () => {
+    setIsCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem("sidebarCollapsed", String(next));
+      } catch (e) {
+        console.error("Failed to persist sidebar state:", e);
+      }
+      return next;
+    });
+  };
   const navItems = [
     {
       label: "Home",
@@ -104,65 +122,83 @@ export default function Sidebar(props: SidebarProps) {
     <aside
       // 1. hideOnMobile እዚህ ጋ ጥቅም ላይ ውሏል
       className={cn(
-        "hidden h-screen w-[280px] shrink-0 flex-col justify-between border-r border-input-border bg-bodey-bg px-5 py-6 md:flex",
+        "hidden h-screen  shrink-0 flex-col justify-between border-r border-input-border bg-bodey-bg  py-6 md:flex transition-all duration-200 ",
+        isCollapsed ? "w-[76px] px-2" : "w-[280px] px-5",
         hideOnMobile && "md:hidden",
       )}
     >
       <div className="flex flex-col gap-5">
-        <h1 className="flex items-center gap-3 text-3xl font-extrabold text-text">
-          <img
-            src={logo}
-            alt="Nexify logo"
-            className="h-10 w-10 rounded-lg object-contain"
-          />
-          Nexify
-        </h1>
-
         <div
-          className="relative"
-          onBlur={(e) => {
-            if (!e.currentTarget.contains(e.relatedTarget)) {
-              setSearchResults([]);
-            }
-          }}
+          className={cn(
+            "flex items-center",
+            isCollapsed ? "justify-center" : "justify-between",
+          )}
         >
-          <MagnifyingGlass
-            size={14}
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink"
-          />
+          {!isCollapsed && (
+            <h1 className="flex items-center gap-3 text-2xl font-extrabold text-text truncate">
+              <img
+                src={logo}
+                alt="Nexify logo"
+                className="h-10 w-10 rounded-lg object-contain shrink-0"
+              />
+              Nexify
+            </h1>
+          )}
+          <button
+            onClick={toggleCollapsed}
+            className="p-2 rounded-lg hover:bg-hover-input text-text transition-colors shrink-0"
+            aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            <List size={22} />
+          </button>
+        </div>
+        {!isCollapsed && (
+          <div
+            className="relative"
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget)) {
+                setSearchResults([]);
+              }
+            }}
+          >
+            <MagnifyingGlass
+              size={14}
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink"
+            />
 
-          <input
-            type="text"
-            value={query}
-            onChange={(e) => handleSearch(e.target.value)}
-            placeholder="Search..."
-            className="w-full rounded-md border border-input-border
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => handleSearch(e.target.value)}
+              placeholder="Search..."
+              className="w-full rounded-md border border-input-border
             placeholder:placeholder-placeholder bg-input shadow-input py-3 pl-10 pr-3 text-sm text-ink
              outline-none focus:border-input-focus"
-          />
-          {searchResults.length > 0 && (
-            <div
-              className="absolute top-full left-0 right-0 mt-1 bg-input border border-input-border
+            />
+            {searchResults.length > 0 && (
+              <div
+                className="absolute top-full left-0 right-0 mt-1 bg-input border border-input-border
              roundedlg shawdow-lg z-50 overflow-hidden"
-            >
-              {searchResults.map(({ label, to, icon: Icon }) => (
-                <NavLink
-                  key={to}
-                  to={to}
-                  onClick={() => {
-                    setQuery("");
-                    setSearchResults([]);
-                  }}
-                  className="flex items-center gap-3 px-4 py-2.5 text-sm text-text hover:bg-slate-50"
-                >
-                  <Icon size={16} />
-                  {label}
-                </NavLink>
-              ))}
-            </div>
-          )}
-        </div>
-
+              >
+                {searchResults.map(({ label, to, icon: Icon }) => (
+                  <NavLink
+                    key={to}
+                    to={to}
+                    onClick={() => {
+                      setQuery("");
+                      setSearchResults([]);
+                    }}
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-text hover:bg-slate-50"
+                  >
+                    <Icon size={16} />
+                    {label}
+                  </NavLink>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
         <nav className="flex flex-col gap-1.5">
           {navItems.map(({ label, to, icon: Icon, tab, badge }) => (
             <NavLink
@@ -171,20 +207,27 @@ export default function Sidebar(props: SidebarProps) {
               end={to === ROUTES.home}
               // 2. activeTab እና setActiveTab እዚህ ጋ ጥቅም ላይ ውለዋል
               onClick={() => setActiveTab?.(tab)}
+              title={isCollapsed ? label : undefined}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center justify-between rounded-lg px-4 py-3.5 text-lg font-bold text-text transition-colors hover:bg-hover-input",
+                  "flex items-center rounded-lg py-3.5 text-lg font-bold text-text transition-colors hover:bg-hover-input",
+                  isCollapsed ? "justify-center px-2" : "justify-between px-4",
                   (isActive || activeTab === tab) && "bg-hover-input",
                 )
               }
             >
-              <div className="flex items-center gap-4">
-                <Icon size={20} />
-                {label}
+              <div className={cn("flex items-center", !isCollapsed && "gap-4")}>
+                <div className="relative shrink-0">
+                  <Icon size={20} />
+                  {isCollapsed && badge > 0 && (
+                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-rose-500" />
+                  )}
+                </div>
+                {!isCollapsed && label}
               </div>
 
               {/* 3. unreadCommunityCount እዚህ ጋ ጥቅም ላይ ውሏል */}
-              {badge > 0 && (
+              {!isCollapsed && badge > 0 && (
                 <span className="bg-rose-500 text-one-text text-xs px-2 py-0.5 rounded-full font-bold">
                   {badge}
                 </span>
@@ -195,26 +238,29 @@ export default function Sidebar(props: SidebarProps) {
           {/* 4. onUploadClick እዚህ ጋ ጥቅም ላይ ውሏል */}
           <button
             onClick={onUploadClick}
+            title={isCollapsed ? "Upload New" : undefined}
             className="mt-4 w-full bg-brand text-one-text py-2.5 rounded-lg font-bold text-sm hover:bg-brand-dark shadow-input transition-colors"
           >
-            Upload New
+            {isCollapsed ? "+" : "Upload New"}
           </button>
         </nav>
       </div>
 
-      <div className="flex flex-col gap-2 border-t border-slate-200 pt-4">
-        <div className="flex flex-wrap gap-2.5 text-xs text-slate-500">
-          {footerLinks.map((link) => (
-            <Link key={link.to} to={link.to} className="hover:text-slate-900">
-              {link.label}
-            </Link>
-          ))}
-        </div>
+      {!isCollapsed && (
+        <div className="flex flex-col gap-2 border-t border-slate-200 pt-4">
+          <div className="flex flex-wrap gap-2.5 text-xs text-slate-500">
+            {footerLinks.map((link) => (
+              <Link key={link.to} to={link.to} className="hover:text-slate-900">
+                {link.label}
+              </Link>
+            ))}
+          </div>
 
-        <p className="text-[11px] text-slate-400">
-          &copy; {new Date().getFullYear()} Nexify
-        </p>
-      </div>
+          <p className="text-[11px] text-slate-400">
+            &copy; {new Date().getFullYear()} Nexify
+          </p>
+        </div>
+      )}
     </aside>
   );
 }
