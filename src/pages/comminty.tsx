@@ -16,6 +16,8 @@ import type { Chat, Message, NavTab } from "../types";
 import { useLocation } from "react-router-dom";
 import { useUI } from "../context/UIContext";
 import CreateChoiceModal from "../components/CreateChoiceModal";
+import MemberPickerModal from "../components/MemberPickerModal";
+import type { SelectableUser } from "../types";
 // ==========================================
 // Title: This is the primary Community.tsx file
 // ==========================================
@@ -29,7 +31,17 @@ export default function Community() {
 
   const [isNewChannelOpen, setIsNewChannelOpen] = useState(false);
   const [isNewGroupOpen, setIsNewGroupOpen] = useState(false);
-    const [isCreateChoiceOpen, setIsCreateChoiceOpen] = useState(false);
+  const [isCreateChoiceOpen, setIsCreateChoiceOpen] = useState(false);
+  const [isMemberPickerOpen, setIsMemberPickerOpen] = useState(false);
+  const [pickedMembers, setPickedMembers] = useState<SelectableUser[]>([]);
+
+  // Group member-picker's data source — ወደፊት real follow/follower data ብቻ ይተካዋል፣ MemberPickerModal ራሱ አይቀየርም
+  // ⏳ ለጊዜው Profile's demo otherUsers — backend ሲመጣ: GET /api/users/me/following ን ይተካል
+  const availableMembersForPicker: SelectableUser[] = [
+    { id: "abel_codes", name: "Abel T.", username: "abel_codes", photo: "" },
+    { id: "betty_dev", name: "Betty Dev", username: "betty_dev", photo: "" },
+  ];
+
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // User profile details (Current member profile loaded dynamically from localStorage)
@@ -444,15 +456,25 @@ export default function Community() {
     // });
   };
   // Create new group logic
-  const handleCreateGroup = (newChat: Chat) => {
+  const handleCreateGroup = (
+    newChat: Chat,
+    initialMembers: SelectableUser[],
+  ) => {
     setChats((prev) => [newChat, ...prev]);
     setMessagesDb((prev) => ({
       ...prev,
       [newChat.id]: [],
     }));
     setActiveChatId(newChat.id);
-    triggerToast(`🚀 Group "${newChat.name}" created successfully!`);
-
+    setPickedMembers([]);
+    const memberNote =
+      initialMembers.length > 0
+        ? ` with ${initialMembers.length} member${initialMembers.length > 1 ? "s" : ""} added`
+        : "";
+    triggerToast(
+      `🚀 Group "${newChat.name}" created successfully${memberNote}!`,
+    );
+    // ⏳ FUTURE: POST /api/groups/:id/members with initialMembers.map(m => m.id)
     // ==========================================
     // FUTURE: Save newly created group in PostgreSQL using INSERT query:
     // ==========================================
@@ -628,7 +650,7 @@ export default function Community() {
         />
       )}
 
-    {/* 3. CREATE CHOICE MODAL (+ ተጭኖ ሲከፈት Channel/Group ምርጫ) */}
+      {/* 3. CREATE CHOICE MODAL (+ ተጭኖ ሲከፈት Channel/Group ምርጫ) */}
       <CreateChoiceModal
         isOpen={isCreateChoiceOpen}
         onClose={() => setIsCreateChoiceOpen(false)}
@@ -648,11 +670,24 @@ export default function Community() {
         onClose={() => setIsNewChannelOpen(false)}
         onCreateChannel={handleCreateChannel}
       />
-      {/* 5. NEW GROUP MODAL (Create new Group dialog window) */}
+      {/*4. NEW GROUP MODAL (Create new Group dialog window)*/}
       <NewGroupModal
         isOpen={isNewGroupOpen}
         onClose={() => setIsNewGroupOpen(false)}
         onCreateGroup={handleCreateGroup}
+        onOpenMemberPicker={() => setIsMemberPickerOpen(true)}
+        pickedMembers={pickedMembers}
+      />
+
+      {/* 5. MEMBER PICKER MODAL (Group creation ውስጥ members መምረጫ) */}
+      <MemberPickerModal
+        isOpen={isMemberPickerOpen}
+        availableUsers={availableMembersForPicker}
+        onClose={() => setIsMemberPickerOpen(false)}
+        onConfirm={(selected) => {
+          setPickedMembers(selected);
+          setIsMemberPickerOpen(false);
+        }}
       />
     </div>
   );

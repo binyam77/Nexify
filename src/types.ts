@@ -121,3 +121,11 @@ export interface FeedPost{
 
 }
 export type NavTab = 'home' | 'community' | 'profile' | 'settings' | 'explore';
+
+// Group ፈጣሪ member-select ሲያደርግ የሚያገለግል generic shape (ወደፊት real follow-data ጋር ተመሳሳይ ይሆናል)
+export interface SelectableUser {
+  id: string;
+  name: string;
+  username: string;
+  photo: string;
+}
