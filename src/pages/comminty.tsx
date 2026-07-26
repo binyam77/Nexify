@@ -15,6 +15,7 @@ import { useAuth } from "../context/AuthContext";
 import type { Chat, Message, NavTab } from "../types";
 import { useLocation } from "react-router-dom";
 import { useUI } from "../context/UIContext";
+import CreateChoiceModal from "../components/CreateChoiceModal";
 // ==========================================
 // Title: This is the primary Community.tsx file
 // ==========================================
@@ -28,6 +29,7 @@ export default function Community() {
 
   const [isNewChannelOpen, setIsNewChannelOpen] = useState(false);
   const [isNewGroupOpen, setIsNewGroupOpen] = useState(false);
+    const [isCreateChoiceOpen, setIsCreateChoiceOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // User profile details (Current member profile loaded dynamically from localStorage)
@@ -591,8 +593,7 @@ export default function Community() {
                 chats={chats}
                 activeChatId={activeChatId}
                 onSelectChat={handleSelectChat}
-                onCreateChannelClick={() => setIsNewChannelOpen(true)}
-                onCreateGroupClick={() => setIsNewGroupOpen(true)}
+                onCreatePlusClick={() => setIsCreateChoiceOpen(true)}
                 onDeleteChat={handleDeleteChat}
               />
             </div>
@@ -627,13 +628,27 @@ export default function Community() {
         />
       )}
 
-      {/* 3. NEW CHANNEL MODAL (Create new Channel dialog window) */}
+    {/* 3. CREATE CHOICE MODAL (+ ተጭኖ ሲከፈት Channel/Group ምርጫ) */}
+      <CreateChoiceModal
+        isOpen={isCreateChoiceOpen}
+        onClose={() => setIsCreateChoiceOpen(false)}
+        onSelectChannel={() => {
+          setIsCreateChoiceOpen(false);
+          setIsNewChannelOpen(true);
+        }}
+        onSelectGroup={() => {
+          setIsCreateChoiceOpen(false);
+          setIsNewGroupOpen(true);
+        }}
+      />
+
+      {/* 4. NEW CHANNEL MODAL (Create new Channel dialog window) */}
       <NewChannelModal
         isOpen={isNewChannelOpen}
         onClose={() => setIsNewChannelOpen(false)}
         onCreateChannel={handleCreateChannel}
       />
-      {/*4. NEW GROUP MODAL (Create new Group dialog window)*/}
+      {/* 5. NEW GROUP MODAL (Create new Group dialog window) */}
       <NewGroupModal
         isOpen={isNewGroupOpen}
         onClose={() => setIsNewGroupOpen(false)}

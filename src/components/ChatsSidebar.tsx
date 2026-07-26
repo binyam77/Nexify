@@ -4,21 +4,14 @@
  */
 
 import React, { useState, useRef } from "react";
-import {
-  Search,
-  PlusCircle,
-  Globe,
-  Users,
-  Trash2,
-} from "lucide-react";
+import { Search,Plus, Globe,  Trash2 } from "lucide-react";
 import type { Chat } from "../types";
 
 interface ChatsSidebarProps {
   chats: Chat[];
   activeChatId: string | null;
   onSelectChat: (chatId: string) => void;
-  onCreateChannelClick: () => void;
-  onCreateGroupClick: () => void;
+  onCreatePlusClick:() => void;
   onDeleteChat: (chatId: string) => void;
 }
 
@@ -28,8 +21,7 @@ export default function ChatsSidebar({
   chats,
   activeChatId,
   onSelectChat,
-  onCreateChannelClick,
-  onCreateGroupClick,
+  onCreatePlusClick,
   onDeleteChat,
 }: ChatsSidebarProps) {
   const [searchQuery, setSearchQuery] = useState("");
@@ -37,6 +29,8 @@ export default function ChatsSidebar({
   const [confirmDeleteChat, setConfirmDeleteChat] = useState<Chat | null>(null);
   const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFiredRef = useRef(false);
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const MOVE_CANCEL_THRESHOLD = 10; // ፒክሰል፦ ከዚህ በላይ ጣቱ ቢንቀሳቀስ scroll ነው ብለን long-press እንሰርዛለን
 
   const startPressTimer = (chat: Chat) => {
     if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
@@ -50,6 +44,22 @@ export default function ChatsSidebar({
     if (pressTimerRef.current) {
       clearTimeout(pressTimerRef.current);
       pressTimerRef.current = null;
+    }
+    touchStartPosRef.current = null;
+  };
+  const handleTouchStart = (chat: Chat, e: React.TouchEvent) => {
+    touchStartPosRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+    startPressTimer(chat);
+  };
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartPosRef.current) return;
+    const dx = Math.abs(e.touches[0].clientX - touchStartPosRef.current.x);
+    const dy = Math.abs(e.touches[0].clientY - touchStartPosRef.current.y);
+    if (dx > MOVE_CANCEL_THRESHOLD || dy > MOVE_CANCEL_THRESHOLD) {
+      cancelPressTimer();
     }
   };
   const handleChatTap = (chats: Chat) => {
@@ -66,7 +76,7 @@ export default function ChatsSidebar({
       chat.lastMsgText.toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
- 
+
   return (
     <section
       className="w-full md:w-[350px] border-r border-gray-100 bg-gray-50 flex flex-col h-full shrink-0"
@@ -99,26 +109,15 @@ export default function ChatsSidebar({
             Rooms
           </h2>
         </div>
-        <div className="flex items-center gap-1 ">
-          <button
-            type="button"
-            onClick={onCreateGroupClick}
-            className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all shrink-0"
-            aria-label="Create new group"
-            title="Create Group"
-          >
-            <Users className="w-6 h-6" />
-          </button>
-          <button
-            type="button"
-            onClick={onCreateChannelClick}
-            className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all shrink-0"
-            aria-label="Create new channel"
-            title="Create Channel"
-          >
-            <PlusCircle className="w-6 h-6" />
-          </button>
-        </div>
+       <button 
+       type="button"
+       onClick={onCreatePlusClick}
+       className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transion-all shrink-0"
+       aria-label="Create new channel or group"
+       title="Create"
+       >
+        <Plus className="w-6 h-6 "/>
+       </button>
       </header>
 
       {/* የፍለጋ ሳጥን (Search Bar) */}
@@ -155,7 +154,8 @@ export default function ChatsSidebar({
               <article
                 key={chat.id}
                 onMouseDown={() => startPressTimer(chat)}
-                onTouchStart={() => startPressTimer(chat)}
+                onTouchStart={(e) => handleTouchStart(chat, e)}
+                onTouchMove={handleTouchMove}
                 onMouseUp={cancelPressTimer}
                 onTouchEnd={cancelPressTimer}
                 onMouseLeave={cancelPressTimer}
@@ -221,7 +221,6 @@ export default function ChatsSidebar({
             );
           })
         )}
-      
       </div>
 
       {/* FUTURE: This footer code will be useful for dynamically loading new groups from the server side */}
