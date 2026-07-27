@@ -89,7 +89,7 @@ export default function Home() {
           onView={() => incrementView(posts[currentIndex]?.id)}
         />
       </div>
-
+ 
       {/* Desktop scroll arrows only */}
       {posts.length > 1 && (
         <div className="hidden md:flex fixed right-8 top-1/2 -translate-y-1/2 flex-col gap-3 z-50">

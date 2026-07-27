@@ -15,7 +15,6 @@ import { useShare } from "../hooks/useShare";
 import CommentModal from "./CommentModal";
 import { useFeed } from "../context/FeedContext";
 import type { FeedPost, User } from "../types";
-
 interface PostCardProps {
   post: FeedPost;
   currentUser: User;
@@ -138,6 +137,7 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
           {toastMessage}
         </div>
       )}
+
       {/* ===== Media Area ===== */}
       {post.type === "video" ? (
         <div
@@ -359,12 +359,12 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
 
       {/* ===== Action Buttons (right side) ===== */}
       <div
-        className="absolute bottom-20 right-3 z-10 flex flex-col items-center gap-3
-      md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
+        className="absolute bottom-20 right-3 z-10 flex flex-col items-center gap-4
+md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
       >
         {/* Like */}
         <ActionBtn
-          icon={<Heart size={24} fill={liked ? "currentColor" : "none"} />}
+          icon={<Heart size={26} fill={liked ? "currentColor" : "none"} />}
           label={likeCount}
           active={liked}
           activeColor="text-rose-500"
@@ -372,7 +372,7 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
         />
         {/* Comment */}
         <ActionBtn
-          icon={<MessageCircle size={22} />}
+          icon={<MessageCircle size={25} />}
           label={comments.length || post.commentsCount}
           active={isCommentsOpen}
           activeColor="text-blue-400"
@@ -380,7 +380,7 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
         />
         {/* Save */}
         <ActionBtn
-          icon={<Bookmark size={22} fill={saved ? "currentColor" : "none"} />}
+          icon={<Bookmark size={25} fill={saved ? "currentColor" : "none"} />}
           label={saveCount}
           active={saved}
           activeColor="text-yellow-400"
@@ -392,16 +392,17 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
             const success = await share();
             if (success) incrementShare(post.id);
           }}
-          className="flex flex-col items-center gap-1"
+          className="flex flex-col items-center gap-0.5"
+          type="button"
         >
           <div
             className="w-12 h-11 rounded-full flex items-center justify-center
-          drop-shadow-lg  text-white 
-           md:bg-surface  md:shadow-none md:text-input-text"
+    shadow-lg drop-shadow-lg text-white transition-transform active:scale-90
+     md:bg-surface md:shadow-md md:drop-shadow-none md:text-input-text"
           >
-            <Share2 size={20} />
+            <Share2 size={23} />
           </div>
-          <span className="text-white text-xs font-medium  drop-shadow md:text-input-text md:drop-shadow-none md:dark:text-neutral-300">
+          <span className="text-white text-xs font-semibold leading-none drop-shadow md:text-input-text md:drop-shadow-none md:dark:text-neutral-300">
             {post.sharesCount}
           </span>
         </button>
@@ -443,7 +444,6 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
   );
 }
 
-// Action Button Component
 function ActionBtn({
   icon,
   label,
@@ -458,15 +458,15 @@ function ActionBtn({
   onClick: () => void;
 }) {
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-1">
+    <button onClick={onClick} className="flex flex-col items-center gap-0.5">
       <div
-        className={`w-12 h-11 rounded-full  flex items-center justify-center transition-colors
-          drop-shadow-lg  md:bg-surface  md:shadow-none 
+        className={`w-12 h-11 rounded-full flex items-center justify-center transition-colors
+          shadow-lg drop-shadow-lg md:bg-surface md:shadow-md
            ${active ? activeColor : "text-white md:text-input-text"}`}
       >
         {icon}
       </div>
-      <span className="text-white text-xs font-medium  drop-shadow md:text-input-text md:drop-shadow-none md:dark:text-neutral-300">
+      <span className="text-white text-xs font-medium leading-none drop-shadow md:text-input-text md:drop-shadow-none md:dark:text-neutral-300">
         {label}
       </span>
     </button>

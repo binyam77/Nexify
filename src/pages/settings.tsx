@@ -171,7 +171,7 @@ export default function Settings() {
           <span className="text-sm font-medium">{alertMessage.text}</span>
         </div>
       )}
-      <div className="flex items-center gap-3 px-3 py-3 sticky top-0 z-10 md:hidden border-gray-100">
+      <div className="flex items-center gap-3 px-3 py-3 sticky top-0 z-50 md:hidden bg-surface border-gray-100">
         <button
           onClick={() => navigate(-1)}
           aria-label="Back"

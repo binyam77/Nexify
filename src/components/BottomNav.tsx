@@ -30,7 +30,7 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
 
   const rightItems = [
     {
-      label: "Alerts",
+      label: "Notifications",
       to: ROUTES.notifications,
       icon: Bell,
       badge: unreadCount,

@@ -115,7 +115,7 @@ export default function ChatsSidebar({
               className="text-xl font-black tracking-tight text-gray-900"
               id="brand-header-title"
             >
-              Nexify
+              Communities
             </h1>
           </div>
         </div>
@@ -140,7 +140,7 @@ export default function ChatsSidebar({
               : "text-gray-400 border-transparent hover:text-gray-600"
           }`}
         >
-          Messages
+          Chats
         </button>
         <button
           onClick={() => setActiveTab("communities")}

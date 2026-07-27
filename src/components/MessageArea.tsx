@@ -65,8 +65,6 @@ export default function MessageArea({
 
   const QUICK_EMOJIS = ["👍", "❤️", "😂", "😆", "😭", "😡"];
 
- 
-
   // Scroll to bottom when a new message is received or active chat changes
   useEffect(() => {
     feedEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -447,7 +445,10 @@ export default function MessageArea({
                   key={msg.id}
                   className="w-full flex justify-end pr-2 md:pr-4 min-w-0"
                 >
-                  <div className="max-w-[85%] md:max-w-[70%] flex justify-end items-end gap-3 animate-in fade-in slide-in-from-right-1 duration-200 min-w-0">
+                  <div
+                    className="max-w-[88%] md:max-w-[75%] flex justify-end items-end
+                 gap-3 animate-in fade-in slide-in-from-right-1 duration-200 min-w-0"
+                  >
                     <article
                       onMouseDown={() => startPressTimer(msg)}
                       onTouchStart={() => startPressTimer(msg)}
@@ -463,7 +464,7 @@ export default function MessageArea({
                     >
                       {/* Media display if attached */}
                       {hasMedia && (
-                        <div className="rounded-xl overflow-hidden mb-2 max-w-full bg-[#1b63a0]">
+                        <div className="rounded-xl overflow-hidden mb-2 -mx-4 -mt-2.5 bg-[#1b63a0]">
                           {msg.mediaType === "video" ? (
                             <video
                               src={msg.mediaUrl}
@@ -611,7 +612,7 @@ export default function MessageArea({
                   key={msg.id}
                   className="w-full flex justify-start pl-2 md:pl-4 min-w-0"
                 >
-                  <div className="max-w-[85%] md:max-w-[70%] flex justify-start items-end gap-3 animate-in fade-in slide-in-from-left-1 duration-200 min-w-0">
+                  <div className="max-w-[88%] md:max-w-[75%] flex justify-start items-end gap-3 animate-in fade-in slide-in-from-left-1 duration-200 min-w-0">
                     {/* Sender user avatar badge- private chat/channel ላይ አይታይም */}
                     {chat.type !== "chat" && chat.type !== "channel" && (
                       <div
@@ -640,7 +641,7 @@ export default function MessageArea({
 
                       {/* Media display if attached */}
                       {hasMedia && (
-                        <div className="rounded-xl overflow-hidden mb-2 max-w-full bg-white/60 border border-gray-200/50">
+                        <div className="rounded-xl overflow-hidden mb-2 -mx-4 -mt-2.5 bg-white/60 border border-gray-200/50">
                           {msg.mediaType === "video" ? (
                             <video
                               src={msg.mediaUrl}
@@ -877,7 +878,10 @@ export default function MessageArea({
 
             <form onSubmit={handleSend} className="flex items-end gap-2 w-full">
               {/* Input wrapper: emoji + textarea + attach icon all live inside this single pill */}
-              <div className="flex-1 flex items-end gap-1 bg-input shadow-input border border-input-border rounded-3xl px-2 py-1.5 focus-within:bg-white focus-within:border-input-focus transition-all duration-200">
+              <div
+                className="flex-1 flex items-end gap-1 bg-white shadow-sm
+              border border-gray-200 rounded-3xl px-2 py-1.5 focus-within:border-blue-400 transition-all duration-200"
+              >
                 <button
                   type="button"
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}

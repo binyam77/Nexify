@@ -1,15 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-
-import {
-  User,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  CheckCircle2,
-  AlertCircle,
-} from "lucide-react";
+import logo from "../assets/logo.png";
+import { Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface CreateAccountProps {
   onNavigateToLogin: () => void;
@@ -37,13 +29,32 @@ export default function CreateAccount({
       return;
     }
 
+    // Username email መያዝ የለበትም
+    if (/\S+@\S+\.\S+/.test(username) || username.includes("@")) {
+      setError("Username cannot contain an email address.");
+      return;
+    }
+
     if (!/\S+@\S+\.\S+/.test(email)) {
       setError("Please enter a valid email address.");
       return;
     }
 
-    if (password.length < 6) {
-      setError("Password must be at least 6 characters long.");
+    // Password strength: >6 chars, 1 letter, 1 number, 1 uppercase
+    if (password.length <= 6) {
+      setError("Password must be more than 6 characters long.");
+      return;
+    }
+    if (!/[A-Z]/.test(password)) {
+      setError("Password must contain at least one uppercase letter.");
+      return;
+    }
+    if (!/[a-z]/.test(password)) {
+      setError("Password must contain at least one letter.");
+      return;
+    }
+    if (!/[0-9]/.test(password)) {
+      setError("Password must contain at least one number.");
       return;
     }
 
@@ -57,9 +68,13 @@ export default function CreateAccount({
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: -15 }}
       transition={{ duration: 0.35, ease: "easeOut" }}
-      className="w-full max-w-md bg-bodey-bg rounded-2xl shadow-card overflow-hidden border border-border p-8 sm:p-10"
+      className="w-full sm:max-w-md min-h-screen sm:min-h-0 bg-bodey-bg sm:rounded-2xl sm:shadow-card overflow-hidden border-0 sm:border sm:border-border p-6 sm:p-8 md:p-10 flex flex-col justify-center sm:justify-start sm:block"
       id="create-account-card"
     >
+      {/* Logo */}
+      <div className="flex justify-center mb-6">
+        <img src={logo} alt="Logo" className="h-12 w-auto" />
+      </div>
       <div className="text-center mb-8">
         <h2 className="text-3xl font-bold text-text-h2 tracking-tight">
           Create Account
@@ -94,78 +109,74 @@ export default function CreateAccount({
       )}
 
       <form onSubmit={handleSubmit} className="space-y-5" id="createAccount">
-        {/* Username Input */}
-        <div className="space-y-2">
+        {/* Username Input - floating label */}
+        <div className="relative">
+          <input
+            id="username"
+            type="text"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            placeholder=" "
+            autoComplete="username"
+            required
+            className="peer w-full px-4 pt-4 pb-1.5 bg-input border border-input-border rounded-lg text-input-text placeholder-transparent
+              focus:outline-none focus:border-input-focus hover:border-input-hover transition-all text-sm"
+          />
           <label
             htmlFor="username"
-            className="text-sm font-semibold text-gray-700 block"
+            className="absolute left-4 -top-2 px-1 bg-bodey-bg text-xs text-brand transition-all pointer-events-none
+              peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent
+              peer-focus:-top-2 peer-focus:text-xs peer-focus:text-brand peer-focus:bg-bodey-bg"
           >
             Username
           </label>
-          <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-              <User className="w-5 h-5" />
-            </span>
-            <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="Enter your username"
-              required
-              className="w-full pl-10 pr-4 py-3 bg-input  border border-input-border rounded-lg text-input-text placeholder:text-input-placeholder focus:outline-none  focus:border-input-focus
-              hover:border-input-hover transition-all text-sm"
-            />
-          </div>
         </div>
 
-        {/* Email Input */}
-        <div className="space-y-2">
+        {/* Email Input - floating label */}
+        <div className="relative">
+          <input
+            id="email"
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder=" "
+            autoComplete="email"
+            required
+            className="peer w-full px-4 pt-4 pb-1.5 bg-input border border-input-border rounded-lg text-input-text placeholder-transparent
+              focus:outline-none focus:border-input-focus hover:border-input-hover transition-all text-sm"
+          />
           <label
             htmlFor="email"
-            className="text-sm font-semibold text-gray-700 block"
+            className="absolute left-4 -top-2 px-1 bg-bodey-bg text-xs text-brand transition-all pointer-events-none
+              peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent
+              peer-focus:-top-2 peer-focus:text-xs peer-focus:text-brand peer-focus:bg-bodey-bg"
           >
-            Email Address
+            Email
           </label>
-          <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-              <Mail className="w-5 h-5" />
-            </span>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="example@domain.com"
-              required
-              className="w-full pl-10 pr-4 py-3 bg-input  border border-input-border rounded-lg text-input-text placeholder:text-input-placeholder focus:outline-none 
-              focus:input-focus hover:border-input-hover transition-all text-sm"
-            />
-          </div>
         </div>
 
-        {/* Password Input */}
+        {/* Password Input - floating label */}
         <div className="space-y-2">
-          <label
-            htmlFor="password"
-            className="text-sm font-semibold text-gray-700 block"
-          >
-            Password
-          </label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">
-              <Lock className="w-5 h-5" />
-            </span>
             <input
               id="password"
               type={showPassword ? "text" : "password"}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              placeholder="Create a strong password"
+              placeholder=" "
+              autoComplete="new-password"
               required
-              className="w-full pl-10 pr-12 py-3 bg-input border border-input-border rounded-lg text-text-input placeholder:text-input-placeholder
-              hover:border-input-hover    focus:outline-none showdaw-soft transition-all text-sm"
+              className="peer w-full px-4 pr-12 pt-4 pb-1.5 bg-input border border-input-border rounded-lg text-text-input placeholder-transparent
+                hover:border-input-hover focus:outline-none focus:border-input-focus transition-all text-sm"
             />
+            <label
+              htmlFor="password"
+              className="absolute left-4 -top-2 px-1 bg-bodey-bg text-xs text-brand transition-all pointer-events-none
+                peer-placeholder-shown:top-3.5 peer-placeholder-shown:text-sm peer-placeholder-shown:text-gray-400 peer-placeholder-shown:bg-transparent
+                peer-focus:-top-2 peer-focus:text-xs peer-focus:text-brand peer-focus:bg-bodey-bg"
+            >
+              Password
+            </label>
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
@@ -178,6 +189,9 @@ export default function CreateAccount({
               )}
             </button>
           </div>
+          <p className="text-xs text-gray-400 pl-1">
+            More than 6 characters, with uppercase, lowercase and a number.
+          </p>
         </div>
 
         {/* Submit Button */}
