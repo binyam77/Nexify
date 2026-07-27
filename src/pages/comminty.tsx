@@ -617,6 +617,7 @@ export default function Community() {
                 onSelectChat={handleSelectChat}
                 onCreatePlusClick={() => setIsCreateChoiceOpen(true)}
                 onDeleteChat={handleDeleteChat}
+                onJoinChat={handleJoinChat}
               />
             </div>
 
