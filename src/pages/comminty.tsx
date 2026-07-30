@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { CheckCircle } from "lucide-react";
 
 import ChatsSidebar from "../components/ChatsSidebar";
@@ -38,7 +38,7 @@ export default function Community() {
   // Group member-picker's data source — ወደፊት real follow/follower data ብቻ ይተካዋል፣ MemberPickerModal ራሱ አይቀየርም
   // ⏳ ለጊዜው Profile's demo otherUsers — backend ሲመጣ: GET /api/users/me/following ን ይተካል
   const availableMembersForPicker: SelectableUser[] = [
-    { id: "abel_codes", name: "Abel T.", username: "abel_codes", photo: "" },
+    { id: "abel_dj", name: "Abel T.", username: "abel_dj", photo: "" },
     { id: "betty_dev", name: "Betty Dev", username: "betty_dev", photo: "" },
   ];
 
@@ -196,6 +196,40 @@ export default function Community() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
+  // Group ውጣ (creator ካልሆነ) — group ራሱ አይጠፋም፣ ተጠቃሚው ብቻ isJoined:false ይሆናል
+  const handleLeaveGroup = (chatId: string) => {
+    setChats((prev) =>
+      prev.map((c) =>
+        c.id === chatId
+          ? {
+              ...c,
+              isJoined: false,
+              membersCount: Math.max(0, c.membersCount - 1),
+            }
+          : c,
+      ),
+    );
+    if (activeChatId === chatId) setActiveChatId(null);
+    triggerToast("👋 You left the group.");
+    // ⏳ FUTURE: DELETE /api/groups/:id/members/me
+  };
+
+  // Group name/photo/bio/cover edit (creator ብቻ)
+  const handleUpdateGroupInfo = (
+    chatId: string,
+    updates: {
+      name?: string;
+      avatarUrl?: string;
+      description?: string;
+      cover?: string;
+    },
+  ) => {
+    setChats((prev) =>
+      prev.map((c) => (c.id === chatId ? { ...c, ...updates } : c)),
+    );
+    triggerToast("✅ Group updated!");
+    // ⏳ FUTURE: PATCH /api/groups/:id
+  };
 
   // Delete chat/group/channel permanently (localStorage ውስጥ ካለው ሙሉ ይጠፋል፤ refresh/relogin ቢሆንም አይመለስም)
   const handleDeleteChat = (chatId: string) => {
@@ -214,6 +248,28 @@ export default function Community() {
     // FUTURE: Delete on backend too:
     // ==========================================
     // fetch(`/api/communities/${chatId}`, { method: 'DELETE' });
+  };
+  // DEMO ONLY: contact "typing..." simulation — real backend ሲመጣ Socket.IO 'typing' event
+  // emit/receive ብቻ ይተካዋል፣ ይህ function ራሱ ይጠፋል
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const handleUserTyping = () => {
+    if (!activeChatId) return;
+    const targetChat = chats.find((c) => c.id === activeChatId);
+    if (targetChat?.type !== "chat") return; // ለ demo private chat ብቻ
+
+    if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    setChats((prev) =>
+      prev.map((c) =>
+        c.id === activeChatId ? { ...c, typingUsers: [targetChat.name] } : c,
+      ),
+    );
+    typingTimeoutRef.current = setTimeout(() => {
+      setChats((prev) =>
+        prev.map((c) =>
+          c.id === activeChatId ? { ...c, typingUsers: [] } : c,
+        ),
+      );
+    }, 2000);
   };
 
   // Chat/Room selection handler
@@ -245,6 +301,7 @@ export default function Community() {
       mediaUrl,
       mediaType,
       reactions: [],
+      seen: false,
     };
 
     // 1. Update message store (Messages DB Update)
@@ -253,6 +310,20 @@ export default function Community() {
       [activeChatId]: [...(prev[activeChatId] || []), newMsg],
     }));
 
+    // DEMO ONLY: 1:1 chat ላይ "ተነባቢ" simulation — real backend ሲመጣ ይህ ጨርሶ ይጠፋል፣
+    // Socket.IO 'message:read' event ብቻ msg.seen ን ያዘምናል
+    const targetChat = chats.find((c) => c.id === activeChatId);
+    if (targetChat?.type === "chat") {
+      const sentMsgId = newMsg.id;
+      setTimeout(() => {
+        setMessagesDb((prev) => ({
+          ...prev,
+          [activeChatId]: (prev[activeChatId] || []).map((m) =>
+            m.id === sentMsgId ? { ...m, seen: true } : m,
+          ),
+        }));
+      }, 1500);
+    }
     // 2. Update the last message preview text and time on the sidebar list
     setChats((prev) =>
       prev.map((c) => {
@@ -344,6 +415,16 @@ export default function Community() {
 
     triggerToast("🗑️ Message deleted successfully!");
   };
+  // Pin/Unpin message toggle (Group/Channel ብቻ)
+  const handlePinMessage = (messageId: string) => {
+    if (!activeChatId) return;
+    setMessagesDb((prev) => ({
+      ...prev,
+      [activeChatId]: (prev[activeChatId] || []).map((msg) =>
+        msg.id === messageId ? { ...msg, isPinned: !msg.isPinned } : msg,
+      ),
+    }));
+  };
 
   // Reaction logic (Allows at most one selected reaction per message per user)
   const handleReactMessage = (messageId: string, emoji: string) => {
@@ -407,6 +488,28 @@ export default function Community() {
     }));
   };
 
+  //Communities/Suggested view ውስጥ Join -- cancel toggle (card ራሱ ከ list አይጠፋም: button ብቻ ይከያየራል)
+  const handleToggleJoin = (chatId: string) => {
+    const targetChat = chats.find((c) => c.id === chatId);
+    if (!targetChat) return;
+    if (targetChat.isJoined) {
+      // Cancel - ወደ ነበረበት (unJoind) ይመለሳል
+      setChats((prev) =>
+        prev.map((c) =>
+          c.id === chatId
+            ? {
+                ...c,
+                isJoined: false,
+                membersCount: Math.max(0, c.membersCount - 1),
+              }
+            : c,
+        ),
+      );
+    } else {
+      handleJoinChat(chatId);
+    }
+  };
+
   // Join community group room handler
   const handleJoinChat = (chatId: string) => {
     const targetChat = chats.find((c) => c.id === chatId);
@@ -455,6 +558,44 @@ export default function Community() {
     //   body: JSON.stringify({ chatId, userId: 'current_user_id' })
     // });
   };
+  // Existing group ላይ አዲስ members መጨመሪያ (Invite Members flow)
+  const handleInviteMembers = (
+    chatId: string,
+    invitedUsers: SelectableUser[],
+  ) => {
+    if (invitedUsers.length === 0) return;
+
+    setChats((prev) =>
+      prev.map((c) =>
+        c.id === chatId
+          ? { ...c, membersCount: c.membersCount + invitedUsers.length }
+          : c,
+      ),
+    );
+
+    const names = invitedUsers.map((u) => u.name).join(", ");
+    const systemMsg: Message = {
+      id: `sys-invite-${Date.now()}`,
+      senderName: "System",
+      text: `👋 ${names} ${invitedUsers.length > 1 ? "have" : "has"} been added to the group.`,
+      time: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
+      isSentByMe: false,
+    };
+    setMessagesDb((prev) => ({
+      ...prev,
+      [chatId]: [...(prev[chatId] || []), systemMsg],
+    }));
+
+    triggerToast(
+      `✅ Added ${invitedUsers.length} member${invitedUsers.length > 1 ? "s" : ""}!`,
+    );
+
+    // ⏳ FUTURE: POST /api/groups/:id/members with invitedUsers.map(u => u.id)
+  };
+
   // Create new group logic
   const handleCreateGroup = (
     newChat: Chat,
@@ -618,6 +759,7 @@ export default function Community() {
                 onCreatePlusClick={() => setIsCreateChoiceOpen(true)}
                 onDeleteChat={handleDeleteChat}
                 onJoinChat={handleJoinChat}
+                onToggleJoin={handleToggleJoin}
               />
             </div>
 
@@ -630,10 +772,20 @@ export default function Community() {
                 chat={activeChat}
                 messages={activeMessages}
                 onSendMessage={handleSendMessage}
+                onUserTyping={handleUserTyping}
+                onInviteMembers={handleInviteMembers}
+                availableUsersForInvite={availableMembersForPicker}
                 onEditMessage={handleEditMessage}
                 onDeleteMessage={handleDeleteMessage}
                 onReactMessage={handleReactMessage}
+                onPinMessage={handlePinMessage}
                 onJoinChat={handleJoinChat}
+                onLeaveGroup={handleLeaveGroup}
+                onDeleteGroup={handleDeleteChat}
+                onUpdateGroupInfo={handleUpdateGroupInfo}
+                onUnsubscribeChannel={handleLeaveGroup}
+                onDeleteChannel={handleDeleteChat}
+                onUpdateChannelInfo={handleUpdateGroupInfo}
                 onBack={() => setActiveChatId(null)} // Handle going back on mobile
                 currentUserProfile={userProfile}
               />

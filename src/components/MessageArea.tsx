@@ -17,10 +17,15 @@ import {
   X,
   Plus,
   Check,
+  Mic,
+  Square,
+  Pin,
+  PinOff,
 } from "lucide-react";
 import ChannelInfoModal from "./ChannelInfoModal";
 import ChatInfoModal from "./ChatInfoModal";
-import type { Chat, Message } from "../types";
+import GroupInfoModal from "./GroupInfoModal";
+import type { Chat, Message, GroupMember, SelectableUser } from "../types";
 
 interface MessageAreaProps {
   chat: Chat | null;
@@ -33,7 +38,33 @@ interface MessageAreaProps {
   onEditMessage: (messageId: string, newText: string) => void;
   onDeleteMessage: (messageId: string) => void;
   onReactMessage: (messageId: string, emoji: string) => void;
+  onPinMessage?: (messageId: string) => void;
+  onLeaveGroup?: (chatId: string) => void;
+  onDeleteGroup?: (chatId: string) => void;
+  onUpdateGroupInfo?: (
+    chatId: string,
+    updates: {
+      name?: string;
+      avatarUrl?: string;
+      description?: string;
+      cover?: string;
+    },
+  ) => void;
+  onUnsubscribeChannel?: (chatId: string) => void;
+  onDeleteChannel?: (chatId: string) => void;
+  onUpdateChannelInfo?: (
+    chatId: string,
+    updates: {
+      name?: string;
+      avatarUrl?: string;
+      description?: string;
+      cover?: string;
+    },
+  ) => void;
   onJoinChat: (chatId: string) => void;
+  onUserTyping?: () => void;
+  onInviteMembers?: (chatId: string, invitedUsers: SelectableUser[]) => void;
+  availableUsersForInvite?: SelectableUser[];
   onBack: () => void; // Handle going back on mobile
   currentUserProfile: {
     name: string;
@@ -53,7 +84,17 @@ export default function MessageArea({
   onEditMessage,
   onDeleteMessage,
   onReactMessage,
+  onPinMessage,
   onJoinChat,
+  onLeaveGroup,
+  onDeleteGroup,
+  onUpdateGroupInfo,
+  onUnsubscribeChannel,
+  onDeleteChannel,
+  onUpdateChannelInfo,
+  onUserTyping,
+  onInviteMembers,
+  availableUsersForInvite,
   onBack,
   currentUserProfile,
 }: MessageAreaProps) {
@@ -97,6 +138,22 @@ export default function MessageArea({
   // Channel header ተነክቶ ሲከፈት (Cover/create name/Empty detail view)
   const [isChannelInfoOpen, setChannelInfoOpen] = useState(false);
 
+  // Group header ተነክቶ ሲከፈት (Cover/Name/Description/Members)
+  const [isGroupInfoOpen, setIsGroupInfoOpen] = useState(false);
+
+  // ⏳ ለጊዜው demo members — backend ሲመጣ: GET /api/groups/:id/members ን ይተካል
+  const demoGroupMembers: GroupMember[] = [
+    {
+      id: "me",
+      name: currentUserProfile.name,
+      username: currentUserProfile.username,
+      photo: currentUserProfile.avatar,
+      isAdmin: true,
+    },
+    { id: "yonas", name: "Yonas G.", username: "yonas_g", photo: "" },
+    { id: "selam", name: "Selam W.", username: "selam_w", photo: "" },
+    { id: "abelk", name: "Abel K.", username: "abel_k", photo: "" },
+  ];
   // Private chat header ተነክቶ ሲከፈት (Cover/photo /name/Stories/Empty detail view)
   const [isChatInfoOpen, setIsChatInfoOpen] = useState(false);
 
@@ -135,6 +192,74 @@ export default function MessageArea({
     type: "image" | "video" | "audio" | "pdf";
     name?: string;
   } | null>(null);
+
+  // Voice recording (MediaRecorder Web API)
+  const [isRecording, setIsRecording] = useState(false);
+  const [recordingSeconds, setRecordingSeconds] = useState(0);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
+  const recordingTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      audioChunksRef.current = [];
+      recorder.ondataavailable = (e) => {
+        if (e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      recorder.onstop = () => {
+        const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+        const url = URL.createObjectURL(blob);
+        setAttachedMedia({ url, type: "audio", name: "Voice message" });
+        stream.getTracks().forEach((track) => track.stop());
+      };
+      recorder.start();
+      mediaRecorderRef.current = recorder;
+      setIsRecording(true);
+      setRecordingSeconds(0);
+      recordingTimerRef.current = setInterval(() => {
+        setRecordingSeconds((s) => s + 1);
+      }, 1000);
+    } catch (err) {
+      console.error("Microphone access denied or unavailable:", err);
+      alert(
+        "Could not access microphone. Please check your browser permissions.",
+      );
+    }
+  };
+
+  const stopRecording = () => {
+    mediaRecorderRef.current?.stop();
+    setIsRecording(false);
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.onstop = null;
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream
+        .getTracks()
+        .forEach((track) => track.stop());
+    }
+    setIsRecording(false);
+    if (recordingTimerRef.current) {
+      clearInterval(recordingTimerRef.current);
+      recordingTimerRef.current = null;
+    }
+  };
+
+  const formatRecordingTime = (secs: number) => {
+    const m = Math.floor(secs / 60)
+      .toString()
+      .padStart(2, "0");
+    const s = (secs % 60).toString().padStart(2, "0");
+    return `${m}:${s}`;
+  };
 
   const filteredMessages = messages.filter((msg) => {
     if (!messageSearchQuery) return true;
@@ -244,8 +369,9 @@ export default function MessageArea({
             onClick={() => {
               if (chat.type === "channel") setChannelInfoOpen(true);
               else if (chat.type === "chat") setIsChatInfoOpen(true);
+              else if (chat.type === "group") setIsGroupInfoOpen(true);
             }}
-            className={`flex items-center gap-3.5 min-w-0 ${chat.type === "channel" || chat.type === "chat" ? "cursor-pointer" : ""}`}
+            className="flex items-center gap-3.5 min-w-0 cursor-pointer"
           >
             {chat.avatarUrl ? (
               <img
@@ -328,14 +454,26 @@ export default function MessageArea({
           </button>
           {chat.type === "group" && (
             <button
+              onClick={() => setIsGroupInfoOpen(true)}
               className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all"
-              aria-label="More options"
+              aria-label="Group info"
             >
               <EllipsisVertical className="w-5 h-5" />
             </button>
           )}
         </div>
       </header>
+      {/* Pinned message banner (Group/Channel ብቻ) */}
+      {(chat.type === "group" || chat.type === "channel") &&
+        messages.some((m) => m.isPinned) && (
+          <div className="px-5 py-2 bg-amber-50 border-b border-amber-100 flex items-center gap-2 shrink-0">
+            <Pin className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+            <p className="text-xs text-amber-800 font-semibold truncate flex-1">
+              {messages.filter((m) => m.isPinned).slice(-1)[0]?.text ||
+                "Pinned message"}
+            </p>
+          </div>
+        )}
 
       {/* Search Input Dropdown inside MessageArea */}
       {isSearchingMessages && (
@@ -541,7 +679,9 @@ export default function MessageArea({
                           >
                             <EllipsisVertical className="w-3 h-3" />
                           </button>
-                          <CheckCheck className="w-3.5 h-3.5 text-blue-100" />
+                          <CheckCheck
+                            className={`w-3.5 h-3.5 ${msg.seen ? "text-sky-300" : "text-blue-100/60"}`}
+                          />
                         </div>
                       </div>
 
@@ -765,6 +905,15 @@ export default function MessageArea({
             }
           })
         )}
+        {chat.typingUsers && chat.typingUsers.length > 0 && (
+          <div className="w-full flex justify-start pl-2 md:pl-4">
+            <div className="bg-[#f1f3f4] px-4 py-3 rounded-[18px] rounded-bl-[3px] flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.3s]" />
+              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce [animation-delay:-0.15s]" />
+              <span className="w-1.5 h-1.5 bg-gray-400 rounded-full animate-bounce" />
+            </div>
+          </div>
+        )}
         <div ref={feedEndRef} />
       </div>
 
@@ -899,7 +1048,10 @@ export default function MessageArea({
                 <textarea
                   ref={textareaRef}
                   value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
+                  onChange={(e) => {
+                    setInputText(e.target.value);
+                    onUserTyping?.();
+                  }}
                   onKeyDown={handleKeyDown}
                   placeholder="Write a message..."
                   rows={1}
@@ -924,20 +1076,56 @@ export default function MessageArea({
                 )}
               </div>
 
-              <button
-                type="submit"
-                disabled={!inputText.trim() && !attachedMedia}
-                className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 select-none ${
-                  inputText.trim() || attachedMedia
-                    ? "bg-[#2481cc] hover:bg-[#2075b8] text-white shadow-md shadow-blue-200 hover:scale-105 active:scale-95 cursor-pointer"
-                    : "bg-gray-100 text-gray-400 cursor-not-allowed"
-                }`}
-                aria-label="Send message"
-                title="Send message"
-              >
-                <Send className="w-5 h-5 transform -rotate-12 translate-x-0.5" />
-              </button>
+              {!inputText.trim() && !attachedMedia ? (
+                <button
+                  type="button"
+                  onClick={startRecording}
+                  className="w-12 h-12 rounded-full flex items-center justify-center bg-[#2481cc] hover:bg-[#2075b8] text-white shadow-md shadow-blue-200 hover:scale-105 active:scale-95 transition-all duration-200 shrink-0 select-none"
+                  aria-label="Record voice message"
+                  title="Record voice message"
+                >
+                  <Mic className="w-5 h-5" />
+                </button>
+              ) : (
+                <button
+                  type="submit"
+                  className="w-12 h-12 rounded-full flex items-center justify-center bg-[#2481cc] hover:bg-[#2075b8] text-white shadow-md shadow-blue-200 hover:scale-105 active:scale-95 transition-all duration-200 shrink-0 select-none cursor-pointer"
+                  aria-label="Send message"
+                  title="Send message"
+                >
+                  <Send className="w-5 h-5 transform -rotate-12 translate-x-0.5" />
+                </button>
+              )}
             </form>
+
+            {/* Recording overlay — composer ን ይተካል፣ ገልብጦ ወይም ልኮ ማቆም ይቻላል */}
+            {isRecording && (
+              <div className="absolute inset-x-0 bottom-0 top-0 bg-white flex items-center gap-3 px-2 rounded-3xl animate-in fade-in duration-150">
+                <button
+                  type="button"
+                  onClick={cancelRecording}
+                  className="p-2.5 text-rose-500 hover:bg-rose-50 rounded-full transition-colors shrink-0"
+                  aria-label="Cancel recording"
+                >
+                  <Trash2 className="w-5 h-5" />
+                </button>
+                <div className="flex-1 flex items-center gap-2">
+                  <span className="w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse shrink-0" />
+                  <span className="text-sm font-bold text-gray-700">
+                    Recording... {formatRecordingTime(recordingSeconds)}
+                  </span>
+                </div>
+                <button
+                  type="button"
+                  onClick={stopRecording}
+                  className="w-12 h-12 rounded-full flex items-center justify-center bg-[#2481cc] hover:bg-[#2075b8] text-white shrink-0 transition-all"
+                  aria-label="Stop and send recording"
+                  title="Stop and attach"
+                >
+                  <Square className="w-4 h-4" fill="white" />
+                </button>
+              </div>
+            )}
           </div>
         ) : isChannelSubscriberOnly && chat.isJoined ? (
           // Subscribe አድርጓል ግን creator ስላልሆነ መጻፍ አይችልም — emoji reaction ብቻ
@@ -1040,6 +1228,29 @@ export default function MessageArea({
                 </button>
               )}
 
+              {/* Pin/Unpin Option: Group/Channel creator ብቻ */}
+              {(chat.type === "group" ||
+                (chat.type === "channel" && chat.isCreatedByMe)) && (
+                <button
+                  onClick={() => {
+                    onPinMessage?.(selectedOptionsMessage.id);
+                    setSelectedOptionsMessage(null);
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-amber-50 hover:text-amber-600 rounded-xl transition-colors text-left"
+                >
+                  {selectedOptionsMessage.isPinned ? (
+                    <PinOff className="w-4 h-4 text-amber-500" />
+                  ) : (
+                    <Pin className="w-4 h-4 text-amber-500" />
+                  )}
+                  <span>
+                    {selectedOptionsMessage.isPinned
+                      ? "Unpin Message"
+                      : "Pin Message"}
+                  </span>
+                </button>
+              )}
+
               {/* Copy Text Option: Always available */}
               <button
                 onClick={() => {
@@ -1051,7 +1262,6 @@ export default function MessageArea({
                 <Check className="w-4 h-4 text-emerald-500" />
                 <span>Copy Text</span>
               </button>
-
               {/* Close Button */}
               <button
                 onClick={() => setSelectedOptionsMessage(null)}
@@ -1088,12 +1298,32 @@ export default function MessageArea({
       {isChannelInfoOpen && chat.type === "channel" && (
         <ChannelInfoModal
           chat={chat}
+          messages={messages}
+          onViewMedia={(url) => setViewingMedia(url)}
+          onUnsubscribe={onUnsubscribeChannel || (() => {})}
+          onDeleteChannel={onDeleteChannel || (() => {})}
+          onUpdateChannelInfo={onUpdateChannelInfo || (() => {})}
           onClose={() => setChannelInfoOpen(false)}
         />
       )}
       {/*7.  Private Chat Detail View (Cover/Photo/Name/Stories / Empty) */}
       {isChatInfoOpen && chat.type === "chat" && (
         <ChatInfoModal chat={chat} onClose={() => setIsChatInfoOpen(false)} />
+      )}
+      {/* 8. Group Info Detail View (Cover/Name/Description/Members) */}
+      {isGroupInfoOpen && chat.type === "group" && (
+        <GroupInfoModal
+          chat={chat}
+          members={demoGroupMembers}
+          messages={messages}
+          availableUsersForInvite={availableUsersForInvite || []}
+          onInviteMembers={onInviteMembers || (() => {})}
+          onViewMedia={(url) => setViewingMedia(url)}
+          onLeaveGroup={onLeaveGroup || (() => {})}
+          onDeleteGroup={onDeleteGroup || (() => {})}
+          onUpdateGroupInfo={onUpdateGroupInfo || (() => {})}
+          onClose={() => setIsGroupInfoOpen(false)}
+        />
       )}
       {/* FUTURE: Code reference for persisting messages in PostgreSQL database using server proxy */}
       {/* // FUTURE: POST request to Express API: /api/messages with body { chatId: chat.id, text: inputText } */}

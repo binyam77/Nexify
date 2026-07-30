@@ -4,6 +4,7 @@ import EmojiPicker from "./EmojiPicker";
 import CommentCard from "./CommentCard";
 import type { CommentItem, CommentSort } from "../types";
 
+
 interface CommentModalProps {
   comments: CommentItem[];
   currentUsername: string;
@@ -46,8 +47,8 @@ export default function CommentModal({
         onClick={onClose}
       />
 
-      <div className="animate-slide-up fixed inset-x-0 bottom-0 z-[9999] flex h-[80vh] w-full flex-col overflow-hidden rounded-t-[20px] bg-black shadow-2xl md:inset-x-auto md:inset-y-4 md:bottom-auto md:right-4 md:h-[calc(100vh-2rem)] md:max-h-none md:w-[420px] md:rounded-[18px]">
-        <div className="flex shrink-0 items-center justify-between border-b border-zinc-800 bg-black px-4 py-3.5">
+      <div className="animate-slide-up fixed inset-x-0 bottom-0 z-[9999] flex h-[80vh] w-full flex-col overflow-hidden rounded-t-[20px] bg-surface shadow-2xl md:inset-x-auto md:inset-y-4 md:bottom-auto md:right-4 md:h-[calc(100vh-2rem)] md:max-h-none md:w-[420px] md:rounded-[18px]">
+        <div className="flex shrink-0 items-center justify-between border-b border-zinc-800 bg-surface px-4 py-3.5">
           <div className="w-8" />
           <h3 className="text-[15px] font-semibold text-white">
             {comments.length} comments
@@ -72,7 +73,7 @@ export default function CommentModal({
           </div>
         </div>
 
-        <div className="scrollbar-thin flex min-h-[200px] flex-1 flex-col gap-4 overflow-y-auto bg-black px-4 py-4">
+        <div className="scrollbar-thin flex min-h-[200px] flex-1 flex-col gap-4 overflow-y-auto bg-surface px-4 py-4">
           {sortedComments.length === 0 ? (
             <div className="m-auto px-4 py-6 text-center text-sm leading-relaxed text-zinc-500">
               <span className="mb-2 block text-3xl">💬</span>
@@ -93,17 +94,17 @@ export default function CommentModal({
           )}
         </div>
 
-        <div className="flex shrink-0 items-center gap-2 border-t border-zinc-800 bg-black px-3 py-2.5">
+        <div className="flex shrink-0 items-center gap-2 border-t border-zinc-800 bg-surface px-3 py-2.5">
           <EmojiPicker
             onSelect={(emoji) => setNewCommentText((t) => t + emoji)}
           />
-          <input
+          <textarea
             value={newCommentText}
             maxLength={300}
             placeholder="Add a comment..."
             onChange={(e) => setNewCommentText(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handlePost()}
-            className="flex-1 rounded-full border border-zinc-700 bg-zinc-900 px-3.5 py-1.5 text-[13px] text-white placeholder:text-zinc-500 outline-none focus:border-zinc-500"
+            className="flex-1 rounded-full border border-input-border resize-none bg-surface-raised px-3.5 py-1.5 text-[13px] text-text placeholder-placeholder outline-none focus:border-zinc-500"
           />
           <button
             type="button"

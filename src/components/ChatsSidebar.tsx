@@ -14,6 +14,7 @@ interface ChatsSidebarProps {
   onCreatePlusClick: () => void;
   onDeleteChat: (chatId: string) => void;
   onJoinChat: (chatId: string) => void;
+  onToggleJoin: (chatId: string) => void;
 }
 
 type SidebarTab = "messages" | "communities";
@@ -25,7 +26,7 @@ export default function ChatsSidebar({
   onSelectChat,
   onCreatePlusClick,
   onDeleteChat,
-  onJoinChat,
+  onToggleJoin,
 }: ChatsSidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>("messages");
   const [searchQuery, setSearchQuery] = useState("");
@@ -85,34 +86,21 @@ export default function ChatsSidebar({
 
   // Messages tab: ተቀላቅሏቸው ያሉት ብቻ
   const joinedChats = searchFiltered.filter((c) => c.isJoined);
-
-  // Communities tab: ያልተቀላቀላቸው ብቻ (Suggested)
-  const suggestedGroups = searchFiltered.filter(
-    (c) => c.type === "group" && !c.isJoined,
-  );
-  const suggestedChannels = searchFiltered.filter(
-    (c) => c.type === "channel" && !c.isJoined,
-  );
+  // Communities tab: ሁሉም groups/channels ይታያሉ (joined ይሁን አልሆነ)፣ button ብቻ state ያሳያል
+  const suggestedGroups = searchFiltered.filter((c) => c.type === "group");
+  const suggestedChannels = searchFiltered.filter((c) => c.type === "channel");
 
   return (
     <section
-      className="w-full md:w-[350px] border-r border-gray-100 bg-gray-50 flex flex-col h-full shrink-0"
+      className="w-full md:w-[350px] border-r border-gray-100 bg-surface flex flex-col h-full shrink-0"
       aria-label="Chats List"
     >
       {/* ራስጌ - የአርዕስት ክፍል */}
-      <header className="p-5 bg-white border-b border-gray-50 flex items-center justify-between shrink-0">
+      <header className="p-5 bg-surface border-b border-gray-50 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="flex items-center gap-2.5">
-            <img
-              src="/logo.png"
-              alt="Nexify"
-              className="w-8 h-8 object-contain shrink-0"
-              onError={(e) => {
-                e.currentTarget.style.display = "none";
-              }}
-            />
             <h1
-              className="text-xl font-black tracking-tight text-gray-900"
+              className="text-xl font-black tracking-tight text-text-h1"
               id="brand-header-title"
             >
               Communities
@@ -122,7 +110,7 @@ export default function ChatsSidebar({
         <button
           type="button"
           onClick={onCreatePlusClick}
-          className="p-2 text-blue-600 hover:bg-blue-50 rounded-xl transition-all shrink-0"
+          className="p-2 text-brand hover:bg-blue-50 rounded-xl transition-all shrink-0"
           aria-label="Create new channel or group"
           title="Create"
         >
@@ -131,12 +119,12 @@ export default function ChatsSidebar({
       </header>
 
       {/* Tab switcher: Messages / Communities */}
-      <div className="flex border-b border-gray-100 bg-white shrink-0">
+      <div className="flex border-b border-gray-100 bg-surface shrink-0">
         <button
           onClick={() => setActiveTab("messages")}
           className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 ${
             activeTab === "messages"
-              ? "text-blue-600 border-blue-600"
+              ? "text-brand border-brand"
               : "text-gray-400 border-transparent hover:text-gray-600"
           }`}
         >
@@ -146,7 +134,7 @@ export default function ChatsSidebar({
           onClick={() => setActiveTab("communities")}
           className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 ${
             activeTab === "communities"
-              ? "text-blue-600 border-blue-600"
+              ? "text-brand border-brand"
               : "text-gray-400 border-transparent hover:text-gray-600"
           }`}
         >
@@ -166,7 +154,7 @@ export default function ChatsSidebar({
                 ? "Search chats..."
                 : "Search communities..."
             }
-            className="w-full pl-10 pr-4 py-2.5 bg-input border border-input-border rounded-xl text-sm text-input-text placeholder:placeholder-input-text focus:bg-input
+            className="w-full pl-10 pr-4 py-2.5 bg-surface-raised border border-input-border rounded-xl text-sm text-input-text placeholder:placeholder-input-text focus:bg-input
              focus:border-input-focus  outline-none transition-all "
           />
           <Search className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
@@ -302,11 +290,15 @@ export default function ChatsSidebar({
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          onJoinChat(chat.id);
+                          onToggleJoin(chat.id);
                         }}
-                        className="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-[10px] font-bold rounded-lg transition-colors"
+                        className={`w-full py-1.5 text-[10px] font-bold rounded-lg transition-colors ${
+                          chat.isJoined
+                            ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                            : "bg-blue-600 hover:bg-blue-700 text-white"
+                        }`}
                       >
-                        Join
+                        {chat.isJoined ? "Cancel" : "Join"}
                       </button>
                     </div>
                   </div>
@@ -359,11 +351,15 @@ export default function ChatsSidebar({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onJoinChat(chat.id);
+                      onToggleJoin(chat.id);
                     }}
-                    className="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-full transition-colors shrink-0"
+                    className={`px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors shrink-0 ${
+                      chat.isJoined
+                        ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
+                        : "bg-blue-600 hover:bg-blue-700 text-white"
+                    }`}
                   >
-                    Subscribe
+                    {chat.isJoined ? "Cancel" : "Subscribe"}
                   </button>
                 </div>
               ))

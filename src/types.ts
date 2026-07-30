@@ -72,6 +72,8 @@ export interface Chat {
   cover?:string;// Channel/chat detail-view ላይ የሚታይ cover banner(Based64/URL)
   description?:string;//Channel ርእስ/ መግለጫ
   bio?:string;//1:1 only chat:speak bio(Profile identity single source of truth)
+  typingUsers?: string[]; // አሁን የሚፅፉ ሰዎች (ephemeral, persist አይደረግም) — TODO: backend ሲመጣ Socket.IO 'typing' event ይህን ይሞላል/ያራግፋል
+  
 }
 
 export interface Message {
@@ -84,7 +86,16 @@ export interface Message {
   mediaType?: 'image' | 'video' | 'audio' | 'pdf'; // የአባሪው ፋይል አይነት (Type of attached media file)
   isEdited?: boolean; // መልዕክቱ የተቀየረ መሆኑን ማሳያ (Flag to indicate if the message has been edited)
   reactions?: { emoji: string; count: number; users: string[] }[]; // ተጠቃሚዎች የሰጡት ምላሽ (List of user reactions to this message)
+  seen?:boolean;//ተቀባይ አይቶታል ወይ (Read receipt) — TODO: backend ሲመጣ Socket.IO 'message:read' event ይህን ያዘምናል
+  isPinned?: boolean; // Group/Channel admin የሰካው መልዕክት
 }
+export interface ChannelStats {
+subscribers:number;
+totalPosts:number;
+totalReactions:number;
+totalComments:number;
+}
+
 export interface OtherCreator {
   id: number;
   name: string;
@@ -128,4 +139,7 @@ export interface SelectableUser {
   name: string;
   username: string;
   photo: string;
+}
+export interface GroupMember extends SelectableUser{
+  isAdmin?:boolean;
 }
