@@ -1,5 +1,7 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
+import { useAuth } from "../context/AuthContext";
+import { ApiError } from "../lib/api-client";
 import { Eye, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
 // TODO: አድራሻውን የእርስዎ project structure መሰረት ያስተካክሉ
 // (ለምሳሌ Login.tsx በ src/pages/ ውስጥ ከሆነ "../assets/logo.png" ትክክል ነው)
@@ -20,13 +22,15 @@ export default function Login({
   onGoogleLogin,
   onFacebookLogin,
 }: LoginProps) {
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess(false);
@@ -35,32 +39,35 @@ export default function Login({
       setError("Please enter a valid email address.");
       return;
     }
-
     if (!password) {
       setError("Please enter your password.");
       return;
     }
 
-    // ⚠️ ጊዜያዊ (placeholder) ማረጋገጫ — localStorage.
-    // Backend ሲገባ: server-side session/JWT + httpOnly secure cookie ይተካዋል.
-    // Password ፈጽሞ በ client-side አይነጻጸርም — server-side Argon2/bcrypt hash comparison ብቻ.
-    const stored = localStorage.getItem("authUser");
-    if (!stored) {
-      setError("No account found. Please create an account first.");
-      return;
+    setIsSubmitting(true);
+    try {
+      // AuthContext's login() → Backend POST /auth/login → accessToken ያገኛል
+      // → GET /auth/me ራሱ በራሱ ይጠራል → user state ይሞላል
+      await login(email, password);
+      setSuccess(true);
+      onSubmit(email); // Parent (routing) ን ማሳወቅ - ነባር pattern
+    } catch (err) {
+      if (err instanceof ApiError) {
+        if (err.statusCode === 403) {
+          // Backend's ForbiddenException: "Please verify your email..."
+          setError(err.message);
+        } else if (err.statusCode === 401) {
+          setError("Invalid email or password.");
+        } else {
+          setError(err.message);
+        }
+      } else {
+        setError("Something went wrong. Please try again.");
+      }
+    } finally {
+      setIsSubmitting(false);
     }
-    const storedUser = JSON.parse(stored);
-
-    // ✅ Bug fix: ቀድሞ "==" (እኩል ሲሆን) ላይ error ይሰጥ ነበር — ተገልብጦ ነበር.
-    if (storedUser.email !== email) {
-      setError("Email not found. Please check and try again.");
-      return;
-    }
-
-    setSuccess(true);
-    onSubmit(email);
   };
-
   const handleGoogleLogin = () => {
     // Placeholder — Backend ሲገባ: redirect to /api/auth/google
     // (state parameter ለ CSRF prevention፣ token exchange ደግሞ ሙሉ በሙሉ backend-side)
@@ -187,12 +194,13 @@ export default function Login({
         </div>
 
         {/* Submit Button */}
-        <button
+       <button
           type="submit"
           id="button"
-          className="w-full py-3.5 px-4 bg-brand text-white font-semibold rounded-lg text-sm sm:text-base cursor-pointer hover:bg-brand-dark active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand/15"
+          disabled={isSubmitting}
+          className="w-full py-3.5 px-4 bg-brand text-white font-semibold rounded-lg text-sm sm:text-base cursor-pointer hover:bg-brand-dark active:scale-[0.98] transition-all flex items-center justify-center gap-2 shadow-lg shadow-brand/15 disabled:opacity-60 disabled:cursor-not-allowed"
         >
-          Sign In
+          {isSubmitting ? "Signing in..." : "Sign In"}
         </button>
       </form>
 

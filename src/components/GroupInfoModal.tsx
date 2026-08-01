@@ -4,7 +4,7 @@
  */
 
 import { useState, useRef } from "react";
-import { X, Users, UserPlus, Image as ImageIcon, Camera, Pencil, LogOut, Trash2 } from "lucide-react";
+import { X, Users, UserPlus, Image as ImageIcon, Camera, Pencil, LogOut, Trash2, Check } from "lucide-react";
 import type { Chat, GroupMember, SelectableUser, Message } from "../types";
 import MembersListModal from "./MembersListModal";
 import MemberPickerModal from "./MemberPickerModal";
@@ -19,11 +19,14 @@ interface GroupInfoModalProps {
   onViewMedia: (url: string) => void;
   onLeaveGroup: (chatId: string) => void;
   onDeleteGroup: (chatId: string) => void;
-  onUpdateGroupInfo: (chatId: string, updates: { name?: string; avatarUrl?: string }) => void;
+  onUpdateGroupInfo: (
+    chatId: string,
+    updates: { name?: string; avatarUrl?: string; description?: string; cover?: string },
+  ) => void;
   onClose: () => void;
 }
 
-// Title: GroupInfoModal — Group detail view (Cover → Avatar → Name → Description → Members → Settings)
+// Title: GroupInfoModal — Group detail view (Cover → Avatar → Name → Bio → Members → Settings)
 export default function GroupInfoModal({
   chat,
   members,
@@ -39,26 +42,47 @@ export default function GroupInfoModal({
   const [isMembersOpen, setIsMembersOpen] = useState(false);
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [isMediaOpen, setIsMediaOpen] = useState(false);
-  const [isEditing, setIsEditing] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [isEditingBio, setIsEditingBio] = useState(false);
   const [editName, setEditName] = useState(chat.name);
+  const [editBio, setEditBio] = useState(chat.description || "");
   const [confirmAction, setConfirmAction] = useState<"leave" | "delete" | null>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const coverInputRef = useRef<HTMLInputElement>(null);
 
   const existingUsernames = new Set(members.map((m) => m.username));
   const invitableUsers = availableUsersForInvite.filter(
     (u) => !existingUsernames.has(u.username),
   );
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !file.type.startsWith("image/")) return;
+  const validateImage = (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      alert("Please select a valid image file!");
+      return false;
+    }
     if (file.size > 5 * 1024 * 1024) {
       alert("File size must be under 5MB!");
-      return;
+      return false;
     }
+    return true;
+  };
+
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !validateImage(file)) return;
     const reader = new FileReader();
     reader.onloadend = () => {
       onUpdateGroupInfo(chat.id, { avatarUrl: reader.result as string });
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !validateImage(file)) return;
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      onUpdateGroupInfo(chat.id, { cover: reader.result as string });
     };
     reader.readAsDataURL(file);
   };
@@ -67,7 +91,12 @@ export default function GroupInfoModal({
     const trimmed = editName.trim();
     if (!trimmed) return;
     onUpdateGroupInfo(chat.id, { name: trimmed });
-    setIsEditing(false);
+    setIsEditingName(false);
+  };
+
+  const handleSaveBio = () => {
+    onUpdateGroupInfo(chat.id, { description: editBio.trim() });
+    setIsEditingBio(false);
   };
 
   return (
@@ -80,7 +109,7 @@ export default function GroupInfoModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Cover */}
-        <div className="relative h-36 bg-gray-200 shrink-0">
+        <div className="relative h-36 bg-gray-200 shrink-0 group">
           {chat.cover ? (
             <img src={chat.cover} alt="Group cover" className="w-full h-full object-cover" />
           ) : (
@@ -96,7 +125,27 @@ export default function GroupInfoModal({
             <X className="w-4 h-4" />
           </button>
 
-          <div className="absolute -bottom-8 left-5 w-16 h-16 rounded-2xl border-4 border-white shadow-md overflow-hidden bg-gray-100 group">
+       {chat.isCreatedByMe && (
+            <button
+              onClick={() => coverInputRef.current?.click()}
+              className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+              title="Change cover"
+            >
+              <span className="flex items-center gap-1.5 text-white text-xs font-bold bg-black/40 px-3 py-1.5 rounded-full">
+                <Camera className="w-3.5 h-3.5" />
+                Change Cover
+              </span>
+            </button>
+          )}
+          <input
+            type="file"
+            ref={coverInputRef}
+            onChange={handleCoverChange}
+            accept="image/*"
+            className="hidden"
+          />
+
+          <div className="absolute -bottom-8 left-5 w-16 h-16 rounded-2xl border-4 border-white shadow-md overflow-hidden bg-gray-100 group/avatar">
             {chat.avatarUrl ? (
               <img src={chat.avatarUrl} alt={chat.name} className="w-full h-full object-cover" />
             ) : (
@@ -107,7 +156,9 @@ export default function GroupInfoModal({
             {chat.isCreatedByMe && (
               <button
                 onClick={() => photoInputRef.current?.click()}
-                className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+                className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${
+                  chat.avatarUrl ? "opacity-0 group-hover/avatar:opacity-100" : "opacity-100"
+                }`}
                 title="Change group photo"
               >
                 <Camera className="w-4 h-4 text-white" />
@@ -124,7 +175,7 @@ export default function GroupInfoModal({
         </div>
 
         <div className="pt-11 px-5 pb-5 overflow-y-auto">
-          {isEditing ? (
+          {isEditingName ? (
             <div className="flex items-center gap-2">
               <input
                 value={editName}
@@ -133,20 +184,17 @@ export default function GroupInfoModal({
                 autoFocus
                 className="flex-1 text-lg font-black text-gray-900 border-b-2 border-blue-500 outline-none"
               />
-              <button
-                onClick={handleSaveName}
-                className="text-xs font-bold text-blue-600 hover:text-blue-800"
-              >
-                Save
+              <button onClick={handleSaveName} className="p-1 text-emerald-600 hover:bg-emerald-50 rounded">
+                <Check className="w-4 h-4" />
               </button>
               <button
                 onClick={() => {
                   setEditName(chat.name);
-                  setIsEditing(false);
+                  setIsEditingName(false);
                 }}
-                className="text-xs font-bold text-gray-400 hover:text-gray-600"
+                className="p-1 text-gray-400 hover:bg-gray-50 rounded"
               >
-                Cancel
+                <X className="w-4 h-4" />
               </button>
             </div>
           ) : (
@@ -154,7 +202,7 @@ export default function GroupInfoModal({
               <h3 className="text-lg font-black text-gray-900 tracking-tight">{chat.name}</h3>
               {chat.isCreatedByMe && (
                 <button
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => setIsEditingName(true)}
                   className="p-1 text-gray-400 hover:text-blue-600"
                   aria-label="Edit group name"
                 >
@@ -167,8 +215,50 @@ export default function GroupInfoModal({
             {chat.membersCount} members
           </p>
 
-          {chat.description && (
-            <p className="text-sm text-gray-600 mt-3 leading-relaxed">{chat.description}</p>
+          {isEditingBio ? (
+            <div className="mt-3">
+              <textarea
+                value={editBio}
+                onChange={(e) => setEditBio(e.target.value)}
+                maxLength={300}
+                rows={3}
+                autoFocus
+                className="w-full text-sm text-gray-700 border border-blue-300 rounded-lg p-2.5 outline-none focus:border-blue-500 resize-none"
+                placeholder="Add a bio for this group..."
+              />
+              <div className="flex justify-end gap-2 mt-1.5">
+                <button
+                  onClick={() => {
+                    setEditBio(chat.description || "");
+                    setIsEditingBio(false);
+                  }}
+                  className="text-xs font-bold text-gray-400 hover:text-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveBio}
+                  className="text-xs font-bold text-blue-600 hover:text-blue-800"
+                >
+                  Save
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-start gap-1.5 mt-3">
+              <p className="text-sm text-gray-600 leading-relaxed flex-1">
+                {chat.description || "No description provided."}
+              </p>
+              {chat.isCreatedByMe && (
+                <button
+                  onClick={() => setIsEditingBio(true)}
+                  className="p-1 text-gray-400 hover:text-blue-600 shrink-0"
+                  aria-label="Edit bio"
+                >
+                  <Pencil className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           )}
 
           <button
@@ -206,7 +296,6 @@ export default function GroupInfoModal({
             <span className="text-xs text-gray-400 font-semibold">→</span>
           </button>
 
-          {/* Danger Zone */}
           <div className="mt-5 pt-4 border-t border-gray-100 space-y-2">
             <button
               onClick={() => setConfirmAction("leave")}
@@ -260,7 +349,6 @@ export default function GroupInfoModal({
         />
       )}
 
-      {/* Leave/Delete confirmation */}
       {confirmAction && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[145] p-4 animate-in fade-in duration-150"

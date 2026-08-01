@@ -115,16 +115,18 @@ export default function ChannelInfoModal({
           )}
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 p-1.5 bg-black/40 hover:bg-black/60 text-white rounded-full transition-all"
+            className="absolute top-3 z-20 right-3 p-1.5 bg-black/40 hover:bg-black/60 text-white rounded-full transition-all"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
           </button>
 
-          {chat.isCreatedByMe && (
+        {chat.isCreatedByMe && (
             <button
               onClick={() => coverInputRef.current?.click()}
-              className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity"
+              className={`absolute inset-0 bg-black/30 flex items-center justify-center transition-opacity ${
+                chat.cover ? "opacity-0 group-hover:opacity-100" : "opacity-100"
+              }`}
               title="Change cover"
             >
               <span className="flex items-center gap-1.5 text-white text-xs font-bold bg-black/40 px-3 py-1.5 rounded-full">
@@ -149,10 +151,12 @@ export default function ChannelInfoModal({
                 {chat.avatarLabel}
               </div>
             )}
-            {chat.isCreatedByMe && (
+           {chat.isCreatedByMe && (
               <button
                 onClick={() => photoInputRef.current?.click()}
-                className="absolute inset-0 bg-black/40 opacity-0 group-hover/avatar:opacity-100 flex items-center justify-center transition-opacity"
+                className={`absolute inset-0 bg-black/40 flex items-center justify-center transition-opacity ${
+                  chat.avatarUrl ? "opacity-0 group-hover/avatar:opacity-100" : "opacity-100"
+                }`}
                 title="Change channel photo"
               >
                 <Camera className="w-4 h-4 text-white" />
@@ -279,15 +283,18 @@ export default function ChannelInfoModal({
             </button>
           )}
 
-          {/* Danger Zone */}
+         {/* Danger Zone */}
           <div className="mt-5 pt-4 border-t border-gray-100 space-y-2">
-            <button
-              onClick={() => setConfirmAction("unsubscribe")}
-              className="w-full flex items-center gap-2 text-sm font-bold text-orange-600 hover:bg-orange-50 rounded-xl px-4 py-3 transition-all"
-            >
-              <LogOut className="w-4 h-4" />
-              Unsubscribe
-            </button>
+            {!chat.isCreatedByMe && (
+              <button
+                onClick={() => setConfirmAction("unsubscribe")}
+                className="w-full flex items-center gap-2 text-sm font-bold text-orange-600 hover:bg-orange-50 rounded-xl px-4 py-3 transition-all"
+              >
+                <LogOut className="w-4 h-4" />
+                Unsubscribe
+              </button>
+            )}
+            
             {chat.isCreatedByMe && (
               <button
                 onClick={() => setConfirmAction("delete")}
@@ -332,7 +339,7 @@ export default function ChannelInfoModal({
                 <X className="w-5 h-5" />
               </button>
             </header>
-            <div className="p-5 grid grid-cols-2 gap-3">
+           <div className="p-5 grid grid-cols-3 gap-3">
               <div className="bg-blue-50 rounded-xl p-4 text-center">
                 <p className="text-2xl font-black text-blue-600">{stats.subscribers}</p>
                 <p className="text-[10px] font-bold text-blue-400 uppercase tracking-wide mt-1">
@@ -349,12 +356,6 @@ export default function ChannelInfoModal({
                 <p className="text-2xl font-black text-rose-600">{stats.totalReactions}</p>
                 <p className="text-[10px] font-bold text-rose-400 uppercase tracking-wide mt-1">
                   Reactions
-                </p>
-              </div>
-              <div className="bg-emerald-50 rounded-xl p-4 text-center">
-                <p className="text-2xl font-black text-emerald-600">{stats.totalComments}</p>
-                <p className="text-[10px] font-bold text-emerald-400 uppercase tracking-wide mt-1">
-                  Comments
                 </p>
               </div>
             </div>

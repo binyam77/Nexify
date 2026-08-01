@@ -86,10 +86,14 @@ export default function ChatsSidebar({
 
   // Messages tab: ተቀላቅሏቸው ያሉት ብቻ
   const joinedChats = searchFiltered.filter((c) => c.isJoined);
-  // Communities tab: ሁሉም groups/channels ይታያሉ (joined ይሁን አልሆነ)፣ button ብቻ state ያሳያል
-  const suggestedGroups = searchFiltered.filter((c) => c.type === "group");
-  const suggestedChannels = searchFiltered.filter((c) => c.type === "channel");
-
+  // Communities tab: ሁሉም groups/channels ይታያሉ (joined ይሁን አልሆነ)፣ button ብቻ state ያሳያል፣
+  // ራስህ የፈጠርካቸው ግን አይታዩም (ራስህ ፈጥረህ "Suggested" ብለህ ማየት ትርጉም የለውም)
+  const suggestedGroups = searchFiltered.filter(
+    (c) => c.type === "group" && !c.isCreatedByMe,
+  );
+  const suggestedChannels = searchFiltered.filter(
+    (c) => c.type === "channel" && !c.isCreatedByMe,
+  );
   return (
     <section
       className="w-full md:w-[350px] border-r border-gray-100 bg-surface flex flex-col h-full shrink-0"

@@ -1,101 +1,135 @@
 import { createContext, useContext, useState, useEffect } from "react";
 import type { ReactNode } from "react";
+import {
+  loginRequest,
+  logoutRequest,
+  refreshRequest,
+  meRequest,
+} from "../features/auth.api";
+
 
 export interface User {
+  id: string;
   username: string;
-  name?:string;
   email: string;
+  isVerified: boolean;
+  // --- Backend ገና ያልሰጠን fields (Profile module ሲገነባ ይሞላሉ) ---
+  name?: string;
   bio?: string;
   photo?: string;
-  cover?:string;
-  followersCount?:number;
-  followingCount?:number;
-  // ✅ backend ሲመጣ ሌሎች fields እዚህ ጨምር (id, avatar, etc.)
+  cover?: string;
+  followersCount?: number;
+  followingCount?: number;
 }
 
 interface AuthContextType {
   user: User | null;
+  accessToken: string | null;
   isLoggedIn: boolean;
   isLoading: boolean;
-  login: (userData: User) => void;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
-  updateFollowCount:(type: 'followers' | 'following', increment:boolean)=>void;
+  updateFollowCount: (
+    type: "followers" | "following",
+    increment: boolean,
+  ) => void;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
+  // ⚠️ accessToken በፍጹም localStorage/sessionStorage አይገባም — React state (in-memory) ብቻ
+  // (XSS ቢኖር እንኳ ስርቆት እንዳይቻል)
+  const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
- 
+
+  // --- Silent Refresh on App Load ---
+  // Page reload ሲደረግ accessToken (in-memory) ይጠፋል፣ ግን refresh_token
+  // httpOnly cookie አሁንም አለ — ይህን ተጠቅመን በራሱ አዲስ accessToken እናገኛለን
   useEffect(() => {
-    // ⏳ ለጊዜው localStorage — backend ሲመጣ ይህን ብቻ ቀይር:
-    // const res = await api.getMe(); setUser(res.data);
-   /*eslint-disable react-hooks/set-state-in-effect -- localStorage initial load ትክክለኛ pattern ነው */
-    try {
-      const stored = localStorage.getItem("authUser");
-      if (stored) setUser(JSON.parse(stored));
-    } catch {
-      localStorage.removeItem("authUser");
+    async function silentRefresh() {
+      try {
+        const { accessToken: newToken } = await refreshRequest();
+        setAccessToken(newToken);
+        const me = await meRequest(newToken);
+        setUser(me);
+      } catch {
+        // Refresh token የለም/expired ነው — ተጠቃሚው logged out ነው ማለት ብቻ ነው (error አይደለም)
+        setAccessToken(null);
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
     }
-    setIsLoading(false);
+    void silentRefresh();
   }, []);
 
-  const login = (userData: User) => {
-    // backend ሲመጣ: const res = await api.login(userData); setUser(res.data);
-    localStorage.setItem("authUser", JSON.stringify(userData));
-    setUser(userData);
+  const login = async (email: string, password: string) => {
+    const { accessToken: newToken } = await loginRequest({ email, password });
+    setAccessToken(newToken);
+    const me = await meRequest(newToken);
+    setUser(me);
   };
 
-  const logout = () => {
-    //authUser አናስወጣም _>> ተጠካሚው ተመልሶ login ማድረግ እንዲችል
-    // backend ሲመጣ: session/token ብቻ ያጠፋል
-
-    setUser(null);
+  const logout = async () => {
+    try {
+      await logoutRequest();
+    } catch {
+      // Logout request ቢወድቅ እንኳ (ለምሳሌ network issue)፣ local state ግን እናጸዳለን
+      // ተጠቃሚው በ UI ደረጃ "logged out" ሆኖ እንዲታይ
+    } finally {
+      setAccessToken(null);
+      setUser(null);
+    }
   };
 
+  // --- Profile fields (bio, photo, ...) — Backend Profile module ገና ስለሌለ
+  // ለጊዜው local state ብቻ ነው የሚቀየረው (UI optimistic update)፣ persist አያደርግም
   const updateUser = (userData: Partial<User>) => {
+    setUser((prev) => (prev ? { ...prev, ...userData } : prev));
+  };
+
+  const updateFollowCount = (
+    type: "followers" | "following",
+    increment: boolean,
+  ) => {
     setUser((prev) => {
       if (!prev) return prev;
-      const updated = { ...prev, ...userData };
-      // localStorage sync - backend ሲመጣ: await api.updateUser(userData)
-      localStorage.setItem("authUser", JSON.stringify(updated));
-      localStorage.setItem(
-        "userProfile",
-        JSON.stringify({
-          ...JSON.parse(localStorage.getItem("userProfile") || "{}"),
-          ...userData,
-        }),
-      );
-      return updated;
+      return {
+        ...prev,
+        followersCount:
+          type === "followers"
+            ? (prev.followersCount ?? 0) + (increment ? 1 : -1)
+            : prev.followersCount,
+        followingCount:
+          type === "following"
+            ? (prev.followingCount ?? 0) + (increment ? 1 : -1)
+            : prev.followingCount,
+      };
     });
   };
-const updateFollowCount=(type:'followers' | 'following', increment:boolean)=>{
-  setUser(prev =>{
-    if(!prev)return prev;
-    const updated={
-      ...prev,
-      followersCount: type === 'followers'
-      ? (prev.followersCount || 0) + (increment ? 1 : -1)
-      :prev.followersCount,
-      followingCount: type === 'following'
-      ?(prev.followingCount || 0) + (increment ? 1 : -1)
-      :prev.followingCount,
-    };
-    localStorage.setItem("authUser", JSON.stringify(updated));
-    return updated;
-  })
-}
+
   return (
     <AuthContext.Provider
-      value={{ user, isLoggedIn: !!user, isLoading, login, logout, updateUser,updateFollowCount }}
+      value={{
+        user,
+        accessToken,
+        isLoggedIn: !!user,
+        isLoading,
+        login,
+        logout,
+        updateUser,
+        updateFollowCount,
+      }}
     >
       {children}
     </AuthContext.Provider>
   );
 }
-//eslint-disable-next-line react-refresh/only-export-components
+
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) throw new Error("useAuth ከ AuthProvider ውጪ ጥቅም ላይ ዋለ");

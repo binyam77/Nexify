@@ -158,8 +158,10 @@ export default function MessageArea({
   const [isChatInfoOpen, setIsChatInfoOpen] = useState(false);
 
   // Timer references for long-press gesture -ብቻ hold options modal ይከፈታል ፈታን ንኪኪ አይደለም
-  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+ const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFiredRef = useRef(false);
+  const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
+  const MOVE_CANCEL_THRESHOLD = 10;
 
   const startPressTimer = (msg: Message) => {
     if (pressTimerRef.current) clearTimeout(pressTimerRef.current);
@@ -175,15 +177,42 @@ export default function MessageArea({
       clearTimeout(pressTimerRef.current);
       pressTimerRef.current = null;
     }
+    touchStartPosRef.current = null;
+  };
+  const handleMsgTouchStart = (msg: Message, e: React.TouchEvent) => {
+    touchStartPosRef.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+    startPressTimer(msg);
+  };
+  const handleMsgTouchMove = (e: React.TouchEvent) => {
+    if (!touchStartPosRef.current) return;
+    const dx = Math.abs(e.touches[0].clientX - touchStartPosRef.current.x);
+    const dy = Math.abs(e.touches[0].clientY - touchStartPosRef.current.y);
+    if (dx > MOVE_CANCEL_THRESHOLD || dy > MOVE_CANCEL_THRESHOLD) {
+      cancelPressTimer();
+    }
   };
   //ፎቶ  ሲነካ ማየት እንጂ options box  መክፈት የለበትም: long-press ገና ከተነሳ ግን  ችላ እንል (double-trigger መከላከያ)
-  const handleImageClick = (e: React.MouseEvent, url?: string) => {
+ const handleImageClick = (e: React.MouseEvent, url?: string) => {
     e.stopPropagation();
     if (longPressFiredRef.current) {
       longPressFiredRef.current = false;
       return;
     }
     if (url) setViewingMedia(url);
+  };
+
+  // Channel subscriber (creator ያልሆነ) ፖስት ላይ tap ብቻ ሲያደርግ emoji-reaction panel ይከፈታል 
+  const handleBubbleClick = (msg: Message) => {
+    if (longPressFiredRef.current) {
+      longPressFiredRef.current = false;
+      return;
+    }
+    if (chat && chat.type === "channel" && !chat.isCreatedByMe) {
+      setSelectedOptionsMessage(msg);
+    }
   };
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
   const [isSearchingMessages, setIsSearchingMessages] = useState(false);
@@ -589,10 +618,12 @@ export default function MessageArea({
                   >
                     <article
                       onMouseDown={() => startPressTimer(msg)}
-                      onTouchStart={() => startPressTimer(msg)}
+                      onTouchStart={(e) => handleMsgTouchStart(msg, e)}
+                      onTouchMove={handleMsgTouchMove}
                       onMouseUp={cancelPressTimer}
                       onTouchEnd={cancelPressTimer}
                       onMouseLeave={cancelPressTimer}
+                      onClick={()=>handleBubbleClick(msg)}
                       onContextMenu={(e) => {
                         e.preventDefault();
                         setSelectedOptionsMessage(msg);
@@ -748,15 +779,21 @@ export default function MessageArea({
               const avatarBg = colors[colorIdx];
 
               return (
-                <div
+               <div
                   key={msg.id}
-                  className="w-full flex justify-start pl-2 md:pl-4 min-w-0"
+                  className={`w-full flex justify-start min-w-0 ${chat.type === "group" ? "" : "pl-2 md:pl-4"}`}
                 >
-                  <div className="max-w-[88%] md:max-w-[75%] flex justify-start items-end gap-3 animate-in fade-in slide-in-from-left-1 duration-200 min-w-0">
+                  <div
+                    className={`flex justify-start items-end animate-in fade-in slide-in-from-left-1 duration-200 min-w-0 ${
+                      chat.type === "group"
+                        ? "max-w-[92%] md:max-w-[80%] gap-2"
+                        : "max-w-[88%] md:max-w-[75%] gap-3"
+                    }`}
+                  >
                     {/* Sender user avatar badge- private chat/channel ላይ አይታይም */}
-                    {chat.type !== "chat" && chat.type !== "channel" && (
+                   {chat.type !== "chat" && chat.type !== "channel" && (
                       <div
-                        className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 shadow-sm border border-white hover:scale-105 active:scale-95 transition-all select-none ${avatarBg}`}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-[11px] text-white shrink-0 shadow-sm border border-white hover:scale-105 active:scale-95 transition-all select-none ${avatarBg}`}
                         title={msg.senderName}
                       >
                         {initials}
@@ -764,7 +801,8 @@ export default function MessageArea({
                     )}
                     <article
                       onMouseDown={() => startPressTimer(msg)}
-                      onTouchStart={() => startPressTimer(msg)}
+                      onTouchStart={(e) => handleMsgTouchStart(msg, e)}
+                      onTouchMove={handleMsgTouchMove}
                       onMouseUp={cancelPressTimer}
                       onTouchEnd={cancelPressTimer}
                       onMouseLeave={cancelPressTimer}
@@ -918,7 +956,7 @@ export default function MessageArea({
       </div>
 
       {/* 3. የመልዕክት መጻፊያ ወይም የመቀላቀያ (Join) አዝራር */}
-      <footer className="border-t border-gray-100 bg-white px-4 pt-4 pb-20 md:pb-4 shrink-0 relative select-none">
+      <footer className="border-t border-gray-100 bg-white px-4 pt-4  md:pb-4 shrink-0 relative select-none">
         {canCompose ? (
           // መታፍ ይችላል:private chat; channel creator ወይም የተከላከለው group
           <div className="relative">
@@ -1162,8 +1200,7 @@ export default function MessageArea({
           </p>
         )}
       </footer>
-
-      {/* 4. Message Options Choice Modal */}
+{/* 4. Message Options — Icon-row (Telegram/WhatsApp style) */}
       {selectedOptionsMessage && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4 animate-in fade-in duration-200"
@@ -1173,10 +1210,9 @@ export default function MessageArea({
             className="bg-white w-full max-w-xs rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Header */}
-            <div className="px-5 py-4 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
+            <div className="px-5 py-3.5 border-b border-gray-100 bg-gray-50 flex justify-between items-center">
               <span className="text-sm font-bold text-gray-800">
-                Message Options
+                {isChannelSubscriberOnly ? "React" : "Message Options"}
               </span>
               <button
                 onClick={() => setSelectedOptionsMessage(null)}
@@ -1186,90 +1222,107 @@ export default function MessageArea({
               </button>
             </div>
 
-            {/* Options list */}
-            <div className="p-2 flex flex-col gap-1">
-              {/* Edit Option:
-                  Allowed if:
-                  1. It's sent by me (isSentByMe = true)
-                  2. It is a Group/Channel chat (chat.type !== 'chat')
-              */}
-              {selectedOptionsMessage.isSentByMe && chat?.type !== "chat" && (
+            {isChannelSubscriberOnly ? (
+              // Channel subscriber — emoji-reaction ብቻ (posting/edit/delete/pin የለም)
+              <div className="p-4">
+                <div className="grid grid-cols-6 gap-1.5 mb-3">
+                  {QUICK_EMOJIS.map((emoji) => (
+                    <button
+                      key={emoji}
+                      onClick={() => {
+                        onReactMessage(selectedOptionsMessage.id, emoji);
+                        setSelectedOptionsMessage(null);
+                      }}
+                      className="text-2xl hover:scale-125 active:scale-90 transition-transform p-2 rounded-xl hover:bg-gray-50"
+                    >
+                      {emoji}
+                    </button>
+                  ))}
+                </div>
                 <button
                   onClick={() => {
-                    setEditingMessageId(selectedOptionsMessage.id);
-                    setInputText(selectedOptionsMessage.text);
+                    navigator.clipboard.writeText(selectedOptionsMessage.text);
                     setSelectedOptionsMessage(null);
-                    setTimeout(() => {
-                      textareaRef.current?.focus();
-                    }, 85);
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors text-left"
+                  className="w-full flex items-center justify-center gap-2 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 rounded-xl transition-colors border-t border-gray-100"
                 >
-                  <Pencil className="w-4 h-4 text-blue-500" />
-                  <span>Edit Message</span>
+                  <Check className="w-4 h-4 text-emerald-500" />
+                  Copy Text
                 </button>
-              )}
-
-              {/* Delete Option:
-                  Allowed if:
-                  1. Sent by me (isSentByMe = true) OR
-                  2. It is a Private Chat (chat.type === 'chat')
-              */}
-              {(selectedOptionsMessage.isSentByMe || chat?.type === "chat") && (
-                <button
-                  onClick={() => {
-                    onDeleteMessage(selectedOptionsMessage.id);
-                    setSelectedOptionsMessage(null);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-red-600 hover:bg-red-50 rounded-xl transition-colors text-left"
-                >
-                  <Trash2 className="w-4 h-4" />
-                  <span>Delete Message</span>
-                </button>
-              )}
-
-              {/* Pin/Unpin Option: Group/Channel creator ብቻ */}
-              {(chat.type === "group" ||
-                (chat.type === "channel" && chat.isCreatedByMe)) && (
-                <button
-                  onClick={() => {
-                    onPinMessage?.(selectedOptionsMessage.id);
-                    setSelectedOptionsMessage(null);
-                  }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-amber-50 hover:text-amber-600 rounded-xl transition-colors text-left"
-                >
-                  {selectedOptionsMessage.isPinned ? (
-                    <PinOff className="w-4 h-4 text-amber-500" />
-                  ) : (
-                    <Pin className="w-4 h-4 text-amber-500" />
+              </div>
+            ) : (
+              // Own chat/group message, or channel creator's own post — icon-row actions
+              <div className="p-4">
+                <div className="flex items-center justify-center gap-3 flex-wrap">
+                  {selectedOptionsMessage.isSentByMe && chat.type !== "chat" && (
+                    <button
+                      onClick={() => {
+                        setEditingMessageId(selectedOptionsMessage.id);
+                        setInputText(selectedOptionsMessage.text);
+                        setSelectedOptionsMessage(null);
+                        setTimeout(() => textareaRef.current?.focus(), 85);
+                      }}
+                      className="flex flex-col items-center gap-1.5"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600 transition-colors">
+                        <Pencil className="w-5 h-5" />
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-600">Edit</span>
+                    </button>
                   )}
-                  <span>
-                    {selectedOptionsMessage.isPinned
-                      ? "Unpin Message"
-                      : "Pin Message"}
-                  </span>
-                </button>
-              )}
 
-              {/* Copy Text Option: Always available */}
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(selectedOptionsMessage.text);
-                  setSelectedOptionsMessage(null);
-                }}
-                className="w-full flex items-center gap-3 px-4 py-3 text-sm font-bold text-gray-700 hover:bg-gray-50 rounded-xl transition-colors text-left"
-              >
-                <Check className="w-4 h-4 text-emerald-500" />
-                <span>Copy Text</span>
-              </button>
-              {/* Close Button */}
-              <button
-                onClick={() => setSelectedOptionsMessage(null)}
-                className="w-full text-center py-2.5 mt-2 text-xs font-black text-gray-400 hover:text-gray-600 uppercase tracking-widest border-t border-gray-50"
-              >
-                Cancel
-              </button>
-            </div>
+                  {(selectedOptionsMessage.isSentByMe || chat.type === "chat") && (
+                    <button
+                      onClick={() => {
+                        onDeleteMessage(selectedOptionsMessage.id);
+                        setSelectedOptionsMessage(null);
+                      }}
+                      className="flex flex-col items-center gap-1.5"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-600 transition-colors">
+                        <Trash2 className="w-5 h-5" />
+                      </div>
+                      <span className="text-[10px] font-bold text-gray-600">Delete</span>
+                    </button>
+                  )}
+
+                  {chat.isCreatedByMe &&
+                    (chat.type === "group" || chat.type === "channel") && (
+                      <button
+                        onClick={() => {
+                          onPinMessage?.(selectedOptionsMessage.id);
+                          setSelectedOptionsMessage(null);
+                        }}
+                        className="flex flex-col items-center gap-1.5"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-amber-50 hover:bg-amber-100 flex items-center justify-center text-amber-600 transition-colors">
+                          {selectedOptionsMessage.isPinned ? (
+                            <PinOff className="w-5 h-5" />
+                          ) : (
+                            <Pin className="w-5 h-5" />
+                          )}
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-600">
+                          {selectedOptionsMessage.isPinned ? "Unpin" : "Pin"}
+                        </span>
+                      </button>
+                    )}
+
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(selectedOptionsMessage.text);
+                      setSelectedOptionsMessage(null);
+                    }}
+                    className="flex flex-col items-center gap-1.5"
+                  >
+                    <div className="w-12 h-12 rounded-full bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center text-emerald-600 transition-colors">
+                      <Check className="w-5 h-5" />
+                    </div>
+                    <span className="text-[10px] font-bold text-gray-600">Copy</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
