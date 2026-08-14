@@ -8,13 +8,10 @@ import { Eye, EyeOff, CheckCircle2, AlertCircle } from "lucide-react";
 
 interface CreateAccountProps {
   onNavigateToLogin: () => void;
-  onSubmit: (username: string, email: string) => void;
 }
 
 export default function CreateAccount({
   onNavigateToLogin,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Register በኋላ auto-login/navigate ስለማያደርግ ገና ጥቅም ላይ አልዋለም
-  onSubmit: _onSubmit, // ← ገና ጥቅም ላይ ያልዋለ (auto-login አናደርግም) - underscore prefix ማለት "ሆን ብዬ ነው" ማለት ነው
 }: CreateAccountProps) {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -66,10 +63,7 @@ export default function CreateAccount({
       setError("Password must contain at least one number.");
       return;
     }
-    if (!/[^a-zA-Z0-9]/.test(password)) {
-      setError("Password must contain at least one special character.");
-      return;
-    }
+    
     setIsSubmitting(true);
     try {
       // Backend: hash + duplicate check + verification token + email መላክ
@@ -225,8 +219,8 @@ export default function CreateAccount({
               </button>
             </div>
             <p className="text-xs text-gray-400 pl-1">
-              At least 8 characters, with uppercase, lowercase, a number, and a
-              special character (e.g. ! @ # $ %).
+              At least 8 characters, with uppercase, lowercase, a number.
+              Special characters are optional but recommended.
             </p>
           </div>
 

@@ -1,4 +1,6 @@
 import { useEffect, useCallback, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ROUTES } from '../routes';
 import PostCard from '../components/PostCard';
 import avatarImg from '../assets/user.png';
 import { useAuth } from '../context/AuthContext';
@@ -7,10 +9,15 @@ import { ChevronUp, ChevronDown } from 'lucide-react';
 import type { User } from '../types';
 
 export default function Home() {
-  const { user } = useAuth();
+ const { user } = useAuth();
   const { posts, incrementView } = useFeed();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const navigate = useNavigate();
 
+  // Post ደራሲ ጋር chat ለመክፈት — Profile's handleMessageUser ጋር ተመሳሳይ pattern
+  const handleMessageUser = (creator: { name: string; username: string; photo: string }) => {
+    navigate(ROUTES.community, { state: { openChatWith: creator } });
+  };
   const currentUser: User = {
     id: user?.username || 'me',
     fullName: user?.username || 'User',
@@ -87,6 +94,7 @@ export default function Home() {
           post={posts[currentIndex]}
           currentUser={currentUser}
           onView={() => incrementView(posts[currentIndex]?.id)}
+          onMessageUser={handleMessageUser}
         />
       </div>
  

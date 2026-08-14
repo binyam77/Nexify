@@ -1,4 +1,4 @@
-import React, { useState, useRef } from "react";
+import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import {
@@ -6,7 +6,6 @@ import {
   AlertCircle,
   Save,
   LogOut,
-  Trash2,
   ShieldAlert,
   ArrowLeft,
 } from "lucide-react";
@@ -15,22 +14,10 @@ export default function Settings() {
   // --- ስቴት ማስተዳደሪያዎች (State Management) ---
   const { logout, user, updateUser } = useAuth();
   const navigate = useNavigate();
-  // 1. የአካውንት መረጃ ስቴት (Account Info State)
-  const savedProfile = JSON.parse(localStorage.getItem("userProfile") || "{}");
   const [username, setUsername] = useState(user?.username || "");
   const [email, setEmail] = useState(user?.email || "");
   const [password, setPassword] = useState("");
   const { theme, toggleTheme } = useTheme();
-  // 2. የፕሮፋይል ስቴት (Profile State)
-  const [profilePic, setProfilePic] = useState<string | null>(
-    savedProfile.photo || null,
-  );
-  const [bio, setBio] = useState(savedProfile.bio || user?.bio || "");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // 3. የግላዊነት ስቴት (Privacy State)
-  const [privacy, setPrivacy] = useState("public"); // "public" ወይም "private"
-
   // 4. የማስታወቂያዎች ስቴት (Notifications State)
   const [notifications, setNotifications] = useState({
     likes: true,
@@ -69,41 +56,6 @@ export default function Settings() {
     showAlert("success", "Your account information is successfully saved!");
   };
 
-  // 2. የፕሮፋይል ምስል ለመምረጥ እና ለማሳየት (Handle Profile Image Upload)
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfilePic(reader.result as string);
-        showAlert("success", "Your profile picture has changed!");
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  // የፕሮፋይል ዝርዝሮችን ለማዘመን (Update Profile Bio)
-  const handleProfileUpdate = (e: React.FormEvent) => {
-    e.preventDefault();
-    updateUser({
-      bio: bio.trim(),
-      photo: profilePic || user?.photo || "",
-    });
-    showAlert(
-      "success",
-      "Your profile information has been successfully updated!",
-    );
-  };
-
-  // 3. የግላዊነት ምርጫን ለማስቀመጥ (Save Privacy Settings)
-  const handlePrivacySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    showAlert(
-      "success",
-      `Your privacy choice to  [${privacy === "public" ? "Everyone can see" : "Only followers can see"}] It's changed!`,
-    );
-  };
-
   // 4. የማስታወቂያ ምርጫዎችን ለማስቀመጥ (Save Notification Settings)
   const handleNotificationsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -131,25 +83,11 @@ export default function Settings() {
   };
 
   // 6. አካውንት መውጫ ተግባር (Logout confirmation)
-  const handleLogout = () => {
+  const handleLogout = async () => {
     const confirmAction = window.confirm("Are you sure you want to Logout?");
-    if (confirmAction) {
-      logout();
-      navigate("./auth/login");
-    }
-  };
-
-  // አካውንት መሰረዣ ተግባር (Delete Account confirmation)
-  const handleAccountDelete = () => {
-    const confirmAction = window.confirm(
-      "Are you sure you want to delete your account? This action cannot be undone!",
-    );
-    if (confirmAction) {
-      localStorage.removeItem("authUser");
-      localStorage.removeItem("userProfile");
-      logout();
-      navigate("./auth/createAccount");
-    }
+    if (!confirmAction) return;
+    await logout(); // Backend's refresh token revoke ያደርጋል + local state ያጸዳል
+    navigate("/auth/login");
   };
 
   return (
@@ -262,126 +200,6 @@ bg-white/90 active:bg-gray-200 transition-color"
           >
             <Save className="w-4 h-4" /> Save
           </button>
-        </form>
-      </section>
-
-      {/* ==========================================================================
-          2. የፕሮፋይል ክፍል (Profile Section)
-          ========================================================================== */}
-      <section className="bg-surface border border-input-border rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
-        <h2 className="text-xl font-bold text-text-h2 mb-6 pb-2 border-b-2 border-slate-100">
-          Profile
-        </h2>
-        <div className="flex flex-col gap-6">
-          <div className="flex flex-col gap-2">
-            <label className="text-sm font-medium text-small-text">
-              Profile Picture
-            </label>
-            <div className="flex items-center gap-5 mt-2 flex-wrap">
-              {profilePic ? (
-                <img
-                  src={profilePic}
-                  alt="Profile Image"
-                  className="w-[90px] h-[90px] rounded-full object-cover border-3 border-[#0185E5] shadow-sm"
-                />
-              ) : (
-                <div className="w-[90px] h-[90px] rounded-full bg-slate-100 border-3 border-dashed border-[#0185E5] flex items-center justify-center text-slate-400 font-bold text-xs">
-                  No Image
-                </div>
-              )}
-              <div className="file">
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={fileInputRef}
-                  onChange={handleImageChange}
-                  className="block w-full text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-sky-50 file:text-sky-700 hover:file:bg-sky-100 cursor-pointer"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-1.5 mt-2">
-            <label id="me" className="text-sm font-medium text-small-text">
-              About You
-            </label>
-            <textarea
-              rows={5}
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Bio..."
-              className="w-full max-w-lg px-4 py-2.5 bg-surface-raised border border-input-border rounded-lg text-input-text focus:border-input-focus focus:outline-none transition-all text-sm resize-y min-h-[100px]"
-            />
-          </div>
-
-          {/* 🔘 ብሉ ግራዲየንት አዝራር (Custom Blue Gradient Button) */}
-          <button
-            type="button"
-            onClick={handleProfileUpdate}
-            className="self-start bg-brand text-one-text font-semibold rounded-lg px-6 py-2.5 shadow-md hover:brightness-110 active:scale-[0.98] transition-all text-sm flex items-center gap-2 cursor-pointer"
-          >
-            Update Profile
-          </button>
-        </div>
-      </section>
-
-      {/* ==========================================================================
-          3. የግላዊነት ክፍል (Privacy Section)
-          ========================================================================== */}
-      <section className="bg-surface border border-border rounded-xl p-6 sm:p-8 w-full shadow-sm hover:shadow-md transition-shadow">
-        <h2 className="text-xl font-bold text-text-h2 mb-6 pb-2 border-b-2 border-slate-100">
-          Privacy
-        </h2>
-        <form onSubmit={handlePrivacySubmit} className="flex flex-col gap-5">
-          <fieldset className="border border-input-border bg-surface-raised rounded-lg p-5 flex flex-col gap-4">
-            <legend className="px-2.5 text-sm font-semibold  text-small-text">
-              Who can see my profile?
-            </legend>
-
-            <div className="flex items-center  gap-2.5 cursor-pointer">
-              <input
-                type="radio"
-                id="public"
-                name="privacy"
-                value="public"
-                checked={privacy === "public"}
-                onChange={() => setPrivacy("public")}
-                className="w-4 h-4 focus:bg-brand-dark text-brand "
-              />
-              <label
-                htmlFor="public"
-                className="text-sm text-text cursor-pointer"
-              >
-                Public (Everyone)
-              </label>
-            </div>
-
-            <div className="flex items-center gap-2.5 cursor-pointer">
-              <input
-                type="radio"
-                id="private"
-                name="privacy"
-                value="private"
-                checked={privacy === "private"}
-                onChange={() => setPrivacy("private")}
-                className="w-4 h-4 bg-brand-dark"
-              />
-              <label
-                htmlFor="private"
-                className="text-sm text-text cursor-pointer"
-              >
-                Private (Only Followers/Members)
-              </label>
-            </div>
-
-            {/* 🔘 ብሉ ግራዲየንት አዝራር (Custom Blue Gradient Button) */}
-            <button
-              type="submit"
-              className="mt-2 self-start bg-brand text-one-text font-semibold rounded-lg px-6 py-2.5 shadow-md hover:brightness-110 active:scale-[0.98] transition-all text-sm flex items-center gap-2 cursor-pointer"
-            >
-              Save
-            </button>
-          </fieldset>
         </form>
       </section>
 
@@ -550,12 +368,6 @@ bg-white/90 active:bg-gray-200 transition-color"
             className="bg-danger hover:bg-danger-hover text-one-text font-semibold rounded-lg px-6 py-2.5 shadow-md transition-colors text-sm flex items-center gap-2 cursor-pointer"
           >
             <LogOut className="w-4 h-4" /> Logout
-          </button>
-          <button
-            onClick={handleAccountDelete}
-            className="bg-danger hover:bg-danger-hover text-text font-semibold rounded-lg px-6 py-2.5 shadow-md transition-colors text-sm flex items-center gap-2 cursor-pointer"
-          >
-            <Trash2 className="w-4 h-4" /> Delete Account
           </button>
         </div>
       </section>

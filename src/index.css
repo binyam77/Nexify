@@ -136,7 +136,7 @@
   --color-like: #f87171; /* like/heart አዝራር - lighter red */
   --color-online: #27bd5f; /* online status dot */
   --color-verified: #019be5; /* verified badge */
-
+  
   /* ---------- 8. Shadows (dark ላይ ጠንካራ/ጥልቅ) ---------- */
   --shadow-soft: 0 2px 6px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.5);
   --shadow-input: 0 2px 8px rgba(0, 0, 0, 0.35);

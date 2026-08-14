@@ -7,12 +7,12 @@ import {
   meRequest,
 } from "../features/auth.api";
 
-
 export interface User {
   id: string;
   username: string;
   email: string;
   isVerified: boolean;
+  role: "user" | "moderator" | "admin";
   // --- Backend ገና ያልሰጠን fields (Profile module ሲገነባ ይሞላሉ) ---
   name?: string;
   bio?: string;

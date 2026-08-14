@@ -10,6 +10,7 @@ export interface MeResponse {
   id: string;
   username: string;
   email: string;
+  role: "user" | "moderator" | "admin";
   isVerified: boolean;
   createdAt: string;
 }
@@ -76,5 +77,26 @@ export function meRequest(accessToken: string): Promise<MeResponse> {
   return apiClient<MeResponse>("/auth/me", {
     method: "GET",
     headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+// ================= REQUEST PASSWORD RESET =================
+export function requestPasswordResetRequest(
+  email: string,
+): Promise<MessageResponse> {
+  return apiClient<MessageResponse>("/auth/request-password-reset", {
+    method: "POST",
+    body: { email },
+  });
+}
+
+// ================= RESET PASSWORD =================
+export function resetPasswordRequest(params: {
+  email: string;
+  code: string;
+  newPassword: string;
+}): Promise<MessageResponse> {
+  return apiClient<MessageResponse>("/auth/reset-password", {
+    method: "POST",
+    body: params,
   });
 }

@@ -3,13 +3,14 @@ import {
   Heart,
   MessageCircle,
   Share2,
-  Bookmark,
   ChevronLeft,
   ChevronRight,
   Play,
   Volume2,
   Volume1,
   VolumeX,
+  MoreHorizontal,
+  MessagesSquare,
 } from "lucide-react";
 import { useShare } from "../hooks/useShare";
 import CommentModal from "./CommentModal";
@@ -19,12 +20,21 @@ interface PostCardProps {
   post: FeedPost;
   currentUser: User;
   onView?: () => void;
+  onMessageUser?: (user: {
+    name: string;
+    username: string;
+    photo: string;
+  }) => void;
 }
 
-export default function PostCard({ post, currentUser, onView }: PostCardProps) {
+export default function PostCard({
+  post,
+  currentUser,
+  onView,
+  onMessageUser,
+}: PostCardProps) {
   const {
     toggleLike: toggleLikePost,
-    toggleSave: toggleSavePost,
     incrementShare,
     commentsMap,
     addComment,
@@ -37,8 +47,6 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
   // toggle ሰደረግ context ራሱ ይከየራል: re-render ይህን በራሱ ያንተባርካል
   const liked = post.liked;
   const likeCount = post.likesCount;
-  const saved = post.saved;
-  const saveCount = post.savesCount;
   const comments = commentsMap[post.id] || [];
 
   const { share, toastMessage, toastVisible } = useShare({
@@ -348,9 +356,10 @@ export default function PostCard({ post, currentUser, onView }: PostCardProps) {
                   e.stopPropagation();
                   setCaptionExpanded((c) => !c);
                 }}
-                className="text-white/70 text-[11px] font-semibold mt-0.5 md:text-input-placeholder"
+                className="mt-1 text-white/80 hover:text-white transition-colors md:text-input-placeholder"
+                aria-label={captionExpanded ? "Show less" : "Show more"}
               >
-                {captionExpanded ? "less" : "more"}
+                <MoreHorizontal size={16} />
               </button>
             )}
           </div>
@@ -378,14 +387,27 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
           activeColor="text-blue-400"
           onClick={() => setIsCommentsOpen(true)}
         />
-        {/* Save */}
-        <ActionBtn
-          icon={<Bookmark size={25} fill={saved ? "currentColor" : "none"} />}
-          label={saveCount}
-          active={saved}
-          activeColor="text-yellow-400"
-          onClick={() => toggleSavePost(post.id)}
-        />
+        {/* Chat — የራስ ፖስት ላይ አይታይም (ራስን መልእክት መላክ ትርጉም የለውም) */}
+        {!isOwnPost && (
+          <button
+            onClick={() =>
+              onMessageUser?.({
+                name: post.username,
+                username: post.username,
+                photo: post.userAvatar,
+              })
+            }
+            className="flex flex-col items-center gap-0.5"
+            type="button"
+          >
+            <div className="w-12 h-11 rounded-full flex items-center justify-center shadow-lg drop-shadow-lg text-white transition-transform active:scale-90 md:bg-surface md:shadow-md md:drop-shadow-none md:text-input-text">
+              <MessagesSquare size={22} />
+            </div>
+            <span className="text-white text-xs font-medium leading-none drop-shadow md:text-input-text md:drop-shadow-none">
+              Chat
+            </span>
+          </button>
+        )}
         {/* Share */}
         <button
           onClick={async () => {
