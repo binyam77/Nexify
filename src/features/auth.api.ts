@@ -100,3 +100,11 @@ export function resetPasswordRequest(params: {
     body: params,
   });
 }
+
+// ================= OAUTH EXCHANGE =================
+export function exchangeOAuthCodeRequest(code: string): Promise<LoginResponse> {
+  return apiClient<LoginResponse>("/auth/oauth/exchange", {
+    method: "POST",
+    body: { code },
+  });
+}

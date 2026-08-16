@@ -17,12 +17,7 @@ interface LoginProps {
   onFacebookLogin?: () => void;
 }
 
-export default function Login({
-  onNavigateToSignup,
-  onSubmit,
-  onGoogleLogin,
-  onFacebookLogin,
-}: LoginProps) {
+export default function Login({ onNavigateToSignup, onSubmit }: LoginProps) {
   const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -72,14 +67,13 @@ export default function Login({
     }
   };
   const handleGoogleLogin = () => {
-    // Placeholder — Backend ሲገባ: redirect to /api/auth/google
-    // (state parameter ለ CSRF prevention፣ token exchange ደግሞ ሙሉ በሙሉ backend-side)
-    onGoogleLogin?.();
+    // Full-page redirect - SPA navigation አይደለም (Backend's OAuth flow
+    // browser-level redirect ስለሚፈልግ)
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/google`;
   };
 
   const handleFacebookLogin = () => {
-    // Placeholder — Backend ሲገባ: redirect to /api/auth/facebook
-    onFacebookLogin?.();
+    window.location.href = `${import.meta.env.VITE_API_URL}/auth/facebook`;
   };
 
   return (

@@ -5,6 +5,7 @@ import {
   logoutRequest,
   refreshRequest,
   meRequest,
+  exchangeOAuthCodeRequest,
 } from "../features/auth.api";
 
 export interface User {
@@ -28,6 +29,7 @@ interface AuthContextType {
   isLoggedIn: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
+  completeOAuthLogin: (handoffCode: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
   updateFollowCount: (
@@ -68,6 +70,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const { accessToken: newToken } = await loginRequest({ email, password });
+    setAccessToken(newToken);
+    const me = await meRequest(newToken);
+    setUser(me);
+  };
+
+  const completeOAuthLogin = async (handoffCode: string) => {
+    const { accessToken: newToken } =
+      await exchangeOAuthCodeRequest(handoffCode);
     setAccessToken(newToken);
     const me = await meRequest(newToken);
     setUser(me);
@@ -119,6 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoggedIn: !!user,
         isLoading,
         login,
+        completeOAuthLogin,
         logout,
         updateUser,
         updateFollowCount,

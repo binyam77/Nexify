@@ -24,7 +24,7 @@ import Terms from "./footer/terms";
 import Contact from "./footer/contact";
 import Helps from "./footer/helps";
 import Notifications from "./pages/notfications";
-
+import OAuthCallbackPage from "./auth/OAuthCallbackPage";
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -59,7 +59,6 @@ export default function App() {
       <Routes>
         {/* FirstEntry ገጽ */}
         <Route path="/" element={<FirstEntry />} />
-
         {/* ✅ የተጠበቁ ገጾች (Protected Routes) */}
         <Route
           element={
@@ -74,7 +73,6 @@ export default function App() {
           <Route path={ROUTES.community} element={<Community />} />
           <Route path={ROUTES.settings} element={<Settings />} />
         </Route>
-
         {/* ✅ የFooter ገጾች (አሁን በRoute ሆነዋል!) */}
         <Route
           path="/privacy"
@@ -87,7 +85,6 @@ export default function App() {
         />
         <Route path="/helps" element={<Helps onNavigate={handleNavigate} />} />
         <Route path="/about" element={<About onNavigate={handleNavigate} />} />
-
         {/* ✅ የAuth ገጾች */}
         <Route
           path="/createAccount"
@@ -108,7 +105,7 @@ export default function App() {
             )
           }
         />
-
+        <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
         <Route
           path="/login"
           element={
@@ -129,7 +126,6 @@ export default function App() {
             )
           }
         />
-
         {/* በስህተት ለሚጻፍ Route */}
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
