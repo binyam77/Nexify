@@ -1,46 +1,78 @@
-import { useEffect, useCallback, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '../routes';
-import PostCard from '../components/PostCard';
-import avatarImg from '../assets/user.png';
-import { useAuth } from '../context/AuthContext';
-import { useFeed } from '../context/FeedContext';
-import { ChevronUp, ChevronDown } from 'lucide-react';
-import type { User } from '../types';
+import { useEffect, useCallback, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { ROUTES } from "../routes";
+import PostCard from "../components/PostCard";
+import avatarImg from "../assets/user.png";
+import { useAuth } from "../context/AuthContext";
+import { useFeed } from "../context/FeedContext";
+import { ChevronUp, ChevronDown, Loader2 } from "lucide-react";
+import type { User } from "../types";
+
+// Feed's end ጋር ይሄን ያህል ሲቀር ነው loadMore() የሚነሳው (scroll ላይ delay እንዳይሰማ)
+const PREFETCH_THRESHOLD = 3;
 
 export default function Home() {
- const { user } = useAuth();
-  const { posts, incrementView } = useFeed();
+  const { user } = useAuth();
+  const {
+    posts,
+    incrementView,
+    isLoading,
+    isLoadingMore,
+    hasMore,
+    error,
+    loadMore,
+  } = useFeed();
   const [currentIndex, setCurrentIndex] = useState(0);
   const navigate = useNavigate();
 
   // Post ደራሲ ጋር chat ለመክፈት — Profile's handleMessageUser ጋር ተመሳሳይ pattern
-  const handleMessageUser = (creator: { name: string; username: string; photo: string }) => {
+  const handleMessageUser = (creator: {
+    name: string;
+    username: string;
+    photo: string;
+  }) => {
     navigate(ROUTES.community, { state: { openChatWith: creator } });
   };
   const currentUser: User = {
-    id: user?.username || 'me',
-    fullName: user?.username || 'User',
-    email: user?.email || '',
+    id: user?.username || "me",
+    fullName: user?.username || "User",
+    email: user?.email || "",
     avatarUrl: user?.photo || avatarImg,
   };
 
   const goNext = useCallback(() => {
-    setCurrentIndex(i => Math.min(i + 1, posts.length - 1));
+    setCurrentIndex((i) => Math.min(i + 1, posts.length - 1));
   }, [posts.length]);
 
   const goPrev = useCallback(() => {
-    setCurrentIndex(i => Math.max(i - 1, 0));
+    setCurrentIndex((i) => Math.max(i - 1, 0));
   }, []);
+
+  // Infinite scroll — feed's end ጋር ስንደርስ ቀጣይ page በራሱ ይጫናል
+  useEffect(() => {
+    if (
+      hasMore &&
+      !isLoadingMore &&
+      currentIndex >= posts.length - PREFETCH_THRESHOLD
+    ) {
+      void loadMore();
+    }
+  }, [currentIndex, posts.length, hasMore, isLoadingMore, loadMore]);
 
   // ① Keyboard — desktop
   useEffect(() => {
     const handle = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowDown' || e.key === 'PageDown') { e.preventDefault(); goNext(); }
-      if (e.key === 'ArrowUp'   || e.key === 'PageUp')   { e.preventDefault(); goPrev(); }
+      if (e.key === "ArrowDown" || e.key === "PageDown") {
+        e.preventDefault();
+        goNext();
+      }
+      if (e.key === "ArrowUp" || e.key === "PageUp") {
+        e.preventDefault();
+        goPrev();
+      }
     };
-    window.addEventListener('keydown', handle);
-    return () => window.removeEventListener('keydown', handle);
+    window.addEventListener("keydown", handle);
+    return () => window.removeEventListener("keydown", handle);
   }, [goNext, goPrev]);
 
   // ② Mouse wheel — desktop (debounced)
@@ -54,28 +86,46 @@ export default function Home() {
       if (e.deltaY > 30) goNext();
       else if (e.deltaY < -30) goPrev();
     };
-    window.addEventListener('wheel', handle, { passive: false });
-    return () => window.removeEventListener('wheel', handle);
+    window.addEventListener("wheel", handle, { passive: false });
+    return () => window.removeEventListener("wheel", handle);
   }, [goNext, goPrev]);
 
   // ③ Touch swipe — mobile (document level)
   useEffect(() => {
     let startY = 0;
-    const onStart = (e: TouchEvent) => { startY = e.touches[0].clientY; };
-    const onEnd   = (e: TouchEvent) => {
+    const onStart = (e: TouchEvent) => {
+      startY = e.touches[0].clientY;
+    };
+    const onEnd = (e: TouchEvent) => {
       const diff = startY - e.changedTouches[0].clientY;
       if (Math.abs(diff) > 60) {
         if (diff > 0) goNext();
         else goPrev();
       }
     };
-    document.addEventListener('touchstart', onStart, { passive: true });
-    document.addEventListener('touchend',   onEnd,   { passive: true });
+    document.addEventListener("touchstart", onStart, { passive: true });
+    document.addEventListener("touchend", onEnd, { passive: true });
     return () => {
-      document.removeEventListener('touchstart', onStart);
-      document.removeEventListener('touchend',   onEnd);
+      document.removeEventListener("touchstart", onStart);
+      document.removeEventListener("touchend", onEnd);
     };
   }, [goNext, goPrev]);
+
+  if (isLoading) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-surface text-slate-400">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="h-full w-full flex flex-col items-center justify-center bg-surface text-slate-400 gap-3">
+        <p className="text-lg font-semibold">{error}</p>
+      </div>
+    );
+  }
 
   if (posts.length === 0) {
     return (
@@ -97,16 +147,22 @@ export default function Home() {
           onMessageUser={handleMessageUser}
         />
       </div>
- 
+
       {/* Desktop scroll arrows only */}
       {posts.length > 1 && (
         <div className="hidden md:flex fixed right-8 top-1/2 -translate-y-1/2 flex-col gap-3 z-50">
-          <button onClick={goPrev} disabled={currentIndex === 0}
-            className="w-10 h-10 rounded-full bg-input/90 hover:bg-input shadow-lg flex items-center justify-center text-input-text disabled:opacity-30 transition-all">
+          <button
+            onClick={goPrev}
+            disabled={currentIndex === 0}
+            className="w-10 h-10 rounded-full bg-input/90 hover:bg-input shadow-lg flex items-center justify-center text-input-text disabled:opacity-30 transition-all"
+          >
             <ChevronUp className="w-5 h-5" />
           </button>
-          <button onClick={goNext} disabled={currentIndex === posts.length - 1}
-            className="w-10 h-10 rounded-full bg-input/90 hover:bg-input shadow-lg flex items-center justify-center text-input-text disabled:opacity-30 transition-all">
+          <button
+            onClick={goNext}
+            disabled={currentIndex === posts.length - 1 && !hasMore}
+            className="w-10 h-10 rounded-full bg-input/90 hover:bg-input shadow-lg flex items-center justify-center text-input-text disabled:opacity-30 transition-all"
+          >
             <ChevronDown className="w-5 h-5" />
           </button>
         </div>

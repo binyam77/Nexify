@@ -42,7 +42,9 @@ export default function PostCard({
     editComment,
     addReply,
     deleteReply,
+    loadComments,
   } = useFeed();
+
   //"post"prop በከትታ FeedContext array element  ስለሆነ(Home.tsx ካስተላለፈው):
   // toggle ሰደረግ context ራሱ ይከየራል: re-render ይህን በራሱ ያንተባርካል
   const liked = post.liked;
@@ -66,6 +68,13 @@ export default function PostCard({
   const [captionExpanded, setCaptionExpanded] = useState<boolean>(false);
   const isOwnPost =
     currentUser.fullName === post.username || currentUser.id === post.userId;
+  // Comments modal ሲከፈት ብቻ ነው ከ backend የምንጭነው (Comments unbounded list ስለሆነ
+  // ሁልጊዜ preload አናደርግም — database-design.md Section 19)
+  useEffect(() => {
+    if (isCommentsOpen) {
+      void loadComments(post.id);
+    }
+  }, [isCommentsOpen, post.id, loadComments]);
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.muted = isMuted;
@@ -436,27 +445,12 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
           comments={comments}
           currentUsername={currentUser.fullName}
           onClose={() => setIsCommentsOpen(false)}
-          onPostComment={(text) =>
-            addComment(
-              post.id,
-              text,
-              currentUser.fullName,
-              currentUser.avatarUrl ?? null,
-            )
-          }
+          onPostComment={(text) => addComment(post.id, text)}
           onDeleteComment={(commentId) => deleteComment(post.id, commentId)}
           onEditComment={(commentId, newText) =>
             editComment(post.id, commentId, newText)
           }
-          onAddReply={(id, text) =>
-            addReply(
-              post.id,
-              id,
-              text,
-              currentUser.fullName,
-              currentUser.avatarUrl ?? null,
-            )
-          }
+          onAddReply={(id, text) => addReply(post.id, id, text)}
           onDeleteReply={(commentId, replyId) =>
             deleteReply(post.id, commentId, replyId)
           }

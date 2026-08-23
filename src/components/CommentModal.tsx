@@ -4,16 +4,15 @@ import EmojiPicker from "./EmojiPicker";
 import CommentCard from "./CommentCard";
 import type { CommentItem, CommentSort } from "../types";
 
-
 interface CommentModalProps {
   comments: CommentItem[];
   currentUsername: string;
   onClose: () => void;
   onPostComment: (text: string) => void;
-  onDeleteComment: (id: number) => void;
-  onEditComment: (id: number, text: string) => void;
-  onAddReply: (id: number, text: string) => void;
-  onDeleteReply: (commentId: number, replyId: number) => void;
+  onDeleteComment: (id: string) => void;
+  onEditComment: (id: string, text: string) => void;
+  onAddReply: (id: string, text: string) => void;
+  onDeleteReply: (commentId: string, replyId: string) => void;
 }
 
 export default function CommentModal({
@@ -28,11 +27,11 @@ export default function CommentModal({
 }: CommentModalProps) {
   const [sort, setSort] = useState<CommentSort>("newest");
   const [newCommentText, setNewCommentText] = useState("");
-
-  const sortedComments = [...comments].sort((a, b) =>
-    sort === "newest" ? b.id - a.id : a.id - b.id,
-  );
-
+  const sortedComments = [...comments].sort((a, b) => {
+    const diff =
+      new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+    return sort === "newest" ? -diff : diff;
+  });
   function handlePost() {
     const trimmed = newCommentText.trim();
     if (!trimmed) return;

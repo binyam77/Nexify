@@ -19,7 +19,7 @@ export interface VideoData {
 }
 
 export interface CommentReply {
-  id: number;
+  id: string;
   text: string;
   username: string;
   avatar: string | null;
@@ -27,7 +27,7 @@ export interface CommentReply {
 }
 
 export interface CommentItem {
-  id: number;
+  id: string;
   text: string;
   username: string;
   avatar: string | null;

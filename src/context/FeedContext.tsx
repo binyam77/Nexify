@@ -2,392 +2,334 @@ import {
   createContext,
   useContext,
   useState,
-  useEffect,
   useCallback,
+  useEffect,
+  useRef,
 } from "react";
 import type { ReactNode } from "react";
 import type { CommentItem, FeedPost } from "../types";
-// የ'import' ማስተካከያ ከላይ
-import { getMediaFile } from "../lib/db";
-// Legacy localStorage["userPostMeta"] shape (backend ሲመጣ ይሀ File ጨርሶ ይጠፋል)
-interface LegacyLocalPost {
-  id: number;
-  username?: string;
-  avatar?: string | null;
-  isVideo?: boolean;
-  thumbnail?: string;
-  description?: string;
-  hashtags?: string[];
-  likes?: number;
-  saves?: number;
-  views?: number;
-  timestamp?: string;
-  liked?:boolean;
-  saved?:boolean;
-}
-// Mock posts — otherUsers posts (algorithm ሲሰራ API ይተካዋል)
-const MOCK_FEED_POSTS: FeedPost[] = [
-  {
-    id: "mock-1",
-    userId: "abel_codes",
-    username: "abel_codes",
-    userAvatar: "",
-    type: "photo",
-    mediaUrls: [
-      "https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=600",
-    ],
-    caption: "Dynamic Interactive Canvas Dashboard #canvas #react",
-    hashtags: ["#canvas", "#react"],
-    likesCount: 48,
-    commentsCount: 5,
-    sharesCount: 3,
-    savesCount: 12,
-    viewsCount: 342,
-    createdAt: new Date(Date.now() - 3600000 * 4).toISOString(),
-    liked: false,
-    saved: false,
-  },
-  {
-    id: "mock-2",
-    userId: "fitsum_backend",
-    username: "fitsum_backend",
-    userAvatar: "",
-    type: "photo",
-    mediaUrls: [
-      "https://images.unsplash.com/photo-1544383835-bda2bc66a55d?q=80&w=600",
-    ],
-    caption: "Database Schema Sharding — scaled writes by 3x #postgres",
-    hashtags: ["#postgres", "#backend"],
-    likesCount: 94,
-    commentsCount: 12,
-    sharesCount: 8,
-    savesCount: 45,
-    viewsCount: 512,
-    createdAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-    liked: false,
-    saved: false,
-  },
-  {
-    id: "mock-3",
-    userId: "eden_creates",
-    username: "eden_creates",
-    userAvatar: "",
-    type: "photo",
-    mediaUrls: [
-      "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=600",
-    ],
-    caption: "3D WebGL Shader Loop #webgl #animation",
-    hashtags: ["#webgl", "#animation"],
-    likesCount: 85,
-    commentsCount: 9,
-    sharesCount: 6,
-    savesCount: 37,
-    viewsCount: 298,
-    createdAt: new Date(Date.now() - 3600000 * 18).toISOString(),
-    liked: false,
-    saved: false,
-  },
-];
+import {
+  fetchFeed,
+  fetchComments,
+  viewPost,
+  likePost,
+  unlikePost,
+  savePost,
+  unsavePost,
+  sharePost,
+  addComment as apiAddComment,
+  addReply as apiAddReply,
+  deleteCommentOrReply,
+  editComment as apiEditComment,
+} from "../features/posts.api";
 
 interface FeedContextType {
   posts: FeedPost[];
+  isLoading: boolean;
+  isLoadingMore: boolean;
+  hasMore: boolean;
+  error: string | null;
+  loadMore: () => Promise<void>;
+
   commentsMap: Record<string, CommentItem[]>;
-  addPost: (post: FeedPost) => void;
-  removePost: (postId: string) => void;
+  isLoadingComments: boolean;
+  loadComments: (postId: string) => Promise<void>;
+
   incrementView: (postId: string) => void;
   toggleLike: (postId: string) => void;
   toggleSave: (postId: string) => void;
   incrementShare: (postId: string) => void;
-  addComment: (
-    postId: string,
-    text: string,
-    username: string,
-    avatar: string | null,
-  ) => void;
-  editComment: (postId: string, commentId: number, newText: string) => void;
-  deleteComment: (postId: string, commentId: number) => void;
-  addReply: (
-    postId: string,
-    commentId: number,
-    text: string,
-    username: string,
-    avatar: string | null,
-  ) => void;
-  deleteReply: (postId: string, commentId: number, reply: number) => void;
+
+  addComment: (postId: string, text: string) => void;
+  addReply: (postId: string, commentId: string, text: string) => void;
+  deleteComment: (postId: string, commentId: string) => void;
+  deleteReply: (postId: string, commentId: string, replyId: string) => void;
+  // TODO: backend ላይ PATCH /comments/:id endpoint ገና የለም — ስለዚህ ለጊዜው no-op ነው
+  editComment: (postId: string, commentId: string, newText: string) => void;
 }
 
 const FeedContext = createContext<FeedContextType | null>(null);
 
-// Shuffle utility (Fisher-Yates) — algorithm placeholder
-function shuffleArray<T>(arr: T[]): T[] {
-  const a = [...arr];
-  for (let i = a.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [a[i], a[j]] = [a[j], a[i]];
-  }
-  return a;
-}
-
 export function FeedProvider({ children }: { children: ReactNode }) {
   const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  // Cursor is a ref, not state — advancing it should never itself trigger a
+  // re-render; only the derived `posts`/`hasMore` updates should.
+  const nextCursorRef = useRef<string | null>(null);
+
   const [commentsMap, setCommentsMap] = useState<Record<string, CommentItem[]>>(
-    () => {
-      try {
-        const saved = localStorage.getItem("feedCommentsMap");
-        return saved ? JSON.parse(saved) : {};
-      } catch {
-        return {};
-      }
-    },
+    {},
   );
+  const [isLoadingComments, setIsLoadingComments] = useState(false);
 
+  // --- Initial feed load ---
   useEffect(() => {
-    // የፈጠርናቸውን object URLs ለመከታተል የሚጠቅም array
-    const createdUrls: string[] = [];
-
-    async function loadFeed() {
-      const savedPosts = localStorage.getItem("userPostsMeta");
-      let userPosts: FeedPost[] = [];
-      if (savedPosts) {
-        try {
-          const parsed = JSON.parse(savedPosts);
-          userPosts = await Promise.all(
-            parsed.map(async (p: LegacyLocalPost) => {
-              let mediaUrl = p.thumbnail || "";
-              try {
-                const blob = await getMediaFile(Number(p.id));
-                if (blob) {
-                  mediaUrl = URL.createObjectURL(blob);
-                  createdUrls.push(mediaUrl); // በኋላ ላይ ከ memory ለማጽዳት እዚህ እናስቀምጠዋለን
-                }
-              } catch (e) {
-                console.error("Media file fetch error:", e);
-              }
-              return {
-                id: String(p.id),
-                userId: p.username || "me",
-                username: p.username || "me",
-                userAvatar: p.avatar || "",
-                type: p.isVideo ? "video" : "photo",
-                mediaUrls: [mediaUrl],
-                caption: p.description || "",
-                hashtags: p.hashtags || [],
-                likesCount: p.likes || 0,
-                commentsCount: 0,
-                sharesCount: 0,
-                savesCount: p.saves || 0,
-                viewsCount: p.views || 0,
-                createdAt: p.timestamp || new Date().toISOString(),
-                liked: p.liked || false,
-                saved: p.saved || false,
-              };
-            }),
-          );
-        } catch (e) {
-          console.error("Feed load error:", e);
-        }
+    let cancelled = false;
+    async function loadInitial() {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const page = await fetchFeed();
+        if (cancelled) return;
+        setPosts(page.items);
+        setHasMore(page.hasMore);
+        nextCursorRef.current = page.nextCursor;
+      } catch (e) {
+        if (!cancelled) setError("Feed መጫን አልተቻለም። እንደገና ይሞክሩ።");
+        console.error("Feed load error:", e);
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
-      const combined = shuffleArray([...userPosts, ...MOCK_FEED_POSTS]);
-      setPosts(combined);
     }
-
-    loadFeed();
-
-    // Cleanup function: component unmount ሲያደርግ memory-ውን ነጻ ያደርጋል
+    void loadInitial();
     return () => {
-      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+      cancelled = true;
     };
   }, []);
-  const addPost = useCallback((post: FeedPost) => {
-    setPosts((prev) => [post, ...prev]);
-  }, []);
 
-  const removePost = useCallback((postId: string) => {
-    setPosts((prev) => prev.filter((p) => p.id !== postId));
-  }, []);
+  const loadMore = useCallback(async () => {
+    if (isLoadingMore || !hasMore || !nextCursorRef.current) return;
+    setIsLoadingMore(true);
+    try {
+      const page = await fetchFeed(nextCursorRef.current);
+      setPosts((prev) => [...prev, ...page.items]);
+      setHasMore(page.hasMore);
+      nextCursorRef.current = page.nextCursor;
+    } catch (e) {
+      console.error("Feed loadMore error:", e);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, hasMore]);
 
+  // --- View — fire-and-forget, matches backend's non-transactional counter ---
   const incrementView = useCallback((postId: string) => {
-    // TODO: POST /api/posts/:id/view
     setPosts((prev) =>
       prev.map((p) =>
         p.id === postId ? { ...p, viewsCount: p.viewsCount + 1 } : p,
       ),
     );
+    viewPost(postId).catch((e) => console.error("View tracking failed:", e));
   }, []);
 
-  // TODO: PATCH /api/posts/:id/like -backend ሲመጣ optimistic update + server sync ይተካዋል
+  // --- Like — optimistic update, reverted if the request fails ---
   const toggleLike = useCallback((postId: string) => {
+    let wasLiked = false;
     setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId
-          ? {
-              ...p,
-              liked: !p.liked,
-              likesCount: p.liked ? p.likesCount - 1 : p.likesCount + 1,
-            }
-          : p,
-      ),
+      prev.map((p) => {
+        if (p.id !== postId) return p;
+        wasLiked = p.liked;
+        return {
+          ...p,
+          liked: !p.liked,
+          likesCount: p.liked ? p.likesCount - 1 : p.likesCount + 1,
+        };
+      }),
     );
+    const request = wasLiked ? unlikePost(postId) : likePost(postId);
+    request.catch((e) => {
+      console.error("Like toggle failed, reverting:", e);
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                liked: wasLiked,
+                likesCount: wasLiked ? p.likesCount + 1 : p.likesCount - 1,
+              }
+            : p,
+        ),
+      );
+    });
   }, []);
 
-  //TODO:PATCH /api/posts/:id/save
+  // --- Save — optimistic update, reverted if the request fails ---
   const toggleSave = useCallback((postId: string) => {
+    let wasSaved = false;
     setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId
-          ? {
-              ...p,
-              saved: !p.saved,
-              savesCount: p.saved ? p.savesCount - 1 : p.savesCount + 1,
-            }
-          : p,
-      ),
+      prev.map((p) => {
+        if (p.id !== postId) return p;
+        wasSaved = p.saved;
+        return {
+          ...p,
+          saved: !p.saved,
+          savesCount: p.saved ? p.savesCount - 1 : p.savesCount + 1,
+        };
+      }),
     );
-  }, []);
-  //TODO:POST /api/posts/:id/share
-  const incrementShare = useCallback((postId: string) => {
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId ? { ...p, sharesCount: p.sharesCount + 1 } : p,
-      ),
-    );
+    const request = wasSaved ? unsavePost(postId) : savePost(postId);
+    request.catch((e) => {
+      console.error("Save toggle failed, reverting:", e);
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                saved: wasSaved,
+                savesCount: wasSaved ? p.savesCount + 1 : p.savesCount - 1,
+              }
+            : p,
+        ),
+      );
+    });
   }, []);
 
-  //TODO:POST/ api/posts/:id/comments -text sanitization/length limit backend ላይ መደረግ አለበት
-  const addComment = useCallback(
-    (postId: string, text: string, username: string, avatar: string | null) => {
+  // --- Share — server returns the authoritative count (append-only log) ---
+  const incrementShare = useCallback((postId: string) => {
+    sharePost(postId)
+      .then(({ sharesCount }) => {
+        setPosts((prev) =>
+          prev.map((p) => (p.id === postId ? { ...p, sharesCount } : p)),
+        );
+      })
+      .catch((e) => console.error("Share tracking failed:", e));
+  }, []);
+
+  // --- Comments — fetched on demand when the modal opens, not preloaded ---
+  const loadComments = useCallback(async (postId: string) => {
+    setIsLoadingComments(true);
+    try {
+      const page = await fetchComments(postId);
+      setCommentsMap((prev) => ({ ...prev, [postId]: page.items }));
+    } catch (e) {
+      console.error("Comments load error:", e);
+    } finally {
+      setIsLoadingComments(false);
+    }
+  }, []);
+
+  const addComment = useCallback((postId: string, text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    apiAddComment(postId, trimmed)
+      .then((comment) => {
+        setCommentsMap((prev) => ({
+          ...prev,
+          [postId]: [comment, ...(prev[postId] || [])],
+        }));
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p,
+          ),
+        );
+      })
+      .catch((e) => console.error("Add comment failed:", e));
+  }, []);
+
+  // Note: backend counts replies toward Post.commentsCount too (same
+  // createAndIncrementCount path as top-level comments) — so a reply
+  // increments commentsCount here as well.
+  const addReply = useCallback(
+    (postId: string, commentId: string, text: string) => {
       const trimmed = text.trim();
       if (!trimmed) return;
-      const newComment: CommentItem = {
-        id: Date.now(),
-        text: trimmed,
-        username,
-        avatar,
-        timestamp: new Date().toISOString(),
-        replies: [],
-      };
-      setCommentsMap((prevMap) => {
-        const updated = {
-          ...prevMap,
-          [postId]: [...(prevMap[postId] || []), newComment],
+      apiAddReply(postId, commentId, trimmed)
+        .then((reply) => {
+          setCommentsMap((prev) => {
+            const list = prev[postId] || [];
+            return {
+              ...prev,
+              [postId]: list.map((c) =>
+                c.id === commentId
+                  ? { ...c, replies: [...c.replies, reply] }
+                  : c,
+              ),
+            };
+          });
+          setPosts((prev) =>
+            prev.map((p) =>
+              p.id === postId
+                ? { ...p, commentsCount: p.commentsCount + 1 }
+                : p,
+            ),
+          );
+        })
+        .catch((e) => console.error("Add reply failed:", e));
+    },
+    [],
+  );
+
+  // Deleting a top-level comment cascades its replies on the backend, so
+  // the local commentsCount decrement accounts for (1 + its loaded replies).
+  const deleteComment = useCallback((postId: string, commentId: string) => {
+    setCommentsMap((prev) => {
+      const list = prev[postId] || [];
+      const target = list.find((c) => c.id === commentId);
+      const removedCount = 1 + (target?.replies.length ?? 0);
+      setPosts((prevPosts) =>
+        prevPosts.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                commentsCount: Math.max(0, p.commentsCount - removedCount),
+              }
+            : p,
+        ),
+      );
+      return { ...prev, [postId]: list.filter((c) => c.id !== commentId) };
+    });
+    deleteCommentOrReply(commentId).catch((e) =>
+      console.error("Delete comment failed:", e),
+    );
+  }, []);
+
+  const deleteReply = useCallback(
+    (postId: string, commentId: string, replyId: string) => {
+      setCommentsMap((prev) => {
+        const list = prev[postId] || [];
+        return {
+          ...prev,
+          [postId]: list.map((c) =>
+            c.id === commentId
+              ? { ...c, replies: c.replies.filter((r) => r.id !== replyId) }
+              : c,
+          ),
         };
-        try {
-          localStorage.setItem("feedCommentsMap", JSON.stringify(updated));
-        } catch (e) {
-          console.error("Failed to persist comments:", e);
-        }
-        return updated;
       });
       setPosts((prev) =>
         prev.map((p) =>
-          p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p,
+          p.id === postId
+            ? { ...p, commentsCount: Math.max(0, p.commentsCount - 1) }
+            : p,
         ),
+      );
+      deleteCommentOrReply(replyId).catch((e) =>
+        console.error("Delete reply failed:", e),
       );
     },
     [],
   );
 
+  // Works whether `commentId` refers to a top-level comment or a reply —
+  // we check both locations in the local map since the caller (CommentCard)
+  // doesn't distinguish them either.
   const editComment = useCallback(
-    (postId: string, commentId: number, newText: string) => {
-      setCommentsMap((prevMap) => {
-        const list = prevMap[postId] || [];
-        const updatedList = list.map((c) =>
-          c.id === commentId ? { ...c, text: newText } : c,
-        );
-        const updated = { ...prevMap, [postId]: updatedList };
-        try {
-          localStorage.setItem("feedCommentsMap", JSON.stringify(updated));
-        } catch (e) {
-          console.error("Failed to persist comments:", e);
-        }
-        return updated;
-      });
-    },
-    [],
-  );
-
-  const deleteComment = useCallback((postId: string, commentId: number) => {
-    setCommentsMap((prevMap) => {
-      const list = prevMap[postId] || [];
-      const updatedList = list.filter((c) => c.id !== commentId);
-      const updated = { ...prevMap, [postId]: updatedList };
-      try {
-        localStorage.setItem("feedCommentsMap", JSON.stringify(updated));
-      } catch (e) {
-        console.error("Failed to persist comments:", e);
-      }
-      return updated;
-    });
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId
-          ? { ...p, commentsCount: Math.max(0, p.commentsCount - 1) }
-          : p,
-      ),
-    );
-  }, []);
-
-  const addReply = useCallback(
-    (
-      postId: string,
-      commentId: number,
-      text: string,
-      username: string,
-      avatar: string | null,
-    ) => {
-      const trimmed = text.trim();
+    (postId: string, commentId: string, newText: string) => {
+      const trimmed = newText.trim();
       if (!trimmed) return;
-      setCommentsMap((prevMap) => {
-        const list = prevMap[postId] || [];
-        const updatedList = list.map((c) =>
-          c.id === commentId
-            ? {
-                ...c,
-                replies: [
-                  ...(c.replies || []),
-                  {
-                    id: Date.now(),
-                    text: trimmed,
-                    username,
-                    avatar,
-                    timestamp: new Date().toISOString(),
-                  },
-                ],
+      apiEditComment(commentId, trimmed)
+        .then(({ text }) => {
+          setCommentsMap((prev) => {
+            const list = prev[postId] || [];
+            const updated = list.map((c) => {
+              if (c.id === commentId) return { ...c, text };
+              if (c.replies.some((r) => r.id === commentId)) {
+                return {
+                  ...c,
+                  replies: c.replies.map((r) =>
+                    r.id === commentId ? { ...r, text } : r,
+                  ),
+                };
               }
-            : c,
-        );
-        const updated = { ...prevMap, [postId]: updatedList };
-        try {
-          localStorage.setItem("feedCommentsMap", JSON.stringify(updated));
-        } catch (e) {
-          console.error("Failed to persist comments: ", e);
-        }
-        return updated;
-      });
-    },
-    [],
-  );
-
-  const deleteReply = useCallback(
-    (postId: string, commentId: number, replyId: number) => {
-      setCommentsMap((prevMap) => {
-        const list = prevMap[postId] || [];
-        const updatedList = list.map((c) =>
-          c.id === commentId
-            ? {
-                ...c,
-                replies: (c.replies || []).filter((r) => r.id !== replyId),
-              }
-            : c,
-        );
-        const updated = { ...prevMap, [postId]: updatedList };
-        try {
-          localStorage.setItem("feedCommentsMap", JSON.stringify(updated));
-        } catch (e) {
-          console.error("Failed to persist comments:", e);
-        }
-        return updated;
-      });
+              return c;
+            });
+            return { ...prev, [postId]: updated };
+          });
+        })
+        .catch((e) => console.error("Edit comment failed:", e));
     },
     [],
   );
@@ -396,24 +338,30 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     <FeedContext.Provider
       value={{
         posts,
+        isLoading,
+        isLoadingMore,
+        hasMore,
+        error,
+        loadMore,
         commentsMap,
-        addPost,
-        removePost,
+        isLoadingComments,
+        loadComments,
         incrementView,
         toggleLike,
         toggleSave,
         incrementShare,
         addComment,
-        editComment,
-        deleteComment,
         addReply,
+        deleteComment,
         deleteReply,
+        editComment,
       }}
     >
       {children}
     </FeedContext.Provider>
   );
 }
+
 // eslint-disable-next-line react-refresh/only-export-components -- context+hook በ1 File ማድረግ የተለመደ pattern ነው
 export function useFeed() {
   const ctx = useContext(FeedContext);

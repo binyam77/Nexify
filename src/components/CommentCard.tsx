@@ -4,14 +4,13 @@ import EmojiPicker from "./EmojiPicker";
 import type { CommentItem, CommentReply } from "../types";
 
 const REPLIES_VISIBLE_LIMIT = 2;
-
 interface CommentCardProps {
   comment: CommentItem;
   currentUsername: string;
-  onDelete: (commentId: number) => void;
-  onEdit: (commentId: number, newText: string) => void;
-  onAddReply: (commentId: number, text: string) => void;
-  onDeleteReply: (commentId: number, replyId: number) => void;
+  onDelete: (commentId: string) => void;
+  onEdit: (commentId: string, newText: string) => void;
+  onAddReply: (commentId: string, text: string) => void;
+  onDeleteReply: (commentId: string, replyId: string) => void;
 }
 
 export default function CommentCard({
