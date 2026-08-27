@@ -125,6 +125,26 @@ export async function fetchFeed(
   );
   return { ...result, items: result.items.map(toFeedPost) };
 }
+export async function searchPosts(
+  q: string,
+  cursor?: string,
+  limit = 12,
+): Promise<PaginatedResult<FeedPost>> {
+  const params = new URLSearchParams();
+  params.set("q", q);
+  if (cursor) params.set("cursor", cursor);
+  params.set("limit", String(limit));
+
+  const result = await apiClient<PaginatedResult<BackendPostResponse>>(
+    `/home/search?${params.toString()}`,
+  );
+  return { ...result, items: result.items.map(toFeedPost) };
+}
+
+export async function fetchPostById(postId: string): Promise<FeedPost> {
+  const dto = await apiClient<BackendPostResponse>(`/posts/${postId}`);
+  return toFeedPost(dto);
+}
 
 // ============================================================================
 // POST INTERACTIONS

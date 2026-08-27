@@ -22,7 +22,7 @@ const FirstEntry: React.FC = () => {
   }, [navigate, isLoggedIn, isLoading]);
 
   return (
-    <div className="flex h-screen w-screen items-center justify-center bg-white overflow-hidden select-none">
+    <div className="flex h-screen w-screen items-center justify-center bg-bodey-bg overflow-hidden select-none">
       <div className="flex items-center justify-center">
         <img
           src={logo}

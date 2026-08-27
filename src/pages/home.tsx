@@ -5,8 +5,9 @@ import PostCard from "../components/PostCard";
 import avatarImg from "../assets/user.png";
 import { useAuth } from "../context/AuthContext";
 import { useFeed } from "../context/FeedContext";
-import { ChevronUp, ChevronDown, Loader2 } from "lucide-react";
+import { ChevronUp, ChevronDown, Loader2, Search } from "lucide-react";
 import type { User } from "../types";
+import SearchOverlay from "../components/SearchOverlay";
 
 // Feed's end ጋር ይሄን ያህል ሲቀር ነው loadMore() የሚነሳው (scroll ላይ delay እንዳይሰማ)
 const PREFETCH_THRESHOLD = 3;
@@ -23,6 +24,7 @@ export default function Home() {
     loadMore,
   } = useFeed();
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isSearchOpen, setIsSearchOpen] = useState(false);
   const navigate = useNavigate();
 
   // Post ደራሲ ጋር chat ለመክፈት — Profile's handleMessageUser ጋር ተመሳሳይ pattern
@@ -138,6 +140,23 @@ export default function Home() {
 
   return (
     <div className="relative h-full w-full bg-surface  overflow-hidden">
+      {/* Mobile-only search entry point  - hidden on wider screens */}
+      <button
+        onClick={() => setIsSearchOpen(true)}
+        aria-label="Search"
+        className="md:hidden absolute top-3 right-3 z-30 bg-black/40 rounded-full p-2 text-white"
+      >
+        <Search size={18} />
+        {isSearchOpen && (
+          <SearchOverlay
+            onClose={() => setIsSearchOpen(false)}
+            onSelectPost={(postId) => {
+              setIsSearchOpen(false);
+              navigate(`/post/${postId}`);
+            }}
+          />
+        )}
+      </button>
       <div className="h-full w-full flex items-center justify-center">
         <PostCard
           key={posts[currentIndex]?.id}

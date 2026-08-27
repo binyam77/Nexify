@@ -10,6 +10,7 @@ import type { ReactNode } from "react";
 import type { CommentItem, FeedPost } from "../types";
 import {
   fetchFeed,
+  fetchPostById,
   fetchComments,
   viewPost,
   likePost,
@@ -30,6 +31,7 @@ interface FeedContextType {
   hasMore: boolean;
   error: string | null;
   loadMore: () => Promise<void>;
+  
 
   commentsMap: Record<string, CommentItem[]>;
   isLoadingComments: boolean;
@@ -40,6 +42,7 @@ interface FeedContextType {
   toggleSave: (postId: string) => void;
   incrementShare: (postId: string) => void;
 
+  ensureSinglePost: (postId: string) => Promise<void>;
   addComment: (postId: string, text: string) => void;
   addReply: (postId: string, commentId: string, text: string) => void;
   deleteComment: (postId: string, commentId: string) => void;
@@ -89,7 +92,20 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       cancelled = true;
     };
   }, []);
-
+  // Used by SinglePostView (opened from a search result) so PostCard's
+  // like/save/etc. keep working normally — they all operate on the same
+  // `posts` array, so a post fetched this way needs to live there too for
+  // the same reactivity Home.tsx already relies on.
+  const ensureSinglePost = useCallback(async (postId: string) => {
+    try {
+      const post = await fetchPostById(postId);
+      setPosts((prev) =>
+        prev.some((p) => p.id === postId) ? prev : [...prev, post],
+      );
+    } catch (e) {
+      console.error("Failed to load post:", e);
+    }
+  }, []);
   const loadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore || !nextCursorRef.current) return;
     setIsLoadingMore(true);
@@ -343,6 +359,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
         hasMore,
         error,
         loadMore,
+        ensureSinglePost,
         commentsMap,
         isLoadingComments,
         loadComments,

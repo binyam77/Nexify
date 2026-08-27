@@ -11,9 +11,9 @@ import {
 } from "react-router-dom";
 import Home from "./pages/home";
 import Layout from "./components/Layout";
-import FirstEntry from "./auth/firstEntry";
 import CreateAccount from "./auth/createAccount";
 import Login from "./auth/login";
+import FirstEntry from "./auth/firstEntry";
 import Profile from "./pages/profile";
 import Community from "./pages/comminty";
 import Settings from "./pages/settings";
@@ -25,6 +25,7 @@ import Contact from "./footer/contact";
 import Helps from "./footer/helps";
 import Notifications from "./pages/notfications";
 import OAuthCallbackPage from "./auth/OAuthCallbackPage";
+import SinglePostView from "./pages/singlePostView";
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -106,6 +107,7 @@ export default function App() {
           }
         />
         <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
+        <Route path="/post/:id" element={<SinglePostView />} />
         <Route
           path="/login"
           element={
@@ -132,15 +134,15 @@ export default function App() {
     </UIProvider>
   );
 }
-// Location ን አስቀድሞ ይይዛል፣ ስለዚህ Login ካደረጉ በኋላ ወደ ትክክለኛው ገፅ መመለስ ይቻላል
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  const { isLoggedIn } = useAuth();
-  const location = useLocation();
-
-  if (!isLoggedIn) {
-    // `state: { from: location }` - Login page ይህን አንብቦ ተመልሶ እዚያው ይልካል
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
+  // ⚠️ TEMPORARY: Login/Google OAuth ገና ስለሚስተካከል፣ ደረጃው ለ development
+  // ብቻ ታግዷል። Login ስንጨርስ ከታች ያለውን commented-out code እንመልሳለን።
   return <>{children}</>;
+
+  // const { isLoggedIn } = useAuth();
+  // const location = useLocation();
+  // if (!isLoggedIn) {
+  //   return <Navigate to="/login" state={{ from: location }} replace />;
+  // }
+  // return <>{children}</>;
 }
