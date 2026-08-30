@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { ArrowLeft, X, Clock, Search as SearchIcon } from "lucide-react";
-import { searchPosts } from "../features/posts.api";
+import { searchPosts } from "../api/posts.api";
 import { useSearchHistory } from "../hooks/useSearchHistory";
 import type { FeedPost } from "../types";
 

@@ -15,6 +15,8 @@ import {
   Bookmark,
   Share2,
   Send,
+  Pencil,
+  Check,
 } from "lucide-react";
 import type { FeedPost, CommentItem, OtherCreator } from "../types";
 import Left from "./Left";
@@ -42,9 +44,10 @@ interface ViewVideoProps {
   handleSharePost: (postId: string) => void;
   handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
   handleAddComment: (postId: string, text: string) => void;
-  handleDeleteComment: (postId: string, commentId: number) => void;
-  handleAddReply: (postId: string, commentId: number, text: string) => void;
+  handleDeleteComment: (postId: string, commentId: string) => void;
+  handleAddReply: (postId: string, commentId: string, text: string) => void;
   handleNavigateToUserProfile: (username: string) => void;
+  handleEditComment:(postId:string, commentId:string,newText:string) => void;
   toggleFollowUser: (index: number) => void;
   formatCount: (num: number) => string;
 }
@@ -66,6 +69,7 @@ export default function ViewVideo({
   handleDeleteComment,
   handleAddReply,
   handleNavigateToUserProfile,
+  handleEditComment,
   toggleFollowUser,
   formatCount,
 }: ViewVideoProps) {
@@ -108,8 +112,23 @@ export default function ViewVideo({
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [mobileCommentsOpen, setMobileCommentsOpen] = useState(false);
 
-  const [activeReplyTo, setActiveReplyTo] = useState<number | null>(null);
+  const [activeReplyTo, setActiveReplyTo] = useState<string | null>(null);
   const [replyInputText, setReplyInputText] = useState("");
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editInputText, setEditInputText] = useState("");
+
+  const startEditing = (item: { id: string; text: string }) => {
+    setEditingCommentId(item.id);
+    setEditInputText(item.text);
+  };
+
+  const confirmEdit = (commentId: string) => {
+    const trimmed = editInputText.trim();
+    if (trimmed) handleEditComment(selectedPost.id, commentId, trimmed);
+    setEditingCommentId(null);
+    setEditInputText("");
+  };
+
 
   const handleVideoClick = (e?: React.MouseEvent) => {
     if (e && (e.target as HTMLElement).closest("#closeBtn")) return;
@@ -266,6 +285,7 @@ export default function ViewVideo({
           handleAddComment={handleAddComment}
           handleDeleteComment={handleDeleteComment}
           handleAddReply={handleAddReply}
+          handleEditComment={handleEditComment}
           handleNavigateToUserProfile={handleNavigateToUserProfile}
           toggleFollowUser={toggleFollowUser}
           authorIndex={authorIndex}
@@ -503,9 +523,25 @@ export default function ViewVideo({
                           >
                             @{comment.username}
                           </h4>
-                          <p className="text-[13.5px] text-slate-800 leading-relaxed break-words font-medium">
-                            {comment.text}
-                          </p>
+                                                    {editingCommentId === comment.id ? (
+                            <div className="flex items-center gap-2 mt-1">
+                              <input
+                                type="text"
+                                value={editInputText}
+                                onChange={(e) => setEditInputText(e.target.value)}
+                                autoFocus
+                                maxLength={500}
+                                className="flex-1 bg-white border border-blue-300 rounded-lg px-3 py-1.5 text-[13px] outline-none focus:border-blue-500"
+                              />
+                              <button onClick={() => confirmEdit(comment.id)} className="w-7 h-7 bg-emerald-500 text-white rounded-full flex items-center justify-center shrink-0">
+                                <Check className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          ) : (
+                            <p className="text-[13.5px] text-slate-800 leading-relaxed break-words font-medium">
+                              {comment.text}
+                            </p>
+                          )}
 
                           <div className="flex items-center gap-4 mt-2 text-[10px] font-bold text-slate-400">
                             <span>
@@ -531,18 +567,23 @@ export default function ViewVideo({
                               Reply
                             </button>
 
-                            {comment.username === profile.username && (
-                              <button
-                                onClick={() =>
-                                  handleDeleteComment(
-                                    selectedPost.id,
-                                    comment.id,
-                                  )
-                                }
-                                className="text-slate-400 hover:text-rose-600 ml-auto"
-                              >
-                                Delete
-                              </button>
+                                                        {comment.username === profile.username && editingCommentId !== comment.id && (
+                              <>
+                                <button onClick={() => startEditing(comment)} className="text-slate-400 hover:text-blue-600 flex items-center gap-1">
+                                  <Pencil className="w-3 h-3" />
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleDeleteComment(
+                                      selectedPost.id,
+                                      comment.id,
+                                    )
+                                  }
+                                  className="text-slate-400 hover:text-rose-600 ml-auto"
+                                >
+                                  Delete
+                                </button>
+                              </>
                             )}
                           </div>
                         </div>

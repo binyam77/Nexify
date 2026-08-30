@@ -259,3 +259,44 @@ export async function editComment(
 export function deleteCommentOrReply(commentId: string): Promise<null> {
   return apiClient<null>(`/comments/${commentId}`, { method: "DELETE" });
 }
+// ============================================================================
+// POST CREATE / DELETE / USER-SCOPED LISTING
+// ============================================================================
+
+export interface CreatePostMediaInput {
+  url: string;
+  type: "IMAGE" | "VIDEO";
+}
+
+export interface CreatePostInput {
+  caption?: string;
+  hashtags?: string[];
+  media: CreatePostMediaInput[];
+}
+
+export async function createPost(input: CreatePostInput): Promise<FeedPost> {
+  const dto = await apiClient<BackendPostResponse>(`/posts`, {
+    method: "POST",
+    body: input,
+  });
+  return toFeedPost(dto);
+}
+
+export function deletePost(postId: string): Promise<null> {
+  return apiClient<null>(`/posts/${postId}`, { method: "DELETE" });
+}
+
+export async function fetchUserPosts(
+  userId: string,
+  cursor?: string,
+  limit = 12,
+): Promise<PaginatedResult<FeedPost>> {
+  const params = new URLSearchParams();
+  if (cursor) params.set("cursor", cursor);
+  params.set("limit", String(limit));
+
+  const result = await apiClient<PaginatedResult<BackendPostResponse>>(
+    `/users/${userId}/posts?${params.toString()}`,
+  );
+  return { ...result, items: result.items.map(toFeedPost) };
+}

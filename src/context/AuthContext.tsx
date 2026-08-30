@@ -6,7 +6,7 @@ import {
   refreshRequest,
   meRequest,
   exchangeOAuthCodeRequest,
-} from "../features/auth.api";
+} from "../api/auth.api";
 
 export interface User {
   id: string;

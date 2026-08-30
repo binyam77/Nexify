@@ -62,6 +62,12 @@ export default function Terms({ onNavigate = () => {} }: TermsProps) {
               <li className="relative pl-[25px] mb-2.5 text-gray-800 text-[15px]">
                 <span className="absolute left-0 text-blue-600 font-bold">✓</span>Watch and share content
               </li>
+               <li className="relative pl-[25px] mb-2.5 text-gray-800 text-[15px]">
+                <span className="absolute left-0 text-blue-600 font-bold">✓</span>Creating Channel and Group
+              </li>
+               <li className="relative pl-[25px] mb-2.5 text-gray-800 text-[15px]">
+                <span className="absolute left-0 text-blue-600 font-bold">✓</span>Messaging in private chat
+              </li>
               <li className="relative pl-[25px] mb-2.5 text-gray-800 text-[15px]">
                 <span className="absolute left-0 text-blue-600 font-bold">✓</span>Post videos, images, and text
               </li>
@@ -212,7 +218,7 @@ export default function Terms({ onNavigate = () => {} }: TermsProps) {
             }}
             className="text-white/70 no-underline transition-colors duration-200 hover:text-[#93c5fd]"
           >
-            Privacy
+            Privacy Policy
           </a>
           <a
             href="/footer/contact"

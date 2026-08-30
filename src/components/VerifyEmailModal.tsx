@@ -1,10 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { CheckCircle2, AlertCircle, X } from "lucide-react";
-import {
-  verifyEmailRequest,
-  resendVerificationRequest,
-} from "../features/auth.api";
+import { verifyEmailRequest, resendVerificationRequest } from "../api/auth.api";
 import { ApiError } from "../lib/api-client";
 
 interface VerifyEmailModalProps {

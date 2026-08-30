@@ -11,8 +11,11 @@ import {
   Share2,
   Trash2,
   Send,
-  
+  Pencil,
+  Check,
+  X as CloseIcon,
 } from "lucide-react";
+import { useState } from "react";
 import type { FeedPost, CommentItem } from "../types";
 
 // Left.tsx የProp ዓይነቶች መግለጫ (Props Interface for Left.tsx)
@@ -39,19 +42,25 @@ interface LeftProps {
   setCommentInputText: (text: string) => void;
   emojiPickerOpen: boolean;
   setEmojiPickerOpen: (open: boolean) => void;
-  activeReplyTo: number | null;
-  setActiveReplyTo: (id: number | null) => void;
+  activeReplyTo: string | null;
+  setActiveReplyTo: (id: string | null) => void;
+
   replyInputText: string;
   setReplyInputText: (text: string) => void;
-  
+
   // ተፅዕኖ ፈጣሪ ተግባራት (Interactive event handlers)
   handleToggleLikePost: (postId: string) => void;
   handleToggleSavePost: (postId: string) => void;
   handleSharePost: (postId: string) => void;
   handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
   handleAddComment: (postId: string, text: string) => void;
-  handleDeleteComment: (postId: string, commentId: number) => void;
-  handleAddReply: (postId: string, commentId: number, text: string) => void;
+  handleDeleteComment: (postId: string, commentId: string) => void;
+  handleAddReply: (postId: string, commentId: string, text: string) => void;
+  handleEditComment: (
+    postId: string,
+    commentId: string,
+    newText: string,
+  ) => void;
 
   handleNavigateToUserProfile: (username: string) => void;
   toggleFollowUser: (index: number) => void;
@@ -81,11 +90,28 @@ export default function Left({
   handleAddComment,
   handleDeleteComment,
   handleAddReply,
+  handleEditComment,
   handleNavigateToUserProfile,
   toggleFollowUser,
   authorIndex,
   formatCount,
 }: LeftProps) {
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editInputText, setEditInputText] = useState("");
+
+  const startEditing = (item: { id: string; text: string }) => {
+    setEditingCommentId(item.id);
+    setEditInputText(item.text);
+  };
+
+  const confirmEdit = (commentId: string) => {
+    const trimmed = editInputText.trim();
+    if (trimmed) {
+      handleEditComment(selectedPost.id, commentId, trimmed);
+    }
+    setEditingCommentId(null);
+    setEditInputText("");
+  };
   return (
     <aside className="hidden md:flex md:w-[420px] flex-col h-full overflow-hidden bg-white border-l border-gray-200">
       {/* 1. Header with Post Author info */}
@@ -233,7 +259,9 @@ export default function Left({
                 {/* Parent comment */}
                 <div className="flex gap-2.5 items-start">
                   <div
-                    onClick={() => handleNavigateToUserProfile(comment.username)}
+                    onClick={() =>
+                      handleNavigateToUserProfile(comment.username)
+                    }
                     className="w-8 h-8 rounded-full overflow-hidden bg-blue-50 flex items-center justify-center text-blue-600 text-xs font-bold shrink-0 border border-slate-100 cursor-pointer hover:opacity-85 transition-opacity"
                     title={`View ${comment.username}'s profile`}
                   >
@@ -249,24 +277,57 @@ export default function Left({
                   </div>
                   <div className="flex-1 bg-slate-50/90 hover:bg-slate-100 rounded-2xl p-4 border-l-2 border-blue-500 shadow-sm transition-all">
                     <h4
-                      onClick={() => handleNavigateToUserProfile(comment.username)}
+                      onClick={() =>
+                        handleNavigateToUserProfile(comment.username)
+                      }
                       className="text-xs font-bold text-blue-600 mb-1 cursor-pointer hover:underline"
                     >
                       @{comment.username}
                     </h4>
-                    <p className="text-[13.5px] text-slate-800 leading-relaxed break-words font-medium">
-                      {comment.text}
-                    </p>
+                    {editingCommentId === comment.id ? (
+                      <div className="flex items-center gap-2 mt-1">
+                        <input
+                          type="text"
+                          value={editInputText}
+                          onChange={(e) => setEditInputText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") confirmEdit(comment.id);
+                            if (e.key === "Escape") setEditingCommentId(null);
+                          }}
+                          autoFocus
+                          maxLength={500}
+                          className="flex-1 bg-white border border-blue-300 rounded-lg px-3 py-1.5 text-[13px] outline-none focus:border-blue-500"
+                        />
+                        <button
+                          onClick={() => confirmEdit(comment.id)}
+                          className="w-7 h-7 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full flex items-center justify-center shrink-0"
+                        >
+                          <Check className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          onClick={() => setEditingCommentId(null)}
+                          className="w-7 h-7 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full flex items-center justify-center shrink-0"
+                        >
+                          <CloseIcon className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ) : (
+                      <p className="text-[13.5px] text-slate-800 leading-relaxed break-words font-medium">
+                        {comment.text}
+                      </p>
+                    )}
 
                     <div className="flex items-center gap-4 mt-2 text-[10px] font-bold text-slate-400">
                       <span>
-                        {new Date(comment.timestamp).toLocaleTimeString(undefined, {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
+                        {new Date(comment.timestamp).toLocaleTimeString(
+                          undefined,
+                          {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          },
+                        )}
                       </span>
 
-                      
                       <button
                         onClick={() => {
                           if (activeReplyTo === comment.id) {
@@ -280,16 +341,26 @@ export default function Left({
                         Reply
                       </button>
 
-                      {comment.username === profile.username && (
-                        <button
-                          onClick={() =>
-                            handleDeleteComment(selectedPost.id, comment.id)
-                          }
-                          className="text-slate-400 hover:text-rose-600 ml-auto transition-colors"
-                        >
-                          Delete
-                        </button>
-                      )}
+                      {comment.username === profile.username &&
+                        editingCommentId !== comment.id && (
+                          <>
+                            <button
+                              onClick={() => startEditing(comment)}
+                              className="text-slate-400 hover:text-blue-600 flex items-center gap-1"
+                            >
+                              <Pencil className="w-3 h-3" />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() =>
+                                handleDeleteComment(selectedPost.id, comment.id)
+                              }
+                              className="text-slate-400 hover:text-rose-600 ml-auto"
+                            >
+                              Delete
+                            </button>
+                          </>
+                        )}
                     </div>
                   </div>
                 </div>
@@ -297,9 +368,14 @@ export default function Left({
                 {/* Sub-Replies list */}
                 {comment.replies &&
                   comment.replies.map((reply) => (
-                    <div key={reply.id} className="flex gap-2.5 items-start pl-8">
+                    <div
+                      key={reply.id}
+                      className="flex gap-2.5 items-start pl-8"
+                    >
                       <div
-                        onClick={() => handleNavigateToUserProfile(reply.username)}
+                        onClick={() =>
+                          handleNavigateToUserProfile(reply.username)
+                        }
                         className="w-6.5 h-6.5 rounded-full overflow-hidden bg-teal-50 flex items-center justify-center text-teal-600 text-[10px] font-bold shrink-0 border border-slate-100 cursor-pointer hover:opacity-85 transition-opacity"
                         title={`View ${reply.username}'s profile`}
                       >
@@ -315,7 +391,9 @@ export default function Left({
                       </div>
                       <div className="flex-1 bg-slate-100/50 rounded-xl p-2.5">
                         <h5
-                          onClick={() => handleNavigateToUserProfile(reply.username)}
+                          onClick={() =>
+                            handleNavigateToUserProfile(reply.username)
+                          }
                           className="text-[11px] font-bold text-teal-600 mb-0.5 cursor-pointer hover:underline"
                         >
                           @{reply.username}
@@ -324,10 +402,13 @@ export default function Left({
                           {reply.text}
                         </p>
                         <span className="text-[9px] text-slate-400 font-medium block mt-1">
-                          {new Date(reply.timestamp).toLocaleTimeString(undefined, {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                          {new Date(reply.timestamp).toLocaleTimeString(
+                            undefined,
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}
                         </span>
                       </div>
                     </div>
@@ -338,7 +419,11 @@ export default function Left({
                   <form
                     onSubmit={(e) => {
                       e.preventDefault();
-                      handleAddReply(selectedPost.id, comment.id, replyInputText);
+                      handleAddReply(
+                        selectedPost.id,
+                        comment.id,
+                        replyInputText,
+                      );
                     }}
                     className="flex gap-2 pl-8 mt-2"
                   >
@@ -429,10 +514,61 @@ export default function Left({
         {emojiPickerOpen && (
           <div className="absolute bottom-[72px] left-4 bg-white border border-gray-200 rounded-2xl shadow-xl p-2.5 grid grid-cols-8 gap-1.5 w-72 max-h-52 overflow-y-auto z-40 scrollbar-thin">
             {[
-              "😊", "😂", "🔥", "❤️", "🙌", "😍", "👏", "🎉", "👍", "😢", "😮", "🤔", "💯", "✨",
-              "💻", "🚀", "⭐", "🎬", "😜", "💖", "💡", "🌈", "⚡", "🍿", "🤣", "🥰", "🤩", "😘",
-              "😋", "😎", "🤓", "🧐", "😏", "🥳", "😭", "🥺", "😤", "😡", "😱", "😰", "🤫", "😑",
-              "💝", "💕", "💘", "💜", "💙", "💚", "💛", "🧡", "🤍", "👎", "🙏", "🤝", "💪"
+              "😊",
+              "😂",
+              "🔥",
+              "❤️",
+              "🙌",
+              "😍",
+              "👏",
+              "🎉",
+              "👍",
+              "😢",
+              "😮",
+              "🤔",
+              "💯",
+              "✨",
+              "💻",
+              "🚀",
+              "⭐",
+              "🎬",
+              "😜",
+              "💖",
+              "💡",
+              "🌈",
+              "⚡",
+              "🍿",
+              "🤣",
+              "🥰",
+              "🤩",
+              "😘",
+              "😋",
+              "😎",
+              "🤓",
+              "🧐",
+              "😏",
+              "🥳",
+              "😭",
+              "🥺",
+              "😤",
+              "😡",
+              "😱",
+              "😰",
+              "🤫",
+              "😑",
+              "💝",
+              "💕",
+              "💘",
+              "💜",
+              "💙",
+              "💚",
+              "💛",
+              "🧡",
+              "🤍",
+              "👎",
+              "🙏",
+              "🤝",
+              "💪",
             ].map((emoji) => (
               <button
                 key={emoji}

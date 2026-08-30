@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {  AlertCircle, X, Eye, EyeOff } from "lucide-react";
+import { AlertCircle, X, Eye, EyeOff } from "lucide-react";
 import {
   requestPasswordResetRequest,
   resetPasswordRequest,
-} from "../features/auth.api";
+} from "../api/auth.api";
 import { ApiError } from "../lib/api-client";
 
 interface ResetPasswordModalProps {
@@ -60,11 +60,14 @@ export default function ResetPasswordModal({
   };
 
   const validateNewPassword = (password: string): string | null => {
-    if (password.length < 8) return "Password must be at least 8 characters long.";
-    if (!/[A-Z]/.test(password)) return "Password must contain an uppercase letter.";
-    if (!/[a-z]/.test(password)) return "Password must contain a lowercase letter.";
+    if (password.length < 8)
+      return "Password must be at least 8 characters long.";
+    if (!/[A-Z]/.test(password))
+      return "Password must contain an uppercase letter.";
+    if (!/[a-z]/.test(password))
+      return "Password must contain a lowercase letter.";
     if (!/[0-9]/.test(password)) return "Password must contain a number.";
-    
+
     return null;
   };
 
@@ -155,7 +158,9 @@ export default function ResetPasswordModal({
           {step === 1 && (
             <>
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-text-h2">Reset your password</h2>
+                <h2 className="text-2xl font-bold text-text-h2">
+                  Reset your password
+                </h2>
                 <p className="text-gray-500 mt-2 text-sm">
                   Enter your email and we'll send you a reset code.
                 </p>
@@ -184,9 +189,12 @@ export default function ResetPasswordModal({
           {step === 2 && (
             <>
               <div className="text-center mb-6">
-                <h2 className="text-2xl font-bold text-text-h2">Enter code & new password</h2>
+                <h2 className="text-2xl font-bold text-text-h2">
+                  Enter code & new password
+                </h2>
                 <p className="text-gray-500 mt-2 text-sm">
-                  We sent a 6-digit code to <span className="font-semibold">{email}</span>
+                  We sent a 6-digit code to{" "}
+                  <span className="font-semibold">{email}</span>
                 </p>
               </div>
               <form onSubmit={handleResetPassword} className="space-y-4">
@@ -215,11 +223,16 @@ export default function ResetPasswordModal({
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute inset-y-0 right-0 flex items-center pr-3 text-gray-400 hover:text-gray-600"
                   >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    {showPassword ? (
+                      <EyeOff className="w-5 h-5" />
+                    ) : (
+                      <Eye className="w-5 h-5" />
+                    )}
                   </button>
                 </div>
                 <p className="text-xs text-gray-400">
-                  At least 8 characters, with uppercase, lowercase, a number, and a special character.
+                  At least 8 characters, with uppercase, lowercase, a number,
+                  and a special character.
                 </p>
 
                 <button
@@ -239,7 +252,9 @@ export default function ResetPasswordModal({
                   disabled={isResending || resendCooldown > 0}
                   className="text-brand hover:text-brand-dark font-semibold hover:underline disabled:opacity-60 disabled:no-underline disabled:cursor-not-allowed"
                 >
-                  {resendCooldown > 0 ? `Resend in ${resendCooldown}s` : "Resend code"}
+                  {resendCooldown > 0
+                    ? `Resend in ${resendCooldown}s`
+                    : "Resend code"}
                 </button>
               </p>
             </>

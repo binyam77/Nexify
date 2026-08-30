@@ -11,10 +11,12 @@ if (!API_URL) {
 
 export class ApiError extends Error {
   readonly statusCode: number;
-  constructor(statusCode: number, message: string) {
+  readonly code?:string;
+  constructor(statusCode: number, message: string, code?:string) {
     super(message);
     this.name = "ApiError";
     this.statusCode = statusCode;
+    this.code= code;
   }
 }
 
@@ -42,11 +44,17 @@ export async function apiClient<T>(
   const data = await response.json().catch(() => null);
 
   if (!response.ok) {
-    // Backend's error format: { message, error, statusCode }
+    // Backend's error format: ( Global Exception Filter):
+    // {success: false, error:{message,code,statuscode}}
+    // Fallback to a flat `.message` is kept for safety, in case any
+    // response ever bypasses the filter (e.g raw framework-level error 
+    // that never reaches NestJs's exception handling at all).
+    const wrapped =(data as {error?: {message?:string; code?:string}})?.error;
     const message =
+    wrapped?.message ??
       (data as { message?: string })?.message ??
       "An unexpected error occurred.";
-    throw new ApiError(response.status, message);
+    throw new ApiError(response.status, message, wrapped?.code);
   }
 
   return data as T;

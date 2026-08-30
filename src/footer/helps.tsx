@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Zap, ChevronRight, ArrowLeft } from "lucide-react";
+import { Zap, ArrowLeft } from "lucide-react";
 
 interface HelpsProps {
   onNavigate?: (page: string) => void;
@@ -36,41 +36,7 @@ export default function Helps({ onNavigate = () => {} }: HelpsProps) {
               <p className="text-sm text-gray-800/55">Find answers to frequently asked questions or contact our support team.</p>
             </header>
 
-            <section className="faq-section">
-              <h2 className="text-lg font-bold mb-4 text-gray-900">Frequently Asked Questions</h2>
-              
-              <div className="faq-list flex flex-col gap-3">
-                <div className="faq-item bg-gray-800/[0.04] rounded-lg p-4">
-                  <div className="faq-question font-semibold text-[15px] text-gray-900 flex items-center gap-1.5">
-                    <ChevronRight className="text-[#2563eb] w-4 h-4 shrink-0" />
-                    <span>How do I change my password?</span>
-                  </div>
-                  <div className="faq-answer mt-2 text-[13.5px] text-gray-800 leading-relaxed pl-3.5 border-l-2 border-l-[#2563eb]/40">
-                    <p>Go to <strong>Settings</strong> from the main menu, scroll down to the account info section, enter your new password, and click <strong>Save</strong>.</p>
-                  </div>
-                </div>
-
-                <div className="faq-item bg-gray-800/[0.04] rounded-lg p-4">
-                  <div className="faq-question font-semibold text-[15px] text-gray-900 flex items-center gap-1.5">
-                    <ChevronRight className="text-[#2563eb] w-4 h-4 shrink-0" />
-                    <span>Can I make my profile private?</span>
-                  </div>
-                  <div className="faq-answer mt-2 text-[13.5px] text-gray-800 leading-relaxed pl-3.5 border-l-2 border-l-[#2563eb]/40">
-                    <p>Yes! In <strong>Settings</strong>, under the <strong>Privacy</strong> section, select "Private (Only Followers/Members)" and click <strong>Save</strong>.</p>
-                  </div>
-                </div>
-
-                <div className="faq-item bg-gray-800/[0.04] rounded-lg p-4">
-                  <div className="faq-question font-semibold text-[15px] text-gray-900 flex items-center gap-1.5">
-                    <ChevronRight className="text-[#2563eb] w-4 h-4 shrink-0" />
-                    <span>How do I upload videos?</span>
-                  </div>
-                  <div className="faq-answer mt-2 text-[13.5px] text-gray-800 leading-relaxed pl-3.5 border-l-2 border-l-[#2563eb]/40">
-                    <p>Video upload features are accessible via the creation tab. Stay tuned for Nexify Creator Studio updates!</p>
-                  </div>
-                </div>
-              </div>
-            </section>
+          
 
             <hr className="section-divider border-none border-t border-gray-800/10 my-[35px]" />
 
@@ -154,7 +120,7 @@ export default function Helps({ onNavigate = () => {} }: HelpsProps) {
                 }}
                 className="hover:text-white transition-colors duration-200"
               >
-                Privacy
+                Privacy Policy
               </a>
               <a 
                 href="/footer/terms/terms.html" 

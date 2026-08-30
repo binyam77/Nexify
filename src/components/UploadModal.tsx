@@ -1,9 +1,5 @@
 import { useState, useRef } from "react";
 import { X, Upload } from "lucide-react";
-import { saveMediaFile } from "../lib/db";
-import { useFeed } from "../context/FeedContext";
-import { useAuth } from "../context/AuthContext";
-import type { FeedPost } from "../types";
 
 interface UploadModalProps {
   isOpen: boolean;
@@ -11,102 +7,43 @@ interface UploadModalProps {
 }
 
 export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
-  const { user } = useAuth();
-  const { addPost } = useFeed();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState("");
   const [caption, setCaption] = useState("");
   const [isUploading, setIsUploading] = useState(false);
   const [isVideo, setIsVideo] = useState(false);
-
+  const [error, setError] = useState<string | null>(null);
   if (!isOpen) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setError(null);
     setIsVideo(file.type.startsWith("video/"));
     setSelectedFile(file);
     setPreviewUrl(URL.createObjectURL(file));
   };
+
   const handleSubmit = async () => {
     if (!selectedFile) return;
     setIsUploading(true);
-
+    setError(null);
     try {
-      const postId = Date.now();
-
-      try {
-        await saveMediaFile(postId, selectedFile);
-      } catch (e) {
-        console.error("IndexedDB save error:", e);
-      }
-
-      const savedProfile = JSON.parse(
-        localStorage.getItem("userProfile") || "{}",
-      );
-
-      const resolvedUrl = URL.createObjectURL(selectedFile);
-
-      const feedPost: FeedPost = {
-        id: String(postId),
-        userId: user?.username || "me",
-        username: savedProfile.username || user?.username || "User",
-        userAvatar: savedProfile.photo || user?.photo || "",
-        type: isVideo ? "video" : "photo",
-        mediaUrls: [resolvedUrl],
-        caption,
-        hashtags: caption.match(/#\w+/g) || [],
-        likesCount: 0,
-        commentsCount: 0,
-        sharesCount: 0,
-        savesCount: 0,
-        viewsCount: 0,
-        createdAt: new Date().toISOString(),
-        liked:false,
-        saved:false,
-      };
-
-      try {
-        const savedPosts = JSON.parse(
-          localStorage.getItem("userPostsMeta") || "[]",
-        );
-        localStorage.setItem(
-          "userPostsMeta",
-          JSON.stringify([
-            {
-              id: postId,
-              isVideo,
-              description: caption,
-              hashtags: caption.match(/#\w+/g) || [],
-              username: savedProfile.username || user?.username || "User",
-              avatar: savedProfile.photo || "",
-              views: 0,
-              likes: 0,
-              liked: false,
-              saves: 0,
-              saved: false,
-              timestamp: new Date().toISOString(),
-            },
-            ...savedPosts,
-          ]),
-        );
-      } catch (e) {
-        console.error("localStorage error:", e);
-      }
-
-      addPost(feedPost);
-      setSelectedFile(null);
-      setPreviewUrl("");
-      setCaption("");
-      onClose();
+      // TODO(object-storage): R2/S3 ሲዘጋጅ፣ selectedFile ን upload አድርገህ
+      // resulting URL ን ወደ createPost({ caption, hashtags, media: [{url,type}] }) አስገባ
+      throw new Error("STORAGE_NOT_CONFIGURED");
     } catch (e) {
-      console.error("Upload failed:", e);
+      if (e instanceof Error && e.message === "STORAGE_NOT_CONFIGURED") {
+        setError("ፎቶ/ቪዲዮ ማስቀመጫ (storage) ገና አልተዋቀረም — በቅርቡ ይሰራል።");
+      } else {
+        console.error("Upload failed:", e);
+        setError("ልጥፍ መስቀል አልተቻለም። እንደገና ይሞክሩ።");
+      }
     } finally {
       setIsUploading(false);
     }
   };
-
   return (
     <div className="fixed inset-0 z-[100] bg-black/70 flex items-end md:items-center justify-center">
       <div className="bg-white w-full max-w-md rounded-t-2xl md:rounded-2xl p-5 flex flex-col gap-4 shadow-2xl">
@@ -170,7 +107,11 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
           rows={3}
           className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
         />
-
+        {error && (
+          <p className="text-xs font-semibold text-amber-600 bg-amber-50 border-amber-200 rounded-lg px-3 py-2">
+            {error}
+          </p>
+        )}
         <button
           onClick={handleSubmit}
           disabled={!selectedFile || isUploading}

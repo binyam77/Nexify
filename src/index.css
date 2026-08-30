@@ -142,7 +142,20 @@
   --shadow-input: 0 2px 8px rgba(0, 0, 0, 0.35);
   --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.5);
 }
+@keyframes loading-dot {
+  0%,
+  100% {
+    background-color: #d1d1d1;
 
+  }
+  50%{
+  background-color:#000000;
+  }
+}
+.animate-loading-dot {
+  animation:loading-dot 1.2s
+  ease-in-out infinite;
+}
 @keyframes slideUp {
   from {
     opacity: 0;

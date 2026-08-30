@@ -108,3 +108,24 @@ export function exchangeOAuthCodeRequest(code: string): Promise<LoginResponse> {
     body: { code },
   });
 }
+export function changeUsernameRequest(
+  username: string,
+  accessToken: string,
+): Promise<MessageResponse> {
+  return apiClient<MessageResponse>("/auth/me/username", {
+    method: "PATCH",
+    body: { username },
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}
+
+export function changePasswordRequest(
+  params: { currentPassword: string; newPassword: string },
+  accessToken: string,
+): Promise<{ message: string; accessToken?: string }> {
+  return apiClient("/auth/me/password", {
+    method: "PATCH",
+    body: params,
+    headers: { Authorization: `Bearer ${accessToken}` },
+  });
+}

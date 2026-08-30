@@ -7,13 +7,12 @@ import React, { useState, useEffect, useRef } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../routes";
-import {  X, Camera, Trash2 } from "lucide-react";
-import { saveMediaFile, deleteMediaFile } from "../lib/db";
-import ShareModal from "../components/ShareModal";
-import { useFeed } from "../context/FeedContext";
+import { X, Camera, Trash2 } from "lucide-react";
+ import ShareModal from "../components/ShareModal";
+  import { useFeed } from "../context/FeedContext"; 
 import { useUI } from "../context/UIContext";
-import type { FeedPost, OtherCreator } from "../types";
-
+ import type { FeedPost, OtherCreator } from "../types";
+import { fetchUserPosts, deletePost } from "../api/posts.api";
 // ንዑስ ክፍሎች ማስመጫ (Importing child components)
 import UserProfile from "../components/UserProfile";
 import ProfileVideo from "../components/ProfileVideo";
@@ -28,12 +27,11 @@ interface ProfileProps {
     name: string;
     username: string;
     photo: string;
-    bio?:string;
+    bio?: string;
   }) => void;
 }
 
 export default function Profile({
-  
   triggerGlobalUpload,
   onClearGlobalUpload,
   onStartChat,
@@ -42,25 +40,53 @@ export default function Profile({
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const {
-    posts: feedPosts,
     commentsMap,
-    addPost,
-    removePost,
+    loadComments,
     incrementView,
     toggleLike,
     toggleSave,
     incrementShare,
     addComment,
-  
     deleteComment,
     addReply,
-  
+    editComment,
   } = useFeed();
-  // Single source of truth: Profile የራሱ post copy አይይዝም፤ FeedContext ን filter ብቻ ያደርጋል
 
-  const myPosts = feedPosts.filter(
-    (p) => p.userId === (user?.username || "me"),
-  );
+  const [myPosts, setMyPosts] = useState<FeedPost[]>([]);
+  const [isLoadingMyPosts, setIsLoadingMyPosts] = useState(true);
+  const [hasMoreMyPosts, setHasMoreMyPosts] = useState(false);
+  const myPostsCursorRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!user?.id) return;
+    let cancelled = false;
+    async function loadInitialMyPosts() {
+      setIsLoadingMyPosts(true);
+      try {
+        const page = await fetchUserPosts(user!.id);
+        if (cancelled) return;
+        setMyPosts(page.items);
+        setHasMoreMyPosts(page.hasMore);
+        myPostsCursorRef.current = page.nextCursor;
+      } catch (e) {
+        console.error("Failed to load my posts:", e);
+      } finally {
+        if (!cancelled) setIsLoadingMyPosts(false);
+      }
+    }
+    void loadInitialMyPosts();
+    return () => {
+      cancelled = true;
+    };
+  }, [user?.id]);
+
+  const loadMoreMyPosts = async () => {
+    if (!user?.id || !hasMoreMyPosts || !myPostsCursorRef.current) return;
+    const page = await fetchUserPosts(user.id, myPostsCursorRef.current);
+    setMyPosts((prev) => [...prev, ...page.items]);
+    setHasMoreMyPosts(page.hasMore);
+    myPostsCursorRef.current = page.nextCursor;
+  };
 
   // --- የተጠቃሚ መገለጫ ሁኔታ መቆጣጠሪያ (Profile Information States) ---
   const profile: {
@@ -139,12 +165,12 @@ export default function Profile({
         (p) => p.id === selectedPostId,
       ) || null
     : null;
-const {setFullscreenModalOpen}=useUI();
-useEffect(()=>{
-  setFullscreenModalOpen(!!selectedPost);
-  return ()=> setFullscreenModalOpen(false);
-  //eslint-disable-next-line react-hooks/exhaustive-deps
-}, [selectedPost]);
+  const { setFullscreenModalOpen } = useUI();
+  useEffect(() => {
+    setFullscreenModalOpen(!!selectedPost);
+    return () => setFullscreenModalOpen(false);
+    //eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPost]);
   // --- የተጠቃሚ ገፅ ሞዳሎች መቆጣጠሪያዎች (UI Dialog / Modals display togglers) ---
   const [activeTab, setActiveTab] = useState<"posts" | "video" | "likes">(
     "posts",
@@ -158,7 +184,7 @@ useEffect(()=>{
     isOpen: boolean;
     type: "post" | "comment";
     postId: string;
-    commentId?: number;
+    commentId?: string;
   } | null>(null);
 
   // --- ፎርም ሁኔታ መቆጣጠሪያዎች (Upload & Edit profile form inputs) ---
@@ -166,7 +192,7 @@ useEffect(()=>{
   const [uploadPreviewUrl, setUploadPreviewUrl] = useState<string>("");
   const [uploadIsVideo, setUploadIsVideo] = useState(false);
   const [uploadDescription, setUploadDescription] = useState("");
-  
+  const [uploadError, setUploadError] = useState<string | null>(null);
 
   const [editName, setEditName] = useState("");
   const [editUsername, setEditUsername] = useState("");
@@ -178,7 +204,6 @@ useEffect(()=>{
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   const coverInputRef = useRef<HTMLInputElement>(null);
-  
 
   // --- በቀጥታ የሚዲያ መጫኛ ማጣቀሻዎች (Direct profile & cover upload refs) ---
   const directPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -219,9 +244,9 @@ useEffect(()=>{
   };
   // --- የተጠቃሚ መገለጫ መረጃ መጫኛ (Load profile metadata from LocalStorage) ---
   useEffect(() => {
-     /* eslint-disable react-hooks/set-state-in-effect -- localStorage initial load ትክክለኛ pattern ነው*/
+    /* eslint-disable react-hooks/set-state-in-effect -- localStorage initial load ትክክለኛ pattern ነው*/
     const savedCountF = localStorage.getItem("countF");
-   
+
     if (savedCountF !== null) {
       setFollowersCount(parseInt(savedCountF, 10));
     } else {
@@ -249,7 +274,7 @@ useEffect(()=>{
   const handleOpenPlayer = (post: FeedPost) => {
     setSelectedPostId(post.id);
     setSelectedMediaSrc(post.mediaUrls[0] || "");
-
+    void loadComments(post.id);
     // view increments handler - duplicate-view guard አሁንም እንፈልጋለን
     const viewedKey = "viewedPostIds";
     const viewed = JSON.parse(localStorage.getItem(viewedKey) || "[]");
@@ -278,6 +303,7 @@ useEffect(()=>{
       const nextPost = currentList[nextIndex];
       setSelectedPostId(nextPost.id);
       setSelectedMediaSrc(nextPost.mediaUrls[0] || "");
+      void loadComments(nextPost.id);
     }
   };
 
@@ -314,17 +340,16 @@ useEffect(()=>{
 
   // --- አስተያየት መጨመርያ (Delegate to FeedContext) ---
   const handleAddComment = (postId: string, text: string) => {
-    addComment(postId, text, profile.username, profile.photo || null);
+    addComment(postId, text);
   };
 
-  
   // --- የአስተያየት ምላሽ (Delegate to FeedContext) ---
-  const handleAddReply = (postId: string, commentId: number, text: string) => {
-    addReply(postId, commentId, text, profile.username, profile.photo || null);
+  const handleAddReply = (postId: string, commentId: string, text: string) => {
+    addReply(postId, commentId, text);
   };
 
   // --- የአስተያየት ማጥፊያ ማረጋገጫ (Comment deletion trigger) ---
-  const handleDeleteComment = (postId: string, commentId: number) => {
+  const handleDeleteComment = (postId: string, commentId: string) => {
     setDeleteConfirmState({
       isOpen: true,
       type: "comment",
@@ -332,7 +357,9 @@ useEffect(()=>{
       commentId,
     });
   };
-
+const handleEditComment = (postId:string, commentId:string,  newText:string) =>{
+  editComment(postId, commentId, newText)
+}
   // --- በቀጥታ መገለጫዎችን መቀየሪያ (Direct external banners upload) ---
   const compressImage = (
     base64Str: string,
@@ -392,14 +419,10 @@ useEffect(()=>{
   const executeDeleteAction = async () => {
     if (!deleteConfirmState) return;
     const { type, postId, commentId } = deleteConfirmState;
-    if (type === "post") {
+        if (type === "post") {
       try {
-        // Legacy numeric IndexedDB keys ብቻ ናቸው blob ያላቸው (mock posts string id ላይ ይዘለላል)
-        const numericId = Number(postId);
-        if (!Number.isNaN(numericId)) {
-          await deleteMediaFile(numericId);
-        }
-        removePost(postId);
+        await deletePost(postId);
+        setMyPosts((prev) => prev.filter((p) => p.id !== postId));
         if (selectedPost?.id === postId) {
           handleClosePlayer();
         }
@@ -416,8 +439,11 @@ useEffect(()=>{
   const handleIncrementShare = (postId: string) => {
     incrementShare(postId);
   };
-  const handleSharePost = (postId: string) => {
-    const found = feedPosts.find((p) => p.id === postId) || null;
+    const handleSharePost = (postId: string) => {
+    const found =
+      myPosts.find((p) => p.id === postId) ||
+      otherProfile?.posts.find((p) => p.id === postId) ||
+      null;
     setShareModalPost(found);
   };
 
@@ -514,8 +540,10 @@ useEffect(()=>{
 
   const handlePostMedia = async () => {
     if (!uploadFile) return;
-    const postId = Date.now();
-
+    setUploadError(null);
+    // TODO(object-storage): storage ሲዘጋጅ real createPost() ይተካዋል
+    setUploadError("ፎቶ/ቪዲዮ ማስቀመጫ (storage) ገና አልተዋቀረም — በቅርቡ ይሰራል።");
+  };
     try {
       await saveMediaFile(postId, uploadFile);
       const hashtags = uploadDescription.match(/#\w+/g) || [];
@@ -628,12 +656,23 @@ useEffect(()=>{
 
       {/* 3. Bento-Grid of Videos and Photos (የልጥፎች መደርደሪያ) */}
       <div className="max-w-4xl w-full mx-auto px-4 md:px-8 mb-6">
-        <ProfileVideo
-          filteredPosts={filteredPosts}
-          viewMode={viewMode}
-          handleOpenPlayer={handleOpenPlayer}
-          handleDeletePost={handleDeletePost}
-        />
+               {isLoadingMyPosts && viewMode === "me" ? (
+          <div className="text-center text-xs text-slate-400 py-10">Loading posts...</div>
+        ) : (
+          <ProfileVideo
+            filteredPosts={filteredPosts}
+            viewMode={viewMode}
+            handleOpenPlayer={handleOpenPlayer}
+            handleDeletePost={handleDeletePost}
+          />
+        )}
+        {viewMode === "me" && hasMoreMyPosts && !isLoadingMyPosts && (
+          <div className="flex justify-center mt-4">
+            <button onClick={loadMoreMyPosts} className="px-4 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg">
+              Load more
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ========================================================
@@ -841,7 +880,11 @@ useEffect(()=>{
                 />
               </div>
             </div>
-
+              {uploadError && (
+                <p className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+                  {uploadError}
+                </p>
+              )}
             <div className="px-6 py-4 border-t border-gray-100 flex gap-3 justify-end bg-white">
               <button
                 onClick={() => setIsUploadModalOpen(false)}
@@ -881,6 +924,7 @@ useEffect(()=>{
           handleAddComment={handleAddComment}
           handleDeleteComment={handleDeleteComment}
           handleAddReply={handleAddReply}
+          handleEditComment={handleEditComment}
           handleNavigateToUserProfile={(username) => {
             if (username === profile.username) {
               setViewMode("me");

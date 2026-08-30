@@ -22,7 +22,7 @@ import {
   addReply as apiAddReply,
   deleteCommentOrReply,
   editComment as apiEditComment,
-} from "../features/posts.api";
+} from "../api/posts.api";
 
 interface FeedContextType {
   posts: FeedPost[];
@@ -31,7 +31,6 @@ interface FeedContextType {
   hasMore: boolean;
   error: string | null;
   loadMore: () => Promise<void>;
-  
 
   commentsMap: Record<string, CommentItem[]>;
   isLoadingComments: boolean;

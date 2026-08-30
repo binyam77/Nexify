@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { registerRequest } from "../features/auth.api";
+import { registerRequest } from "../api/auth.api";
 import { ApiError } from "../lib/api-client";
 import VerifyEmailModal from "../components/VerifyEmailModal";
 import logo from "../assets/logo.png";
@@ -63,7 +63,7 @@ export default function CreateAccount({
       setError("Password must contain at least one number.");
       return;
     }
-    
+
     setIsSubmitting(true);
     try {
       // Backend: hash + duplicate check + verification token + email መላክ

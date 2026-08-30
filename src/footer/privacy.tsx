@@ -28,7 +28,7 @@ export default function Privacy({ onNavigate = () => {} }: PrivacyProps) {
           <h1 className="text-[32px] md:text-[42px] font-extrabold tracking-[1px] bg-gradient-to-r from-white to-[#93c5fd] bg-clip-text text-transparent mb-2 flex items-center justify-center gap-[15px]">
             <ShieldCheck className="text-white w-8 h-8 md:w-10 md:h-10 shrink-0 filter drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" /> Privacy Policy
           </h1>
-          <p className="text-white/60 text-base tracking-[2px] uppercase">Nexify Social Media Platform</p>
+         
         </div>
       </header>
 

@@ -13,7 +13,6 @@ import Home from "./pages/home";
 import Layout from "./components/Layout";
 import CreateAccount from "./auth/createAccount";
 import Login from "./auth/login";
-import FirstEntry from "./auth/firstEntry";
 import Profile from "./pages/profile";
 import Community from "./pages/comminty";
 import Settings from "./pages/settings";
@@ -49,8 +48,12 @@ export default function App() {
   // ማረጋገጫው እስከሚጨርስ ሎዲንግ ማሳየት (ከሁሉም በላይ መሆን አለበት)
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading...
+      <div className="min-h-screen flex items-center justify-center bg-white">
+        <div className="flex items-center gap-4">
+          <span className="w-5 h-5 rounded-full bg-gray-300 animate-loading-dot"/>
+          <span className="w-5 h-5 rounded-full bg-gray-300 animate-loading-dot [animate-delay:150ms]"/>
+          <span className="w-5 h-5 rounded-full bg-gray-300 animate-loading-dot [animate-delay:300ms]"/>
+        </div>
       </div>
     );
   }
@@ -59,7 +62,7 @@ export default function App() {
     <UIProvider>
       <Routes>
         {/* FirstEntry ገጽ */}
-        <Route path="/" element={<FirstEntry />} />
+        <Route path="/" element={<Navigate to={ROUTES.home} replace/>}/>
         {/* ✅ የተጠበቁ ገጾች (Protected Routes) */}
         <Route
           element={
@@ -134,6 +137,7 @@ export default function App() {
     </UIProvider>
   );
 }
+
 function RequireAuth({ children }: { children: React.ReactNode }) {
   // ⚠️ TEMPORARY: Login/Google OAuth ገና ስለሚስተካከል፣ ደረጃው ለ development
   // ብቻ ታግዷል። Login ስንጨርስ ከታች ያለውን commented-out code እንመልሳለን።
