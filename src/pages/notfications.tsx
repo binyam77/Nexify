@@ -1,29 +1,54 @@
-
-import { Heart, MessageCircle, UserPlus, AtSign, Bell, CheckCheck, Trash2 } from 'lucide-react';
-import { useNotifications } from '../context/NotificationContext';
-import type { AppNotification, NotificationType } from '../context/NotificationContext';
-import { cn } from '../utils';
+import { useEffect, useRef } from "react";
+import {
+  Heart,
+  MessageCircle,
+  UserPlus,
+  Bell,
+  CheckCheck,
+  Trash2,
+} from "lucide-react";
+import { useNotifications } from "../context/NotificationContext";
+import type {
+  AppNotification,
+  NotificationType,
+} from "../context/NotificationContext";
+import { cn } from "../utils";
 
 // Notification icon by type
 function NotifIcon({ type }: { type: NotificationType }) {
   const base = "w-4 h-4";
   switch (type) {
-    case 'like':    return <Heart className={cn(base, "text-rose-500")} fill="currentColor" />;
-    case 'comment': return <MessageCircle className={cn(base, "text-emerald-500")}fill="currentColor" />;
-    case 'follow':  return <UserPlus className={cn(base, "text-blue-500")} />;
-    case 'mention': return <AtSign className={cn(base, "text-purple-500")} />;
-    default:        return <Bell className={cn(base, "text-slate-400")}fill="currentColor" />;
+    case "like":
+      return (
+        <Heart className={cn(base, "text-rose-500")} fill="currentColor" />
+      );
+    case "comment":
+      return (
+        <MessageCircle
+          className={cn(base, "text-emerald-500")}
+          fill="currentColor"
+        />
+      );
+    case "follow":
+      return <UserPlus className={cn(base, "text-blue-500")} />;
+    default:
+      return (
+        <Bell className={cn(base, "text-slate-400")} fill="currentColor" />
+      );
   }
 }
 
 // Icon bg color by type
 function iconBg(type: NotificationType) {
   switch (type) {
-    case 'like':    return 'bg-input';
-    case 'comment': return 'bg-input';
-    case 'follow':  return 'b-ginput';
-    case 'mention': return 'bg-input';
-    default:        return 'bg-slate-100';
+    case "like":
+      return "bg-input";
+    case "comment":
+      return "bg-input";
+    case "follow":
+      return "b-ginput";
+    default:
+      return "bg-slate-100";
   }
 }
 
@@ -31,36 +56,52 @@ function iconBg(type: NotificationType) {
 function formatTime(iso: string) {
   const diff = Date.now() - new Date(iso).getTime();
   const m = Math.floor(diff / 60000);
-  if (m < 1)  return 'Just now';
+  if (m < 1) return "Just now";
   if (m < 60) return `${m}m ago`;
   const h = Math.floor(m / 60);
   if (h < 24) return `${h}h ago`;
   const d = Math.floor(h / 24);
-  if (d < 7)  return `${d}d ago`;
-  return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  if (d < 7) return `${d}d ago`;
+  return new Date(iso).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
 }
 
-function NotifItem({ notif, onRead }: { notif: AppNotification; onRead: () => void }) {
+function NotifItem({
+  notif,
+  onRead,
+}: {
+  notif: AppNotification;
+  onRead: () => void;
+}) {
   return (
     <div
       onClick={onRead}
       className={cn(
         "flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-colors hover:bg-slate-50",
-        !notif.isRead && "bg-blue-50/60 hover:bg-blue-50"
+        !notif.isRead && "bg-blue-50/60 hover:bg-blue-50",
       )}
     >
       {/* Avatar + icon */}
       <div className="relative shrink-0">
         <div className="w-11 h-11 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm">
-          {notif.actorAvatar
-            ? <img src={notif.actorAvatar} className="w-full h-full object-cover rounded-full" alt="" />
-            : notif.actorUsername[0]?.toUpperCase()
-          }
+          {notif.actorAvatar ? (
+            <img
+              src={notif.actorAvatar}
+              className="w-full h-full object-cover rounded-full"
+              alt=""
+            />
+          ) : (
+            notif.actorUsername[0]?.toUpperCase()
+          )}
         </div>
-        <div className={cn(
-          "absolute -bottom-0.5 -right-0.5 w-5 h-5  rounded-full flex items-center justify-center",
-          iconBg(notif.type)
-        )}>
+        <div
+          className={cn(
+            "absolute -bottom-0.5 -right-0.5 w-5 h-5  rounded-full flex items-center justify-center",
+            iconBg(notif.type),
+          )}
+        >
           <NotifIcon type={notif.type} />
         </div>
       </div>
@@ -68,10 +109,12 @@ function NotifItem({ notif, onRead }: { notif: AppNotification; onRead: () => vo
       {/* Content */}
       <div className="flex-1 min-w-0">
         <p className="text-sm text-slate-800 leading-snug">
-          <span className="font-bold">{notif.actorUsername}</span>
-          {' '}{notif.message}
+          <span className="font-bold">{notif.actorUsername}</span>{" "}
+          {notif.message}
         </p>
-        <p className="text-xs text-small-text mt-0.5">{formatTime(notif.createdAt)}</p>
+        <p className="text-xs text-small-text mt-0.5">
+          {formatTime(notif.createdAt)}
+        </p>
       </div>
 
       {/* Unread dot */}
@@ -81,14 +124,43 @@ function NotifItem({ notif, onRead }: { notif: AppNotification; onRead: () => vo
     </div>
   );
 }
-
 export default function Notifications() {
-  const { notifications, unreadCount, markAsRead, markAllAsRead, clearAll } = useNotifications();
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    hasMore,
+    loadMore,
+    markAsRead,
+    markAllAsRead,
+    clearAll,
+  } = useNotifications();
 
+  // Infinite scroll: observes a sentinel element at the bottom of the
+  // list and requests the next page once it enters the viewport — same
+  // "boring, conventional" IntersectionObserver pattern rather than a
+  // manual scroll-position calculation.
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const unread = notifications.filter(n => !n.isRead);
-  const read   = notifications.filter(n =>  n.isRead);
+  useEffect(() => {
+    const node = sentinelRef.current;
+    if (!node || !hasMore) return;
 
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting && !isLoading) {
+          void loadMore();
+        }
+      },
+      { rootMargin: "200px" }, // trigger slightly before it's fully visible
+    );
+
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [hasMore, isLoading, loadMore]);
+
+  const unread = notifications.filter((n) => !n.isRead);
+  const read = notifications.filter((n) => n.isRead);
   return (
     <div className="h-full w-full overflow-y-auto bg-bodey-bg">
       {/* Header */}
@@ -133,9 +205,11 @@ export default function Notifications() {
       {/* Unread */}
       {unread.length > 0 && (
         <div>
-          <p className="px-4 pt-4 pb-2 text-xs font-bold text-text uppercase tracking-wider">New</p>
+          <p className="px-4 pt-4 pb-2 text-xs font-bold text-text uppercase tracking-wider">
+            New
+          </p>
           <div className="divide-y divide-slate-100 bg-slate-300">
-            {unread.map(n => (
+            {unread.map((n) => (
               <NotifItem key={n.id} notif={n} onRead={() => markAsRead(n.id)} />
             ))}
           </div>
@@ -145,15 +219,24 @@ export default function Notifications() {
       {/* Read */}
       {read.length > 0 && (
         <div>
-          <p className="px-4 pt-4 pb-2 text-xs font-bold text-input-text uppercase tracking-wider">Earlier</p>
+          <p className="px-4 pt-4 pb-2 text-xs font-bold text-input-text uppercase tracking-wider">
+            Earlier
+          </p>
           <div className="divide-y divide-slate-100">
-            {read.map(n => (
+            {read.map((n) => (
               <NotifItem key={n.id} notif={n} onRead={() => markAsRead(n.id)} />
             ))}
           </div>
         </div>
       )}
-
+      {/* Infinite scroll sentinel + loading indicator */}
+      {hasMore && (
+        <div ref={sentinelRef} className="flex justify-center py-4">
+          {isLoading && (
+            <div className="w-5 h-5 border-2 border-slate-300 border-t-brand-dark rounded-full animate-spin" />
+          )}
+        </div>
+      )}
       {/* Bottom padding for mobile nav */}
       <div className="h-20 md:h-4" />
     </div>

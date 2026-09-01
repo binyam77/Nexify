@@ -13,7 +13,10 @@ export type NotificationType =
   | "MENTION"
   | "COMMUNITY_INVITE"
   | "COMMUNITY_NEW_SUBSCRIBER"
-  | "DIRECT_MESSAGE";
+  | "DIRECT_MESSAGE"
+  | "POST_LIKE"
+  | "POST_COMMENT"
+  | "NEW_FOLLOWER";
 
 export interface NotificationActor {
   id: string;
@@ -26,11 +29,16 @@ export interface NotificationResponse {
   actorUserId: string | null;
   actorUser: NotificationActor | null;
   type: NotificationType;
-  // At most one of the three below is set, matching `type` — same
+  // At most one of the five below is set, matching `type` — same
   // nullable-reference design as the backend's Notification model.
   communityId: string | null;
   communityMessageId: string | null;
   messageId: string | null;
+  postId: string | null;
+  commentId: string | null;
+  // Composed server-side at read time (never stored) — see backend's
+  // NotificationsService.composeMessage. Always a ready-to-render string.
+  message: string;
   isRead: boolean;
   readAt: string | null;
   createdAt: string;
@@ -98,6 +106,16 @@ export function markAllNotificationsReadRequest(
 ): Promise<{ updatedCount: number }> {
   return apiClient<{ updatedCount: number }>("/notifications/read-all", {
     method: "PATCH",
+    headers: authHeader(accessToken),
+  });
+}
+
+// ================= CLEAR ALL =================
+export function clearAllNotificationsRequest(
+  accessToken: string,
+): Promise<{ deletedCount: number }> {
+  return apiClient<{ deletedCount: number }>("/notifications", {
+    method: "DELETE",
     headers: authHeader(accessToken),
   });
 }

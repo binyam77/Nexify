@@ -18,7 +18,7 @@ import {
   Pencil,
   Check,
 } from "lucide-react";
-import type { FeedPost, CommentItem, OtherCreator } from "../types";
+import type { FeedPost, CommentItem } from "../types";
 import Left from "./Left";
 
 // ViewVideo.tsx የProp ዓይነቶች መግለጫ (Props Interface for ViewVideo.tsx)
@@ -31,8 +31,6 @@ interface ViewVideoProps {
     photo: string;
     bio: string;
   };
-  otherUsers: OtherCreator[];
-  viewMode: "me" | "other";
   followersCount: number;
   selectedMediaSrc: string | null;
 
@@ -47,8 +45,11 @@ interface ViewVideoProps {
   handleDeleteComment: (postId: string, commentId: string) => void;
   handleAddReply: (postId: string, commentId: string, text: string) => void;
   handleNavigateToUserProfile: (username: string) => void;
-  handleEditComment:(postId:string, commentId:string,newText:string) => void;
-  toggleFollowUser: (index: number) => void;
+  handleEditComment: (
+    postId: string,
+    commentId: string,
+    newText: string,
+  ) => void;
   formatCount: (num: number) => string;
 }
 
@@ -56,7 +57,6 @@ export default function ViewVideo({
   selectedPost,
   commentsMap,
   profile,
-  otherUsers,
   followersCount,
   selectedMediaSrc,
   handleClosePlayer,
@@ -70,7 +70,6 @@ export default function ViewVideo({
   handleAddReply,
   handleNavigateToUserProfile,
   handleEditComment,
-  toggleFollowUser,
   formatCount,
 }: ViewVideoProps) {
   const comments = commentsMap[selectedPost.id] || [];
@@ -78,9 +77,6 @@ export default function ViewVideo({
 
   // የልጥፉ ባለቤት ማነው? (Detect who is the author of this post)
   const isOwnPost = selectedPost.username === profile.username;
-  const authorIndex = otherUsers.findIndex(
-    (u) => u.username === selectedPost.username,
-  );
 
   const postAuthor = isOwnPost
     ? {
@@ -91,17 +87,14 @@ export default function ViewVideo({
         followersCount: followersCount,
         bio: profile.bio,
       }
-    : authorIndex !== -1
-      ? otherUsers[authorIndex]
-      : {
-          name: "Other Creator",
-          username: selectedPost.username || "creator",
-          photo: "",
-          isFollowing: false,
-          followersCount: 150,
-          bio: "",
-        };
-
+    : {
+        name: selectedPost.username || "Creator",
+        username: selectedPost.username || "creator",
+        photo: selectedPost.userAvatar || "",
+        isFollowing: false,
+        followersCount: 0,
+        bio: "",
+      };
   // የቪዲዮ ማጫወቻው ሁኔታ መቆጣጠሪያዎች (Video Player refs and state variables)
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const [videoPlaying, setVideoPlaying] = useState(true);
@@ -128,7 +121,6 @@ export default function ViewVideo({
     setEditingCommentId(null);
     setEditInputText("");
   };
-
 
   const handleVideoClick = (e?: React.MouseEvent) => {
     if (e && (e.target as HTMLElement).closest("#closeBtn")) return;
@@ -287,8 +279,6 @@ export default function ViewVideo({
           handleAddReply={handleAddReply}
           handleEditComment={handleEditComment}
           handleNavigateToUserProfile={handleNavigateToUserProfile}
-          toggleFollowUser={toggleFollowUser}
-          authorIndex={authorIndex}
           formatCount={formatCount}
         />
 
@@ -386,22 +376,6 @@ export default function ViewVideo({
                     <span className="text-[10px] text-white/70 font-medium truncate">
                       @{postAuthor.username}
                     </span>
-
-                    {!isOwnPost && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleFollowUser(authorIndex);
-                        }}
-                        className={`px-2.5 py-1 text-[10px] font-black rounded-lg transition-all ml-1.5 ${
-                          postAuthor.isFollowing
-                            ? "bg-white/20 text-white border border-white/20 backdrop-blur-sm"
-                            : "bg-gradient-to-b from-[#019BE5] via-[#0185E5] to-[#0071E3] text-white hover:opacity-95 shadow-sm"
-                        }`}
-                      >
-                        {postAuthor.isFollowing ? "Following" : "Follow"}
-                      </button>
-                    )}
                   </div>
                 </div>
               </div>
@@ -523,17 +497,22 @@ export default function ViewVideo({
                           >
                             @{comment.username}
                           </h4>
-                                                    {editingCommentId === comment.id ? (
+                          {editingCommentId === comment.id ? (
                             <div className="flex items-center gap-2 mt-1">
                               <input
                                 type="text"
                                 value={editInputText}
-                                onChange={(e) => setEditInputText(e.target.value)}
+                                onChange={(e) =>
+                                  setEditInputText(e.target.value)
+                                }
                                 autoFocus
                                 maxLength={500}
                                 className="flex-1 bg-white border border-blue-300 rounded-lg px-3 py-1.5 text-[13px] outline-none focus:border-blue-500"
                               />
-                              <button onClick={() => confirmEdit(comment.id)} className="w-7 h-7 bg-emerald-500 text-white rounded-full flex items-center justify-center shrink-0">
+                              <button
+                                onClick={() => confirmEdit(comment.id)}
+                                className="w-7 h-7 bg-emerald-500 text-white rounded-full flex items-center justify-center shrink-0"
+                              >
                                 <Check className="w-3.5 h-3.5" />
                               </button>
                             </div>
@@ -567,24 +546,28 @@ export default function ViewVideo({
                               Reply
                             </button>
 
-                                                        {comment.username === profile.username && editingCommentId !== comment.id && (
-                              <>
-                                <button onClick={() => startEditing(comment)} className="text-slate-400 hover:text-blue-600 flex items-center gap-1">
-                                  <Pencil className="w-3 h-3" />
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleDeleteComment(
-                                      selectedPost.id,
-                                      comment.id,
-                                    )
-                                  }
-                                  className="text-slate-400 hover:text-rose-600 ml-auto"
-                                >
-                                  Delete
-                                </button>
-                              </>
-                            )}
+                            {comment.username === profile.username &&
+                              editingCommentId !== comment.id && (
+                                <>
+                                  <button
+                                    onClick={() => startEditing(comment)}
+                                    className="text-slate-400 hover:text-blue-600 flex items-center gap-1"
+                                  >
+                                    <Pencil className="w-3 h-3" />
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteComment(
+                                        selectedPost.id,
+                                        comment.id,
+                                      )
+                                    }
+                                    className="text-slate-400 hover:text-rose-600 ml-auto"
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
                           </div>
                         </div>
                       </div>

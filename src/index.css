@@ -23,15 +23,10 @@
   --color-divider: #f1f5f9; /* ቀጭን መስመር መካከል content (feed items) */
 
   /* ---------- 3. Brand (ከሎጎ የተወሰደ) ---------- */
-  --background-image-brand: linear-gradient(
-    to bottom,
-    #019be5,
-    #0185e5,
-    #0071e3
-  );
-  --color-brand: #0071e3; /* ዋና brand ቀለም - አዝራር/active icon/link */
-  --color-brand-light: #019be5; /* ቀለል ያለ shade - hover state */
-  --color-brand-dark: #0071e3; /* ጨለም ያለ shade - pressed/active state */
+  --background-image-brand: #2563eb;
+ --color-brand: #1370fc; /* ዋና brand ቀለም */
+  --color-brand-light: #1da8fd; /* hover state */
+  --color-brand-dark: #198dfe; /* ጨለም ያለ shade - pressed/active state */
   --color-brand-contrast: #ffffff; /* brand background ላይ የሚቀመጥ ጽሁፍ ቀለም */
 
   /* ---------- 4. Text Hierarchy ---------- */
@@ -90,15 +85,10 @@
   --color-divider: #232323; /* ቀጭን መስመር መካከል content */
 
   /* ---------- 3. Brand (ተመሳሳይ በሁሉም mode) ---------- */
-  --background-image-brand: linear-gradient(
-    to bottom,
-    #019be5,
-    #0185e5,
-    #0071e3
-  );
-  --color-brand: #0071e3; /* ዋና brand ቀለም */
-  --color-brand-light: #019be5; /* hover state */
-  --color-brand-dark: #0185e5; /* pressed/active state */
+  --background-image-brand: #2563eb;
+  --color-brand: #1370fc; /* ዋና brand ቀለም */
+  --color-brand-light: #1da8fd; /* hover state */
+  --color-brand-dark: #198dfe; /* pressed/active state */
   --color-brand-contrast: #ffffff; /* brand background ላይ ጽሁፍ */
 
   /* ---------- 4. Text Hierarchy ---------- */
@@ -121,8 +111,8 @@
   --color-input: #1a1a1a; /* input box background */
   --color-input-text: #ffffff; /* input ውስጥ የተየብ ጽሁፍ */
   --color-input-border: #2d2d2d; /* input መደበኛ border */
-  --color-input-hover: #019be5; /* input hover border/highlight */
-  --color-input-focus: #0071e3; /* input focus ቀለም */
+  --color-input-hover: #198dff; /* input hover border/highlight */
+  --color-input-focus: #198dff; /* input focus ቀለም */
   --color-hover-input: #232323; /* hover ስታደርግ የሚታይ background */
 
   /* ---------- 6. Status Colors (dark ላይ lighter/brighter ለ contrast) ---------- */

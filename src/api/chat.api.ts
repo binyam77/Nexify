@@ -15,6 +15,10 @@ export interface ChatMessageResponse {
   id: string;
   conversationId: string;
   userId: string;
+  user: {
+    id: string;
+    profile: { username: string; avatar: string | null } | null;
+  };
   text: string | null;
   mediaUrl: string | null;
   mediaType: MessageMediaType | null;
@@ -64,8 +68,11 @@ function authHeader(accessToken: string): Record<string, string> {
   return { Authorization: `Bearer ${accessToken}` };
 }
 
-function toQueryString<T extends object>(params:T): string {
-  const entries = Object.entries(params).filter(([, v]) => v !== undefined)as [string, string][];
+function toQueryString<T extends object>(params: T): string {
+  const entries = Object.entries(params).filter(([, v]) => v !== undefined) as [
+    string,
+    string,
+  ][];
   if (entries.length === 0) return "";
   const search = new URLSearchParams(entries);
   return `?${search.toString()}`;

@@ -50,9 +50,9 @@ export default function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex items-center gap-4">
-          <span className="w-5 h-5 rounded-full bg-gray-300 animate-loading-dot"/>
-          <span className="w-5 h-5 rounded-full bg-gray-300 animate-loading-dot [animate-delay:150ms]"/>
-          <span className="w-5 h-5 rounded-full bg-gray-300 animate-loading-dot [animate-delay:300ms]"/>
+          <span className="w-2 h-2 rounded-full bg-gray-300 animate-loading-dot"/>
+          <span className="w-2 h-2 rounded-full bg-gray-300 animate-loading-dot [animate-delay:150ms]"/>
+          <span className="w-2 h-2 rounded-full bg-gray-300 animate-loading-dot [animate-delay:300ms]"/>
         </div>
       </div>
     );

@@ -19,10 +19,7 @@ import {
   EyeOff,
   CheckCircle2,
 } from "lucide-react";
-import {
-  changeUsernameRequest,
-  changePasswordRequest,
-} from "../api/auth.api";
+import { changeUsernameRequest, changePasswordRequest } from "../api/auth.api";
 import { ApiError } from "../lib/api-client";
 
 type View =
@@ -608,12 +605,8 @@ function ListRow({
   noChevron?: boolean;
   labelClassName?: string;
 }) {
-  return (
-    <button
-      onClick={onClick}
-      disabled={!onClick}
-      className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-surface-raised transition-colors disabled:cursor-default"
-    >
+  const content = (
+    <>
       {icon && <span className="shrink-0">{icon}</span>}
       <span className="flex-1 min-w-0">
         <span
@@ -632,6 +625,26 @@ function ListRow({
       {!noChevron && onClick && (
         <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
       )}
+    </>
+  );
+
+  // ⚠️ onClick ከሌለው (ለምሳሌ Theme row - trailing ውስጥ የራሱ button ያለው)፣
+  // <div> እንጠቀማለን - <button> ውስጥ <button> (invalid HTML, browser ራሱ
+  // DOM ን ያፈርሰዋል - nested interactive elements ፈጽሞ አይፈቀድም) እንዳይፈጠር
+  if (!onClick) {
+    return (
+      <div className="w-full flex items-center gap-3 px-4 py-3.5">
+        {content}
+      </div>
+    );
+  }
+
+  return (
+    <button
+      onClick={onClick}
+      className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-surface-raised transition-colors"
+    >
+      {content}
     </button>
   );
 }
@@ -644,10 +657,12 @@ function ThemeSwitch({
   onToggle: () => void;
 }) {
   return (
-    <span
+    <button
+      type="button"
       onClick={onToggle}
       role="switch"
       aria-checked={checked}
+      aria-label="Toggle dark mode"
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 cursor-pointer ${
         checked ? "bg-brand" : "bg-slate-300"
       }`}
@@ -657,7 +672,7 @@ function ThemeSwitch({
           checked ? "translate-x-6" : "translate-x-1"
         }`}
       />
-    </span>
+    </button>
   );
 }
 

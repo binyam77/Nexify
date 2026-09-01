@@ -63,8 +63,6 @@ interface LeftProps {
   ) => void;
 
   handleNavigateToUserProfile: (username: string) => void;
-  toggleFollowUser: (index: number) => void;
-  authorIndex: number;
   formatCount: (num: number) => string;
 }
 
@@ -92,8 +90,6 @@ export default function Left({
   handleAddReply,
   handleEditComment,
   handleNavigateToUserProfile,
-  toggleFollowUser,
-  authorIndex,
   formatCount,
 }: LeftProps) {
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
@@ -151,7 +147,7 @@ export default function Left({
           </div>
         </div>
 
-        {isOwnPost ? (
+               {isOwnPost && (
           <button
             onClick={(e) => handleDeletePost(selectedPost.id, e)}
             className="px-3.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center gap-1.5 text-xs font-black transition-all"
@@ -159,17 +155,6 @@ export default function Left({
           >
             <Trash2 className="w-3.5 h-3.5 text-rose-600" />
             <span>Delete</span>
-          </button>
-        ) : (
-          <button
-            onClick={() => toggleFollowUser(authorIndex)}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all ${
-              postAuthor.isFollowing
-                ? "bg-slate-100 text-slate-500 border border-slate-200"
-                : "bg-gradient-to-b from-[#019BE5] via-[#0185E5] to-[#0071E3] text-white hover:opacity-95 shadow-sm"
-            }`}
-          >
-            {postAuthor.isFollowing ? "Following" : "Follow"}
           </button>
         )}
       </header>

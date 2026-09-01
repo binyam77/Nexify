@@ -7,7 +7,8 @@ import {
   meRequest,
   exchangeOAuthCodeRequest,
 } from "../api/auth.api";
-
+import { fetchMyProfile, updateMyProfile } from "../api/profile.api";
+import type { UpdateProfileInput } from "../api/profile.api";
 export interface User {
   id: string;
   username: string;
@@ -32,6 +33,7 @@ interface AuthContextType {
   completeOAuthLogin: (handoffCode: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
+  updateProfile: (input: UpdateProfileInput) => Promise<void>;
   updateFollowCount: (
     type: "followers" | "following",
     increment: boolean,
@@ -57,6 +59,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAccessToken(newToken);
         const me = await meRequest(newToken);
         setUser(me);
+        try {
+          const profileData = await fetchMyProfile();
+          setUser((prev) => (prev ? { ...prev, ...profileData } : prev));
+        } catch (e) {
+          console.error("Failed to load profile data:", e);
+        }
       } catch {
         // Refresh token የለም/expired ነው — ተጠቃሚው logged out ነው ማለት ብቻ ነው (error አይደለም)
         setAccessToken(null);
@@ -68,19 +76,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void silentRefresh();
   }, []);
 
-  const login = async (email: string, password: string) => {
+   const login = async (email: string, password: string) => {
     const { accessToken: newToken } = await loginRequest({ email, password });
     setAccessToken(newToken);
     const me = await meRequest(newToken);
     setUser(me);
+    try {
+      const profileData = await fetchMyProfile();
+      setUser((prev) => (prev ? { ...prev, ...profileData } : prev));
+    } catch (e) {
+      console.error("Failed to load profile data:", e);
+    }
   };
 
-  const completeOAuthLogin = async (handoffCode: string) => {
+   const completeOAuthLogin = async (handoffCode: string) => {
     const { accessToken: newToken } =
       await exchangeOAuthCodeRequest(handoffCode);
     setAccessToken(newToken);
     const me = await meRequest(newToken);
     setUser(me);
+    try {
+      const profileData = await fetchMyProfile();
+      setUser((prev) => (prev ? { ...prev, ...profileData } : prev));
+    } catch (e) {
+      console.error("Failed to load profile data:", e);
+    }
   };
 
   const logout = async () => {
@@ -99,6 +119,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ለጊዜው local state ብቻ ነው የሚቀየረው (UI optimistic update)፣ persist አያደርግም
   const updateUser = (userData: Partial<User>) => {
     setUser((prev) => (prev ? { ...prev, ...userData } : prev));
+  };
+
+  const updateProfile = async (input: UpdateProfileInput) => {
+    const profileData = await updateMyProfile(input);
+    setUser((prev) => (prev ? { ...prev, ...profileData } : prev));
   };
 
   const updateFollowCount = (
@@ -132,6 +157,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         completeOAuthLogin,
         logout,
         updateUser,
+        updateProfile,
         updateFollowCount,
       }}
     >

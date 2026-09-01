@@ -19,10 +19,20 @@ export interface PaginatedResult<T> {
   hasMore: boolean;
 }
 
+export interface CommunityMessageReaction {
+  emoji: string;
+  userId: string;
+  user: { id: string; profile: { username: string } | null };
+}
+
 export interface CommunityMessageResponse {
   id: string;
   communityId: string;
   userId: string;
+  user: {
+    id: string;
+    profile: { username: string; avatar: string | null } | null;
+  };
   text: string | null;
   mediaUrl: string | null;
   mediaType: MessageMediaType | null;
@@ -31,6 +41,7 @@ export interface CommunityMessageResponse {
   clientMessageId: string | null;
   createdAt: string;
   updatedAt: string;
+  reactions: CommunityMessageReaction[];
 }
 
 export interface CommunityResponse {
@@ -91,7 +102,10 @@ function authHeader(accessToken: string): Record<string, string> {
 }
 
 function toQueryString<T extends object>(params: T): string {
-  const entries = Object.entries(params).filter(([, v]) => v !== undefined)as [string, string][];
+  const entries = Object.entries(params).filter(([, v]) => v !== undefined) as [
+    string,
+    string,
+  ][];
   if (entries.length === 0) return "";
   const search = new URLSearchParams(entries);
   return `?${search.toString()}`;

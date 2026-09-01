@@ -63,7 +63,7 @@ export interface Chat {
   membersCount: number; // የግሩፑ/የቻናሉ ጠቅላላ አባላት ብዛት (Total number of members in group/channel)
   onlineCount: number; // አሁን መስመር ላይ ያሉ አባላት ብዛት (Current number of online members)
   isJoined: boolean; // ተጠቃሚው ይህን ግሩፕ የተቀላቀለ መሆኑን ማሳያ (Whether the current user has joined this room)
-  type?: 'group' | 'chat' | 'channel'; // የቻቱ አይነት፦ ግሩፕ፣ የግል ቻት ወይም ቻናል (Type of room: group, private direct chat, or public channel)
+  type?: 'group' | 'chat' | 'channel' | 'privateGroup'; // የቻቱ አይነት፦ ግሩፕ፣ የግል ቻት ወይም ቻናል (Type of room: group, private direct chat, or public channel)
   participantUsername?:string;//1:1 chat ብቻ፤ ተነጋጋሪው ልዩ (unique) - ስም፟ ተኮር matching ደህንነት ችግር ስለፈጠረ
   avatarUrl?: string; // የአምሳያ ምስል ሊንክ (Optional image URL or Base64 data URL for avatar)
   isCreatedByMe?: boolean; // በኔ የተፈጠረ መሆኑን ማሳያ (True if created by the current user to authorize posts)
@@ -96,19 +96,7 @@ totalReactions:number;
 totalComments:number;
 }
 
-export interface OtherCreator {
-  id: number;
-  name: string;
-  username: string;
-  photo: string;
-  gradient: string;
-  isFollowing: boolean;
-  followersCount: number;
-  followingCount: number;
-  bio: string;
-  loginsCount: number;
-  posts: FeedPost[];
-}
+
 
 
 export interface FeedPost{
