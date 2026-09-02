@@ -4,8 +4,6 @@ import {
   MessageCircle,
   UserPlus,
   Bell,
-  CheckCheck,
-  Trash2,
 } from "lucide-react";
 import { useNotifications } from "../context/NotificationContext";
 import type {
@@ -13,7 +11,8 @@ import type {
   NotificationType,
 } from "../context/NotificationContext";
 import { cn } from "../utils";
-
+import { useNavigate } from "react-router-dom";
+import { userProfilePath } from "../routes";
 // Notification icon by type
 function NotifIcon({ type }: { type: NotificationType }) {
   const base = "w-4 h-4";
@@ -71,13 +70,19 @@ function formatTime(iso: string) {
 function NotifItem({
   notif,
   onRead,
+  onNavigate,
 }: {
   notif: AppNotification;
   onRead: () => void;
+  onNavigate: (notif: AppNotification) => void;
 }) {
+  const handleClick = () => {
+    onRead();
+    onNavigate(notif);
+  };
   return (
     <div
-      onClick={onRead}
+      onClick={handleClick}
       className={cn(
         "flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-colors hover:bg-slate-50",
         !notif.isRead && "bg-blue-50/60 hover:bg-blue-50",
@@ -125,6 +130,7 @@ function NotifItem({
   );
 }
 export default function Notifications() {
+  const navigate = useNavigate();
   const {
     notifications,
     unreadCount,
@@ -132,9 +138,21 @@ export default function Notifications() {
     hasMore,
     loadMore,
     markAsRead,
-    markAllAsRead,
-    clearAll,
   } = useNotifications();
+  // Routes to wherever the notification is about — Like/Comment go to the
+  // post, Follow goes to the actor's profile. Reuses the app's own
+  // existing route helpers (userProfilePath, /post/:id) rather than
+  // constructing paths locally, so this stays consistent with however
+  // Profile/Post navigation works everywhere else in the app.
+  const handleNavigate = (notif: AppNotification) => {
+    if (notif.type === "follow") {
+      navigate(userProfilePath(notif.actorUsername));
+      return;
+    }
+    if (notif.postId) {
+      navigate(`/post/${notif.postId}`);
+    }
+  };
 
   // Infinite scroll: observes a sentinel element at the bottom of the
   // list and requests the next page once it enters the viewport — same
@@ -171,26 +189,6 @@ export default function Notifications() {
             <p className="text-xs text-small-text mt-0.5">{unreadCount} new</p>
           )}
         </div>
-        <div className="flex items-center gap-2">
-          {unreadCount > 0 && (
-            <button
-              onClick={markAllAsRead}
-              className="flex items-center gap-1.5 text-xs font-semibold text-brand-dark hover:text-brand-light px-3 py-1.5 rounded-lg hover:bg-surface-raised transition-colors"
-            >
-              <CheckCheck className="w-3.5 h-3.5" />
-              Mark all read
-            </button>
-          )}
-          {notifications.length > 0 && (
-            <button
-              onClick={clearAll}
-              className="flex items-center gap-1.5 text-xs font-semibold text-small-text hover:text-rose-500 px-3 py-1.5 rounded-lg hover:bg-surface-raised transition-colors"
-            >
-              <Trash2 className="w-3.5 h-3.5" />
-              Clear
-            </button>
-          )}
-        </div>
       </div>
 
       {/* Empty state */}
@@ -210,7 +208,11 @@ export default function Notifications() {
           </p>
           <div className="divide-y divide-slate-100 bg-slate-300">
             {unread.map((n) => (
-              <NotifItem key={n.id} notif={n} onRead={() => markAsRead(n.id)} />
+              <NotifItem 
+              key={n.id} 
+              notif={n} 
+              onRead={() => markAsRead(n.id)}
+              onNavigate={handleNavigate} />
             ))}
           </div>
         </div>
@@ -224,7 +226,11 @@ export default function Notifications() {
           </p>
           <div className="divide-y divide-slate-100">
             {read.map((n) => (
-              <NotifItem key={n.id} notif={n} onRead={() => markAsRead(n.id)} />
+              <NotifItem 
+               key={n.id}
+                notif={n}
+                 onRead={() => markAsRead(n.id)}
+                 onNavigate={handleNavigate} />
             ))}
           </div>
         </div>

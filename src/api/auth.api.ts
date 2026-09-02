@@ -129,3 +129,24 @@ export function changePasswordRequest(
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 }
+// ================= REGISTER START (Username + Email) =================
+export function registerStartRequest(params: {
+  username: string;
+  email: string;
+}): Promise<MessageResponse> {
+  return apiClient<MessageResponse>("/auth/register-start", {
+    method: "POST",
+    body: params,
+  });
+}
+
+// ================= COMPLETE REGISTRATION (Password → Tokens) =================
+export function completeRegistrationRequest(params: {
+  email: string;
+  password: string;
+}): Promise<LoginResponse> {
+  return apiClient<LoginResponse>("/auth/complete-registration", {
+    method: "POST",
+    body: params,
+  });
+}

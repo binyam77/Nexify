@@ -99,23 +99,3 @@ export function markNotificationReadRequest(
     },
   );
 }
-
-// ================= MARK ALL READ =================
-export function markAllNotificationsReadRequest(
-  accessToken: string,
-): Promise<{ updatedCount: number }> {
-  return apiClient<{ updatedCount: number }>("/notifications/read-all", {
-    method: "PATCH",
-    headers: authHeader(accessToken),
-  });
-}
-
-// ================= CLEAR ALL =================
-export function clearAllNotificationsRequest(
-  accessToken: string,
-): Promise<{ deletedCount: number }> {
-  return apiClient<{ deletedCount: number }>("/notifications", {
-    method: "DELETE",
-    headers: authHeader(accessToken),
-  });
-}

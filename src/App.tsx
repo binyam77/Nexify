@@ -11,9 +11,11 @@ import {
 } from "react-router-dom";
 import Home from "./pages/home";
 import Layout from "./components/Layout";
+import FirstEntry from "./auth/firstEntry";
 import CreateAccount from "./auth/createAccount";
 import Login from "./auth/login";
 import Profile from "./pages/profile";
+import UserProfile from "./pages/userProfile";
 import Community from "./pages/comminty";
 import Settings from "./pages/settings";
 import { ROUTES } from "./routes";
@@ -50,9 +52,9 @@ export default function App() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
         <div className="flex items-center gap-4">
-          <span className="w-2 h-2 rounded-full bg-gray-300 animate-loading-dot"/>
-          <span className="w-2 h-2 rounded-full bg-gray-300 animate-loading-dot [animate-delay:150ms]"/>
-          <span className="w-2 h-2 rounded-full bg-gray-300 animate-loading-dot [animate-delay:300ms]"/>
+          <span className="w-2 h-2 rounded-full bg-gray-300 animate-loading-dot" />
+          <span className="w-2 h-2 rounded-full bg-gray-300 animate-loading-dot [animate-delay:150ms]" />
+          <span className="w-2 h-2 rounded-full bg-gray-300 animate-loading-dot [animate-delay:300ms]" />
         </div>
       </div>
     );
@@ -62,7 +64,7 @@ export default function App() {
     <UIProvider>
       <Routes>
         {/* FirstEntry ገጽ */}
-        <Route path="/" element={<Navigate to={ROUTES.home} replace/>}/>
+        <Route path="/" element={<FirstEntry/>}/>
         {/* ✅ የተጠበቁ ገጾች (Protected Routes) */}
         <Route
           element={
@@ -73,6 +75,7 @@ export default function App() {
         >
           <Route path={ROUTES.home} element={<Home />} />
           <Route path={ROUTES.profile} element={<Profile />} />
+          <Route path={ROUTES.userProfile} element={<UserProfile />} />
           <Route path={ROUTES.notifications} element={<Notifications />} />
           <Route path={ROUTES.community} element={<Community />} />
           <Route path={ROUTES.settings} element={<Settings />} />
@@ -121,7 +124,7 @@ export default function App() {
                     <Login
                       key="login"
                       onNavigateToSignup={() => navigate("/createAccount")}
-                      onSubmit={handleLoginSuccess}
+                      onNavigateBack={handleLoginSuccess}
                     />
                   </AnimatePresence>
                 </main>
@@ -139,14 +142,11 @@ export default function App() {
 }
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  // ⚠️ TEMPORARY: Login/Google OAuth ገና ስለሚስተካከል፣ ደረጃው ለ development
-  // ብቻ ታግዷል። Login ስንጨርስ ከታች ያለውን commented-out code እንመልሳለን።
-  return <>{children}</>;
+ const {isLoggedIn} = useAuth();
+ const location= useLocation();
+ if(!isLoggedIn) {
+ return <Navigate to="/login" state={{ from:location}} replace/>
+ }
+ return <>{children}</>
 
-  // const { isLoggedIn } = useAuth();
-  // const location = useLocation();
-  // if (!isLoggedIn) {
-  //   return <Navigate to="/login" state={{ from: location }} replace />;
-  // }
-  // return <>{children}</>;
 }

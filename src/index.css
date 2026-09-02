@@ -13,7 +13,7 @@
 
 @theme {
   /* ---------- 1. Base Backgrounds ---------- */
-  --color-bodey-bg: #f5f5f5; /* ዋና የገጹ background */
+  --color-bodey-bg: #ffffff; /* ዋና የገጹ background */
   --color-surface: #f8fafc; /* ካርድ፣ modal፣ ንዑስ ክፍል background */
   --color-surface-raised: #ffffff; /* ከ surface ትንሽ ከፍ ያለ (dropdown, popover) */
   --color-overlay: rgba(0, 0, 0, 0.4); /* modal/backdrop overlay */
@@ -85,7 +85,7 @@
   --color-divider: #232323; /* ቀጭን መስመር መካከል content */
 
   /* ---------- 3. Brand (ተመሳሳይ በሁሉም mode) ---------- */
-  --background-image-brand: #2563eb;
+  --background-image-brand-one: #2563eb;
   --color-brand: #1370fc; /* ዋና brand ቀለም */
   --color-brand-light: #1da8fd; /* hover state */
   --color-brand-dark: #198dfe; /* pressed/active state */

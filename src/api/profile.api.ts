@@ -61,3 +61,27 @@ export async function updateMyProfile(
   });
   return toProfileData(dto);
 }
+export async function fetchProfile(
+  username: string,
+): Promise<ProfileData & { userId: string; isFollowedByMe: boolean | null }> {
+  const dto = await apiClient<BackendProfileResponse>(`/profile/${username}`);
+  return {
+    ...toProfileData(dto),
+    userId: dto.userId,
+    isFollowedByMe: dto.isFollowedByMe,
+  };
+}
+
+export function followUser(userId: string): Promise<{ isFollowing: boolean }> {
+  return apiClient<{ isFollowing: boolean }>(`/profile/${userId}/follow`, {
+    method: "POST",
+  });
+}
+
+export function unfollowUser(
+  userId: string,
+): Promise<{ isFollowing: boolean }> {
+  return apiClient<{ isFollowing: boolean }>(`/profile/${userId}/follow`, {
+    method: "DELETE",
+  });
+}

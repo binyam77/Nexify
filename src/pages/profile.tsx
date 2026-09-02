@@ -37,7 +37,7 @@ export default function Profile({
   onStartChat,
 }: ProfileProps) {
   // --- መለያ ፍቃድ መቆጣጠሪያ (Auth System Hooks) ---
-  const { user, updateUser } = useAuth();
+  const { user, updateUser, updateProfile } = useAuth();
   const navigate = useNavigate();
   const {
     commentsMap,
@@ -104,8 +104,8 @@ export default function Profile({
   };
 
   // --- ተከታታይ እና የሚከታተሏቸው ቁጥር ሁኔታዎች (Followers & Following counts) ---
-  const [followersCount, setFollowersCount] = useState(0);
-  const [starsCount, setStarsCount] = useState(0); // starsCount represents Following count!
+  const followersCount = user?.followersCount ?? 0;
+  const starsCount = user?.followingCount ?? 0;
 
   // --- የልጥፎች እይታ እና የማጋሪያ ሁነታ መኮጣጠሪያዎች (Player and Share Modal states) ---
   //selectedPostId ብቻ ይይዛል፤ ራሱ post object ሁልጊዘ ከ FeedContext ትኩስ ይመጣል (single source of truth)
@@ -150,6 +150,7 @@ export default function Profile({
   const [editBio, setEditBio] = useState("");
   const [editPhotoPreview, setEditPhotoPreview] = useState("");
   const [editCoverPreview, setEditCoverPreview] = useState("");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // --- የማጣቀሻ ፋይል መምረጫዎች (File Picker input refs) ---
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -175,24 +176,6 @@ export default function Profile({
     }
   };
 
-  // --- የተጠቃሚ መገለጫ መረጃ መጫኛ (Load profile metadata from LocalStorage) ---
-  useEffect(() => {
-    /* eslint-disable react-hooks/set-state-in-effect -- localStorage initial load ትክክለኛ pattern ነው*/
-    const savedCountF = localStorage.getItem("countF");
-
-    if (savedCountF !== null) {
-      setFollowersCount(parseInt(savedCountF, 10));
-    } else {
-      setFollowersCount(0); // Default count
-    }
-    const savedCountS = localStorage.getItem("countS");
-    if (savedCountS !== null) {
-      setStarsCount(parseInt(savedCountS, 10));
-    } else {
-      setStarsCount(0); // Default Following count
-    }
-    /* eslint-enable react-hooks/set-state-in-effect */
-  }, []);
   // --- ውጫዊ ሚዲያ መጫኛ መቆጣጠሪያ (Manage background uploads from outside) ---
   useEffect(() => {
     if (triggerGlobalUpload && fileInputRef.current) {
@@ -391,31 +374,6 @@ export default function Profile({
     setIsEditModalOpen(true);
   };
 
-  const handleSaveProfile = () => {
-    if (!editName.trim()) {
-      alert("Name can't be empty!");
-      return;
-    }
-    // Security: username ን lowercase/alphanumeric/underscore ብቻ እናደርገዋለን- Community chat matching
-    //በዚህ unique handle ልይ ስለሚመሰረት፤ ንቱህ ያልሆነ ግብዐት ቢገባ ግጥሚያ/routing ላይ ችግር ይፈጥራል
-    const sanitizedUsername =
-      editUsername
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9_]/g, "") ||
-      user?.username ||
-      "username";
-
-    updateUser({
-      name: editName.trim(),
-      username: sanitizedUsername,
-      bio: editBio.trim(),
-      photo: editPhotoPreview,
-      cover: editCoverPreview,
-    });
-    setIsEditModalOpen(false);
-  };
-
   const handlePhotoUploadChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -433,7 +391,36 @@ export default function Profile({
       r.readAsDataURL(file);
     }
   };
+  const handleSaveProfile = async () => {
+    if (!editName.trim()) {
+      alert("Name can't be empty!");
+      return;
+    }
+    const sanitizedUsername =
+      editUsername
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9_]/g, "") ||
+      user?.username ||
+      "username";
 
+    setIsSavingProfile(true);
+    try {
+      // avatar/cover ገና local-only (storage ሲዘጋጅ real persist ይሆናል)
+      updateUser({ photo: editPhotoPreview, cover: editCoverPreview });
+      await updateProfile({
+        displayName: editName.trim(),
+        username: sanitizedUsername,
+        bio: editBio.trim(),
+      });
+      setIsEditModalOpen(false);
+    } catch (e) {
+      console.error("Failed to save profile:", e);
+      alert("Profile ማስቀመጥ አልተቻለም። እንደገና ይሞክሩ።");
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
   const handleCoverUploadChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -719,9 +706,10 @@ export default function Profile({
               </button>
               <button
                 onClick={handleSaveProfile}
-                className="px-5 py-2 bg-blue-600 text-xs font-bold text-white rounded-xl shadow-md"
+                disabled={isSavingProfile}
+                className="px-5 py-2 bg-blue-600 text-xs font-bold text-white rounded-xl shadow-md disabled:opacity-50"
               >
-                Save Profile
+                {isSavingProfile ? "Saving..." : "Save Profile"}
               </button>
             </div>
           </div>
@@ -823,7 +811,11 @@ export default function Profile({
           handleDeleteComment={handleDeleteComment}
           handleAddReply={handleAddReply}
           handleEditComment={handleEditComment}
-          handleNavigateToUserProfile={() => {}}
+          handleNavigateToUserProfile={(username) => {
+            if (username !== profile.username) {
+              navigate(`/profile/${username}`);
+            }
+          }}
           formatCount={formatCount}
         />
       )}

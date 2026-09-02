@@ -13,8 +13,6 @@ import {
   listNotificationsRequest,
   unreadNotificationCountRequest,
   markNotificationReadRequest,
-  markAllNotificationsReadRequest,
-  clearAllNotificationsRequest,
 } from "../api/notifications.api";
 import type {
   NotificationResponse,
@@ -50,8 +48,6 @@ interface NotificationContextType {
   hasMore: boolean;
   loadMore: () => Promise<void>;
   markAsRead: (id: string) => void;
-  markAllAsRead: () => void;
-  clearAll: () => void;
 }
 
 const NotificationContext = createContext<NotificationContextType | null>(null);
@@ -215,28 +211,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     [accessToken, notifications],
   );
 
-  const markAllAsRead = useCallback(() => {
-    if (!accessToken) return;
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-    setUnreadCount(0);
-
-    void markAllNotificationsReadRequest(accessToken).catch(() => {
-      // Silently ignored — see markAsRead's comment.
-    });
-  }, [accessToken]);
-
-  const clearAll = useCallback(() => {
-    if (!accessToken) return;
-    setNotifications([]);
-    setUnreadCount(0);
-    cursorRef.current = undefined;
-    setHasMore(false);
-
-    void clearAllNotificationsRequest(accessToken).catch(() => {
-      // Silently ignored — see markAsRead's comment.
-    });
-  }, [accessToken]);
-
+  
   return (
     <NotificationContext.Provider
       value={{
@@ -246,8 +221,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
         hasMore,
         loadMore,
         markAsRead,
-        markAllAsRead,
-        clearAll,
       }}
     >
       {children}

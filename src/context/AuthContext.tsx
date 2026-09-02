@@ -32,6 +32,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   completeOAuthLogin: (handoffCode: string) => Promise<void>;
   logout: () => Promise<void>;
+  loginWithTokens: (accessToken: string) => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
   updateProfile: (input: UpdateProfileInput) => Promise<void>;
   updateFollowCount: (
@@ -76,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void silentRefresh();
   }, []);
 
-   const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string) => {
     const { accessToken: newToken } = await loginRequest({ email, password });
     setAccessToken(newToken);
     const me = await meRequest(newToken);
@@ -88,8 +89,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error("Failed to load profile data:", e);
     }
   };
-
-   const completeOAuthLogin = async (handoffCode: string) => {
+  // Complete Registration ራሱ accessToken ስለሚመልስ (refresh cookie already
+  // Backend ራሱ አዘጋጅቶታል) - loginRequest() ደግመን አንጠራም፣ /auth/me ብቻ እንጠራለን
+  const loginWithTokens = async (newAccessToken: string) => {
+    setAccessToken(newAccessToken);
+    const me = await meRequest(newAccessToken);
+    setUser(me);
+  };
+  const completeOAuthLogin = async (handoffCode: string) => {
     const { accessToken: newToken } =
       await exchangeOAuthCodeRequest(handoffCode);
     setAccessToken(newToken);
@@ -156,6 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         login,
         completeOAuthLogin,
         logout,
+        loginWithTokens,
         updateUser,
         updateProfile,
         updateFollowCount,
