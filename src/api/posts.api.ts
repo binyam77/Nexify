@@ -35,6 +35,9 @@ interface BackendPostResponse {
   createdAt: string;
   likedByMe: boolean;
   savedByMe: boolean;
+  // Present only on Home's endpoints (feed/search) — Home composes this
+  // from Profile's FollowService, Posts' own /posts/:id has no concept of it.
+  isFollowedByMe?: boolean;
 }
 
 interface BackendCommentAuthor {
@@ -64,7 +67,6 @@ export interface PaginatedResult<T> {
 // ============================================================================
 // ADAPTERS — the only place backend shape ↔ frontend shape translation happens
 // ============================================================================
-
 function toFeedPost(dto: BackendPostResponse): FeedPost {
   const firstMedia = dto.media[0];
   return {
@@ -84,6 +86,7 @@ function toFeedPost(dto: BackendPostResponse): FeedPost {
     createdAt: dto.createdAt,
     liked: dto.likedByMe,
     saved: dto.savedByMe,
+    isFollowing: dto.isFollowedByMe ?? false,
   };
 }
 

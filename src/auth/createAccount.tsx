@@ -154,7 +154,7 @@ export default function CreateAccount({
   };
 
   const titles: Record<Step, string> = {
-    username: "Choose a username",
+    username: "Enter a username",
     email: "What's your email?",
     verify: "Verify your email",
     password: "Create a password",

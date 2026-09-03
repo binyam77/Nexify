@@ -98,7 +98,6 @@ totalComments:number;
 
 
 
-
 export interface FeedPost{
   id: string;
   userId:string;  // PostagraSQL: usres.id
@@ -116,9 +115,10 @@ export interface FeedPost{
   createdAt:string;
   liked:boolean;
   saved:boolean;
-  
+  isFollowing:boolean; // Home/search endpoints only — Profile's Follow domain, composed by Home's backend
 
 }
+
 export type NavTab = 'home' | 'community' | 'profile' | 'settings' | 'explore';
 
 // Group ፈጣሪ member-select ሲያደርግ የሚያገለግል generic shape (ወደፊት real follow-data ጋር ተመሳሳይ ይሆናል)

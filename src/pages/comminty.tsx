@@ -18,6 +18,27 @@ import { useUI } from "../context/UIContext";
 import CreateChoiceModal from "../components/CreateChoiceModal";
 import MemberPickerModal from "../components/MemberPickerModal";
 import type { SelectableUser } from "../types";
+import {
+  listMyCommunitiesRequest,
+  listSuggestedCommunitiesRequest,
+  createCommunityRequest,
+  joinCommunityRequest,
+  leaveCommunityRequest,
+  deleteCommunityRequest,
+  updateCommunityRequest,
+  listMessagesRequest,
+  editMessageRequest,
+  deleteMessageRequest,
+  togglePinMessageRequest,
+  reactToMessageRequest,
+  type MessageMediaType as BackendMessageMediaType,
+} from "../api/community.api";
+import {
+  mapCommunityListItemToChat,
+  mapCommunitySuggestedToChat,
+  mapCommunityMessageToMessage,
+} from "../lib/realtime.mappers";
+import { useRealtime } from "../context/RealtimeContext";
 // ==========================================
 // Title: This is the primary Community.tsx file
 // ==========================================
@@ -45,7 +66,9 @@ export default function Community() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // User profile details (Current member profile loaded dynamically from localStorage)
-  const { user } = useAuth();
+  const { user, accessToken } = useAuth();
+  const { socket, joinRoom, sendMessage, markRead, startTyping, stopTyping } =
+    useRealtime();
   const userProfile = {
     name: user?.name || user?.username || "User",
     role: user?.bio?.split(".")[0] || "Developer",
@@ -53,120 +76,174 @@ export default function Community() {
     username: user?.username || "username",
   };
 
-  // List of group rooms (Community Chats / Channels)
-  // Users can create their own rooms or join existing public rooms.
-  const [chats, setChats] = useState<Chat[]>(() => {
-    const savedChats = localStorage.getItem("nexify_chats");
-    if (savedChats) {
-      try {
-        return JSON.parse(savedChats);
-      } catch (e) {
-        console.error("Error parsing saved chats from localStorage:", e);
-      }
-    }
-    return [
-      {
-        id: "channel-demo-1",
-        name: "Sniper trader",
-        description: "Weekly analsis  forex",
-        lastMsgText: "System: Subscribe to get our weekly digest!",
-        lastMsgSender: "System",
-        lastMsgTime: "Yesterdey",
-        unreadCount: 1,
-        avatarLabel: "ST",
-        bgGradient: "bg-gradient-3",
-        membersCount: 860,
-        onlineCount: 0,
-        isJoined: false,
-        type: "channel",
-        isCreatedByMe: false,
-      },
-      {
-        id: "group-demo-2",
-        name: "Nq emini tarders",
-        lastMsgText: "Sustem: Subscribe to get our weeky digest!",
-        lastMsgSender: "Binjamin",
-        lastMsgTime: "Yesterday",
-        unreadCount: 0,
-        avatarLabel: "NQ",
-        bgGradient: "bg-gradient-1",
-        membersCount: 1005,
-        onlineCount: 235,
-        isJoined: false,
-        type: "group",
-      },
-      {
-        id: "chat-2",
-        name: "Abel T. (UI/UX Designer)",
-        participantUsername: "abel_codes",
-        bio: "Passionate UI/UX designer crafting clean, human-centered interfaces",
-        lastMsgText: "Abel: The mobile screen version looks amazing!",
-        lastMsgSender: "Abel",
-        lastMsgTime: "09:15 AM",
-        unreadCount: 0,
-        avatarLabel: "AT",
-        bgGradient: "bg-gradient-2",
-        membersCount: 2,
-        onlineCount: 1,
-        isJoined: false,
-        type: "chat",
-        isOnline: true,
-      },
-    ];
-  });
-
-  // Local message database indexed by chatId
-  const [messagesDb, setMessagesDb] = useState<Record<string, Message[]>>(
-    () => {
-      const savedDb = localStorage.getItem("nexify_messages_db");
-      if (savedDb) {
-        try {
-          return JSON.parse(savedDb);
-        } catch (e) {
-          console.error("Error parsing saved messages from localStorage:", e);
-        }
-      }
-      return {
-        "channel-demo-1": [
-          {
-            id: "m1",
-            senderName: "System",
-            text: "Welcome to our official announcements channel! Only the channel owner can post here — subscribers can react with emoji.",
-            time: "10:42 AM",
-            isSentByMe: false,
-          },
-        ],
-        "group-demo-1": [
-          {
-            id: "m2",
-            senderName: "Nq emini tarders",
-            text: "Anyone up for pair programming this weekend?",
-            time: "Yesterdey",
-            isSentByMe: false,
-          },
-        ],
-        "chat-2": [
-          {
-            id: "m2_1",
-            senderName: "Abel",
-            text: "The mobile screen version looks amazing! I used Inter for buttons and Outfit for display headers.",
-            time: "09:15 AM",
-            isSentByMe: false,
-          },
-        ],
-      };
+  // Chat list. The single "chat-2" entry below is Chat-domain (1:1) DEMO
+  // data — untouched, out of this refactor's scope. Community entries
+  // (channel/group) are no longer seeded here or from localStorage; they
+  // are loaded from the real backend by the effect further down and
+  // merged into this same array once they arrive.
+  const [chats, setChats] = useState<Chat[]>([
+    {
+      id: "chat-2",
+      name: "Abel T. (UI/UX Designer)",
+      participantUsername: "abel_codes",
+      bio: "Passionate UI/UX designer crafting clean, human-centered interfaces",
+      lastMsgText: "Abel: The mobile screen version looks amazing!",
+      lastMsgSender: "Abel",
+      lastMsgTime: "09:15 AM",
+      unreadCount: 0,
+      avatarLabel: "AT",
+      bgGradient: "bg-gradient-2",
+      membersCount: 2,
+      onlineCount: 1,
+      isJoined: false,
+      type: "chat",
+      isOnline: true,
     },
-  );
+  ]);
+
+  // Message store indexed by chat id. For Community chats this is
+  // populated from the backend (listMessagesRequest + live 'message:new'
+  // events); for the demo "chat-2" entry it stays local-only, unchanged.
+  const [messagesDb, setMessagesDb] = useState<Record<string, Message[]>>({
+    "chat-2": [
+      {
+        id: "m2_1",
+        senderName: "Abel",
+        text: "The mobile screen version looks amazing! I used Inter for buttons and Outfit for display headers.",
+        time: "09:15 AM",
+        isSentByMe: false,
+      },
+    ],
+  });
   const location = useLocation();
 
-  // Save changes to localStorage on change
+  // ================= LOAD COMMUNITIES (mine + suggested) =================
   useEffect(() => {
-    localStorage.setItem("nexify_chats", JSON.stringify(chats));
-  }, [chats]);
+    if (!accessToken || !user) return;
+    const token = accessToken; // narrowed local const - nested closures below can safly use this
+    let cancelled = false;
 
+    async function loadCommunities() {
+      try {
+        const [mine, suggested] = await Promise.all([
+          listMyCommunitiesRequest(token),
+          listSuggestedCommunitiesRequest(token),
+        ]);
+        if (cancelled) return;
+
+        const mineChats = mine.items.map((item) =>
+          mapCommunityListItemToChat(item, user.id),
+        );
+        const suggestedChats = suggested.items.map(mapCommunitySuggestedToChat);
+
+        setChats((prev) => {
+          const chatOnly = prev.filter((c) => c.type === "chat");
+          return [...mineChats, ...suggestedChats, ...chatOnly];
+        });
+      } catch (err) {
+        console.error("Failed to load communities:", err);
+        triggerToast("⚠️ Could not load your communities.");
+      }
+    }
+
+    void loadCommunities();
+    return () => {
+      cancelled = true;
+    };
+  }, [accessToken, user]);
+
+  // ================= REALTIME: incoming messages =================
   useEffect(() => {
-    localStorage.setItem("nexify_messages_db", JSON.stringify(messagesDb));
-  }, [messagesDb]);
+    if (!socket || !user) return;
+
+    function handleMessageNew(payload: {
+      scope: string;
+      targetId: string;
+      message: unknown;
+    }) {
+      if (payload.scope !== "community") return;
+
+      const mapped = mapCommunityMessageToMessage(
+        payload.message as Parameters<typeof mapCommunityMessageToMessage>[0],
+        user!.id,
+      );
+
+      setMessagesDb((prev) => ({
+        ...prev,
+        [payload.targetId]: [...(prev[payload.targetId] || []), mapped],
+      }));
+
+      setChats((prev) =>
+        prev.map((c) => {
+          if (c.id !== payload.targetId) return c;
+          const isViewingThisChat = c.id === activeChatId;
+          return {
+            ...c,
+            lastMsgText: mapped.mediaUrl
+              ? mapped.text || "📷 Media"
+              : mapped.text,
+            lastMsgSender: mapped.senderName,
+            lastMsgTime: mapped.time,
+            unreadCount:
+              isViewingThisChat || mapped.isSentByMe ? 0 : c.unreadCount + 1,
+          };
+        }),
+      );
+
+      if (payload.targetId === activeChatId) {
+        markRead("community", payload.targetId).catch(() => {});
+      }
+    }
+
+    function handleTypingStart(payload: {
+      scope: string;
+      targetId: string;
+      userId: string;
+    }) {
+      if (payload.scope !== "community" || payload.userId === user!.id) return;
+      setChats((prev) =>
+        prev.map((c) =>
+          c.id === payload.targetId
+            ? {
+                ...c,
+                typingUsers: [
+                  ...new Set([...(c.typingUsers || []), payload.userId]),
+                ],
+              }
+            : c,
+        ),
+      );
+    }
+
+    function handleTypingStop(payload: {
+      scope: string;
+      targetId: string;
+      userId: string;
+    }) {
+      if (payload.scope !== "community") return;
+      setChats((prev) =>
+        prev.map((c) =>
+          c.id === payload.targetId
+            ? {
+                ...c,
+                typingUsers: (c.typingUsers || []).filter(
+                  (id) => id !== payload.userId,
+                ),
+              }
+            : c,
+        ),
+      );
+    }
+
+    socket.on("message:new", handleMessageNew);
+    socket.on("typing:start", handleTypingStart);
+    socket.on("typing:stop", handleTypingStop);
+    return () => {
+      socket.off("message:new", handleMessageNew);
+      socket.off("typing:start", handleTypingStart);
+      socket.off("typing:stop", handleTypingStop);
+    };
+  }, [socket, user, activeChatId, markRead]);
 
   // Total unread messages count for active chats to display on the sidebar
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Sidebar's unreadCommunityCount prop ላይ ጥክም ላይ ይውላል
@@ -196,8 +273,23 @@ export default function Community() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
-  // Group ውጣ (creator ካልሆነ) — group ራሱ አይጠፋም፣ ተጠቃሚው ብቻ isJoined:false ይሆናል
-  const handleLeaveGroup = (chatId: string) => {
+  const isCommunityChat = (chat: Chat | undefined | null) =>
+    chat?.type === "channel" || chat?.type === "group";
+
+  const handleLeaveGroup = async (chatId: string) => {
+    const target = chats.find((c) => c.id === chatId);
+
+    if (isCommunityChat(target)) {
+      if (!accessToken) return;
+      try {
+        await leaveCommunityRequest(accessToken, chatId);
+      } catch (err) {
+        console.error("Failed to leave community:", err);
+        triggerToast("⚠️ Failed to leave. Please try again.");
+        return;
+      }
+    }
+
     setChats((prev) =>
       prev.map((c) =>
         c.id === chatId
@@ -211,11 +303,9 @@ export default function Community() {
     );
     if (activeChatId === chatId) setActiveChatId(null);
     triggerToast("👋 You left the group.");
-    // ⏳ FUTURE: DELETE /api/groups/:id/members/me
   };
 
-  // Group name/photo/bio/cover edit (creator ብቻ)
-  const handleUpdateGroupInfo = (
+  const handleUpdateGroupInfo = async (
     chatId: string,
     updates: {
       name?: string;
@@ -224,15 +314,43 @@ export default function Community() {
       cover?: string;
     },
   ) => {
+    const target = chats.find((c) => c.id === chatId);
+
+    if (isCommunityChat(target)) {
+      if (!accessToken) return;
+      try {
+        await updateCommunityRequest(accessToken, chatId, {
+          name: updates.name,
+          avatar: updates.avatarUrl,
+          description: updates.description,
+          cover: updates.cover,
+        });
+      } catch (err) {
+        console.error("Failed to update community:", err);
+        triggerToast("⚠️ Failed to update. Please try again.");
+        return;
+      }
+    }
+
     setChats((prev) =>
       prev.map((c) => (c.id === chatId ? { ...c, ...updates } : c)),
     );
     triggerToast("✅ Group updated!");
-    // ⏳ FUTURE: PATCH /api/groups/:id
   };
+  const handleDeleteChat = async (chatId: string) => {
+    const target = chats.find((c) => c.id === chatId);
 
-  // Delete chat/group/channel permanently (localStorage ውስጥ ካለው ሙሉ ይጠፋል፤ refresh/relogin ቢሆንም አይመለስም)
-  const handleDeleteChat = (chatId: string) => {
+    if (isCommunityChat(target)) {
+      if (!accessToken) return;
+      try {
+        await deleteCommunityRequest(accessToken, chatId);
+      } catch (err) {
+        console.error("Failed to delete community:", err);
+        triggerToast("⚠️ Failed to delete. Please try again.");
+        return;
+      }
+    }
+
     setChats((prev) => prev.filter((c) => c.id !== chatId));
     setMessagesDb((prev) => {
       const updated = { ...prev };
@@ -243,18 +361,24 @@ export default function Community() {
       setActiveChatId(null);
     }
     triggerToast("🗑️ Deleted successfully!");
-
-    // ==========================================
-    // FUTURE: Delete on backend too:
-    // ==========================================
-    // fetch(`/api/communities/${chatId}`, { method: 'DELETE' });
   };
+
   // DEMO ONLY: contact "typing..." simulation — real backend ሲመጣ Socket.IO 'typing' event
   // emit/receive ብቻ ይተካዋል፣ ይህ function ራሱ ይጠፋል
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleUserTyping = () => {
     if (!activeChatId) return;
     const targetChat = chats.find((c) => c.id === activeChatId);
+
+    if (isCommunityChat(targetChat)) {
+      startTyping("community", activeChatId);
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = setTimeout(() => {
+        stopTyping("community", activeChatId);
+      }, 2000);
+      return;
+    }
+
     if (targetChat?.type !== "chat") return; // ለ demo private chat ብቻ
 
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
@@ -273,25 +397,60 @@ export default function Community() {
   };
 
   // Chat/Room selection handler
-  const handleSelectChat = (chatId: string) => {
+  const handleSelectChat = async (chatId: string) => {
     setActiveChatId(chatId);
-
-    // Clear unread count for this selected room
     setChats((prev) =>
       prev.map((c) => (c.id === chatId ? { ...c, unreadCount: 0 } : c)),
     );
+
+    const target = chats.find((c) => c.id === chatId);
+    if (!isCommunityChat(target) || !accessToken || !user) return;
+
+    try {
+      await joinRoom("community", chatId);
+    } catch (err) {
+      console.error("Failed to join realtime room:", err);
+    }
+
+    if (messagesDb[chatId]) return; // already loaded this session
+
+    try {
+      const result = await listMessagesRequest(accessToken, chatId);
+      const mapped = result.items
+        .map((m) => mapCommunityMessageToMessage(m, user.id))
+        .reverse();
+      setMessagesDb((prev) => ({ ...prev, [chatId]: mapped }));
+    } catch (err) {
+      console.error("Failed to load messages:", err);
+      triggerToast("⚠️ Could not load messages.");
+    }
   };
 
-  // Send message logic (Supports attachments for rich media like image, video, audio & pdf)
   const handleSendMessage = (
     text: string,
     mediaUrl?: string,
     mediaType?: "image" | "video" | "audio" | "pdf",
   ) => {
     if (!activeChatId) return;
+    const targetChat = chats.find((c) => c.id === activeChatId);
+
+    if (isCommunityChat(targetChat)) {
+      sendMessage({
+        scope: "community",
+        targetId: activeChatId,
+        text: text || undefined,
+        mediaUrl,
+        mediaType: mediaType
+          ? (mediaType.toUpperCase() as BackendMessageMediaType)
+          : undefined,
+      }).catch((err) => {
+        console.error("Failed to send message:", err);
+        triggerToast("⚠️ Failed to send message.");
+      });
+      return;
+    }
 
     const formattedTime = getFormattedDateTime();
-
     const newMsg: Message = {
       id: `msg-${Date.now()}`,
       senderName: userProfile.name,
@@ -312,7 +471,6 @@ export default function Community() {
 
     // DEMO ONLY: 1:1 chat ላይ "ተነባቢ" simulation — real backend ሲመጣ ይህ ጨርሶ ይጠፋል፣
     // Socket.IO 'message:read' event ብቻ msg.seen ን ያዘምናል
-    const targetChat = chats.find((c) => c.id === activeChatId);
     if (targetChat?.type === "chat") {
       const sentMsgId = newMsg.id;
       setTimeout(() => {
@@ -344,9 +502,20 @@ export default function Community() {
     );
   };
 
-  // Edit message logic
-  const handleEditMessage = (messageId: string, newText: string) => {
+  const handleEditMessage = async (messageId: string, newText: string) => {
     if (!activeChatId) return;
+    const targetChat = chats.find((c) => c.id === activeChatId);
+
+    if (isCommunityChat(targetChat)) {
+      if (!accessToken) return;
+      try {
+        await editMessageRequest(accessToken, activeChatId, messageId, newText);
+      } catch (err) {
+        console.error("Failed to edit message:", err);
+        triggerToast("⚠️ Failed to edit message.");
+        return;
+      }
+    }
 
     setMessagesDb((prev) => ({
       ...prev,
@@ -355,23 +524,27 @@ export default function Community() {
       ),
     }));
 
-    // Update the last message text in the sidebar if the edited message is the last one
     setChats((prev) =>
-      prev.map((c) => {
-        if (c.id === activeChatId) {
-          return {
-            ...c,
-            lastMsgText: newText,
-          };
-        }
-        return c;
-      }),
+      prev.map((c) =>
+        c.id === activeChatId ? { ...c, lastMsgText: newText } : c,
+      ),
     );
   };
-
   // Delete message logic (removes message and dynamically recalculates sidebar preview)
-  const handleDeleteMessage = (messageId: string) => {
+  const handleDeleteMessage = async (messageId: string) => {
     if (!activeChatId) return;
+    const targetChat = chats.find((c) => c.id === activeChatId);
+
+    if (isCommunityChat(targetChat)) {
+      if (!accessToken) return;
+      try {
+        await deleteMessageRequest(accessToken, activeChatId, messageId);
+      } catch (err) {
+        console.error("Failed to delete message:", err);
+        triggerToast("⚠️ Failed to delete message.");
+        return;
+      }
+    }
 
     const currentMsgs = messagesDb[activeChatId] || [];
     const updatedMsgs = currentMsgs.filter((msg) => msg.id !== messageId);
@@ -416,8 +589,19 @@ export default function Community() {
     triggerToast("🗑️ Message deleted successfully!");
   };
   // Pin/Unpin message toggle (Group/Channel ብቻ)
-  const handlePinMessage = (messageId: string) => {
+  const handlePinMessage = async (messageId: string) => {
     if (!activeChatId) return;
+    const targetChat = chats.find((c) => c.id === activeChatId);
+    if (!isCommunityChat(targetChat) || !accessToken) return;
+
+    try {
+      await togglePinMessageRequest(accessToken, activeChatId, messageId);
+    } catch (err) {
+      console.error("Failed to toggle pin:", err);
+      triggerToast("⚠️ Failed to update pin.");
+      return;
+    }
+
     setMessagesDb((prev) => ({
       ...prev,
       [activeChatId]: (prev[activeChatId] || []).map((msg) =>
@@ -427,8 +611,18 @@ export default function Community() {
   };
 
   // Reaction logic (Allows at most one selected reaction per message per user)
-  const handleReactMessage = (messageId: string, emoji: string) => {
-    if (!activeChatId) return;
+  const handleReactMessage = async (messageId: string, emoji: string) => {
+    if (!activeChatId || !accessToken || !user) return;
+    const targetChat = chats.find((c) => c.id === activeChatId);
+    if (!isCommunityChat(targetChat)) return;
+
+    try {
+      await reactToMessageRequest(accessToken, activeChatId, messageId, emoji);
+    } catch (err) {
+      console.error("Failed to react:", err);
+      triggerToast("⚠️ Failed to react.");
+      return;
+    }
 
     setMessagesDb((prev) => ({
       ...prev,
@@ -493,27 +687,24 @@ export default function Community() {
     const targetChat = chats.find((c) => c.id === chatId);
     if (!targetChat) return;
     if (targetChat.isJoined) {
-      // Cancel - ወደ ነበረበት (unJoind) ይመለሳል
-      setChats((prev) =>
-        prev.map((c) =>
-          c.id === chatId
-            ? {
-                ...c,
-                isJoined: false,
-                membersCount: Math.max(0, c.membersCount - 1),
-              }
-            : c,
-        ),
-      );
+      handleLeaveGroup(chatId);
     } else {
       handleJoinChat(chatId);
     }
   };
 
   // Join community group room handler
-  const handleJoinChat = (chatId: string) => {
+  const handleJoinChat = async (chatId: string) => {
     const targetChat = chats.find((c) => c.id === chatId);
-    const isChannel = targetChat?.type === "channel";
+    if (!isCommunityChat(targetChat) || !accessToken) return;
+
+    try {
+      await joinCommunityRequest(accessToken, chatId);
+    } catch (err) {
+      console.error("Failed to join community:", err);
+      triggerToast("⚠️ Failed to join. Please try again.");
+      return;
+    }
 
     setChats((prev) =>
       prev.map((c) => {
@@ -530,33 +721,7 @@ export default function Community() {
       }),
     );
 
-    if (!isChannel) {
-      // Send a system welcome message inside group chat
-      const systemMsg: Message = {
-        id: `sys-${Date.now()}`,
-        senderName: "System",
-        text: `🎉 ${userProfile.name} has joined the community group! Welcome!`,
-        time: new Date().toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-        }),
-        isSentByMe: false,
-      };
-
-      setMessagesDb((prev) => ({
-        ...prev,
-        [chatId]: [...(prev[chatId] || []), systemMsg],
-      }));
-    }
-
-    // ==========================================================
-    // FUTURE: Register joining group in PostgreSQL using user ID and group ID:
-    // ==========================================================
-    // fetch('/api/communities/join', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({ chatId, userId: 'current_user_id' })
-    // });
+    setMessagesDb((prev) => (prev[chatId] ? prev : { ...prev, [chatId]: [] }));
   };
   // Existing group ላይ አዲስ members መጨመሪያ (Invite Members flow)
   const handleInviteMembers = (
@@ -592,58 +757,83 @@ export default function Community() {
     triggerToast(
       `✅ Added ${invitedUsers.length} member${invitedUsers.length > 1 ? "s" : ""}!`,
     );
-
-    // ⏳ FUTURE: POST /api/groups/:id/members with invitedUsers.map(u => u.id)
   };
 
   // Create new group logic
-  const handleCreateGroup = (
+  const handleCreateGroup = async (
     newChat: Chat,
     initialMembers: SelectableUser[],
   ) => {
-    setChats((prev) => [newChat, ...prev]);
-    setMessagesDb((prev) => ({
-      ...prev,
-      [newChat.id]: [],
-    }));
-    setActiveChatId(newChat.id);
-    setPickedMembers([]);
-    const memberNote =
-      initialMembers.length > 0
-        ? ` with ${initialMembers.length} member${initialMembers.length > 1 ? "s" : ""} added`
-        : "";
-    triggerToast(
-      `🚀 Group "${newChat.name}" created successfully${memberNote}!`,
-    );
-    // ⏳ FUTURE: POST /api/groups/:id/members with initialMembers.map(m => m.id)
-    // ==========================================
-    // FUTURE: Save newly created group in PostgreSQL using INSERT query:
-    // ==========================================
-    // fetch('/api/groups/create', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(newChat)
-    // });
+    if (!accessToken) return;
+    try {
+      const created = await createCommunityRequest(accessToken, {
+        type: "GROUP",
+        name: newChat.name,
+        description: newChat.description,
+        avatar: newChat.avatarUrl,
+        cover: newChat.cover,
+        themeColor: newChat.bgGradient,
+      });
+
+      const mapped = mapCommunitySuggestedToChat({
+        ...created,
+        membersCount: 1,
+      });
+      const finalChat: Chat = {
+        ...mapped,
+        isJoined: true,
+        isCreatedByMe: true,
+      };
+
+      setChats((prev) => [finalChat, ...prev]);
+      setMessagesDb((prev) => ({ ...prev, [finalChat.id]: [] }));
+      setActiveChatId(finalChat.id);
+      setPickedMembers([]);
+
+      const memberNote =
+        initialMembers.length > 0
+          ? ` (${initialMembers.length} member${initialMembers.length > 1 ? "s" : ""} selected locally — real invites need the Profile domain)`
+          : "";
+      triggerToast(
+        `🚀 Group "${finalChat.name}" created successfully${memberNote}!`,
+      );
+    } catch (err) {
+      console.error("Failed to create group:", err);
+      triggerToast("⚠️ Failed to create group. Please try again.");
+    }
   };
 
   // Create new channel logic
-  const handleCreateChannel = (newChat: Chat) => {
-    setChats((prev) => [newChat, ...prev]);
-    setMessagesDb((prev) => ({
-      ...prev,
-      [newChat.id]: [],
-    }));
-    setActiveChatId(newChat.id);
-    triggerToast(`📢 Channel "${newChat.name}" created successfully!`);
+  const handleCreateChannel = async (newChat: Chat) => {
+    if (!accessToken) return;
+    try {
+      const created = await createCommunityRequest(accessToken, {
+        type: "CHANNEL",
+        name: newChat.name,
+        description: newChat.description,
+        avatar: newChat.avatarUrl,
+        cover: newChat.cover,
+        themeColor: newChat.bgGradient,
+      });
 
-    // ==========================================
-    // FUTURE: Save newly created channel in PostgreSQL using INSERT query:
-    // ==========================================
-    // fetch('/api/channels/create', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify(newChat)
-    // });
+      const mapped = mapCommunitySuggestedToChat({
+        ...created,
+        membersCount: 1,
+      });
+      const finalChat: Chat = {
+        ...mapped,
+        isJoined: true,
+        isCreatedByMe: true,
+      };
+
+      setChats((prev) => [finalChat, ...prev]);
+      setMessagesDb((prev) => ({ ...prev, [finalChat.id]: [] }));
+      setActiveChatId(finalChat.id);
+      triggerToast(`📢 Channel "${finalChat.name}" created successfully!`);
+    } catch (err) {
+      console.error("Failed to create channel:", err);
+      triggerToast("⚠️ Failed to create channel. Please try again.");
+    }
   };
 
   // Start or open a chat with another developer

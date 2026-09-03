@@ -20,10 +20,10 @@ import {
   sharePost,
   addComment as apiAddComment,
   addReply as apiAddReply,
-  deleteCommentOrReply,
   editComment as apiEditComment,
+  deleteCommentOrReply,
 } from "../api/posts.api";
-
+import { followUser, unfollowUser } from "../api/follow.api";
 interface FeedContextType {
   posts: FeedPost[];
   isLoading: boolean;
@@ -42,6 +42,7 @@ interface FeedContextType {
   incrementShare: (postId: string) => void;
 
   ensureSinglePost: (postId: string) => Promise<void>;
+  toggleFollow: (authorUserId: string) => void;
   addComment: (postId: string, text: string) => void;
   addReply: (postId: string, commentId: string, text: string) => void;
   deleteComment: (postId: string, commentId: string) => void;
@@ -187,6 +188,31 @@ export function FeedProvider({ children }: { children: ReactNode }) {
                 savesCount: wasSaved ? p.savesCount + 1 : p.savesCount - 1,
               }
             : p,
+        ),
+      );
+    });
+  }, []);
+  // --- Follow — one author may have several posts on screen at once
+  // (feed + search results share the same `posts` array), so toggling
+  // updates every post by that author, not just the one the button was
+  // clicked on. Optimistic, reverted on failure — same pattern as like/save.
+  const toggleFollow = useCallback((authorUserId: string) => {
+    let wasFollowing = false;
+    setPosts((prev) =>
+      prev.map((p) => {
+        if (p.userId !== authorUserId) return p;
+        wasFollowing = p.isFollowing;
+        return { ...p, isFollowing: !p.isFollowing };
+      }),
+    );
+    const request = wasFollowing
+      ? unfollowUser(authorUserId)
+      : followUser(authorUserId);
+    request.catch((e) => {
+      console.error("Follow toggle failed, reverting:", e);
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.userId === authorUserId ? { ...p, isFollowing: wasFollowing } : p,
         ),
       );
     });
@@ -359,6 +385,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
         error,
         loadMore,
         ensureSinglePost,
+        toggleFollow,
         commentsMap,
         isLoadingComments,
         loadComments,

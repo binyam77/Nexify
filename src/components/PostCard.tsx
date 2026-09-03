@@ -35,6 +35,7 @@ export default function PostCard({
 }: PostCardProps) {
   const {
     toggleLike: toggleLikePost,
+    toggleFollow,
     incrementShare,
     commentsMap,
     addComment,
@@ -44,7 +45,6 @@ export default function PostCard({
     deleteReply,
     loadComments,
   } = useFeed();
-
   //"post"prop በከትታ FeedContext array element  ስለሆነ(Home.tsx ካስተላለፈው):
   // toggle ሰደረግ context ራሱ ይከየራል: re-render ይህን በራሱ ያንተባርካል
   const liked = post.liked;
@@ -61,7 +61,6 @@ export default function PostCard({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isVertical, setIsVertical] = useState(true);
-  const [isFollowing, setIsFollowing] = useState<boolean>(false);
   const [imgIsVertical, setImgVertical] = useState<boolean>(true);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [volume, setVolume] = useState<number>(0.8);
@@ -336,17 +335,17 @@ export default function PostCard({
             <span className="text-input font-bold text-sm drop-shadow md:text-ink">
               {post.username}
             </span>
-            {!isOwnPost && (
+                       {!isOwnPost && (
               <button
-                onClick={() => setIsFollowing((f) => !f)}
+                onClick={() => toggleFollow(post.userId)}
                 className={`text-[11px] font-bold px-2.5 py-0.5  rounded-full border transition-colors
             ${
-              isFollowing
+              post.isFollowing
                 ? "border border-input-border text-input  md:border-input-border md:text-input-text"
                 : "border-brand-light bg-brand text-input w-15  md:border-brand-light md:text-input md:bg-brand"
             }`}
               >
-                {isFollowing ? "Following" : "Follow"}
+                {post.isFollowing ? "Following" : "Follow"}
               </button>
             )}
           </div>
