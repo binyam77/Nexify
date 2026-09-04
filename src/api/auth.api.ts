@@ -18,17 +18,7 @@ export interface MessageResponse {
   message: string;
 }
 
-// ================= REGISTER =================
-export function registerRequest(params: {
-  username: string;
-  email: string;
-  password: string;
-}): Promise<MessageResponse> {
-  return apiClient<MessageResponse>("/auth/register", {
-    method: "POST",
-    body: params,
-  });
-}
+
 // ================= LOGIN =================
 export function loginRequest(params: {
   email: string;

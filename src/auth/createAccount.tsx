@@ -154,7 +154,7 @@ export default function CreateAccount({
   };
 
   const titles: Record<Step, string> = {
-    username: "Enter a username",
+    username: "What's your name?",
     email: "What's your email?",
     verify: "Verify your email",
     password: "Create a password",
@@ -187,22 +187,22 @@ export default function CreateAccount({
       {step === "username" && (
         <div className="flex flex-col gap-5">
           <div>
-            <label className="text-sm text-gray-500 mb-1.5 block">
-              Username
+            <label className="text-sm text-gray-700 mb-1.5 block">
+              Enter a username
             </label>
             <input
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="username"
               autoComplete="username"
-              className="w-full px-4 py-3.5 bg-surface-raised rounded-lg text-input-text placeholder:text-input-placeholder border-0 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-all text-base"
+              className="w-full px-4 py-3.5 bg-surface-raised rounded-[10px] text-input-text placeholder:text-input-placeholder border border-[#e4e4e4] focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-all text-base"
             />
           </div>
           <button
             type="button"
             onClick={handleUsernameNext}
             disabled={!username}
-            className="w-full py-4 bg-brand text-white font-semibold rounded-lg text-base hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full py-4 bg-brand text-white font-semibold rounded-full text-base hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
           >
             Continue
           </button>
@@ -213,14 +213,14 @@ export default function CreateAccount({
       {step === "email" && (
         <div className="flex flex-col gap-5">
           <div>
-            <label className="text-sm text-gray-500 mb-1.5 block">Email</label>
+            <label className="text-sm text-gray-700 mb-1.5 block">Email</label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="Enter your email"
               autoComplete="email"
-              className="w-full px-4 py-3.5 bg-surface-raised rounded-lg text-input-text placeholder:text-input-placeholder border-0 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-all text-base"
+              className="w-full px-4 py-3.5 bg-surface-raised rounded-lg text-input-text placeholder:text-input-placeholder border-1 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-all text-base"
             />
           </div>
           <button

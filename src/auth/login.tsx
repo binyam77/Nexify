@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, AlertCircle, CheckCircle2, AtSign, ChevronRight } from "lucide-react";
+import { Eye, EyeOff, AlertCircle, CheckCircle2, ChevronRight } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../lib/api-client";
 import ResetPasswordModal from "../components/ResetPasswordModal";
@@ -77,26 +77,28 @@ export default function Login({ onNavigateToSignup }: LoginProps) {
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-5">
           <div>
-            <label className="text-sm text-gray-500 mb-1.5 block">Email</label>
+            
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder="Email"
               autoComplete="email"
-              className="w-full px-4 py-3.5 bg-surface-raised rounded-lg text-input-text placeholder:text-input-placeholder border-0 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-all text-base"
+              className="w-full  px-4 py-3.5 bg-surface-raised rounded-[10px] text-input-text placeholder:text-input-placeholder border border-[#e4e4e4] focus:outline-none focus:ring-1 focus:ring-[#1370fc] transition-all text-base"
             />
           </div>
 
           <div>
-            <label className="text-sm text-gray-500 mb-1.5 block">Password</label>
+            
             <div className="relative">
+            
               <input
                 type={showPassword ? "text" : "password"}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
                 autoComplete="current-password"
-                className="w-full px-4 py-3.5 pr-12 bg-surface-raised rounded-lg text-input-text border-0 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-all text-base"
+                className="w-full px-4 py-3.5 pr-12 bg-surface-raised rounded-[10px] text-input-text border border-[#e4e4e4] focus:outline-none focus:ring-1 focus:ring-[#1370fc] transition-all text-base"
               />
               <button
                 type="button"
@@ -119,7 +121,7 @@ export default function Login({ onNavigateToSignup }: LoginProps) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-4 bg-brand text-white font-semibold rounded-lg text-base hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+            className="w-full py-4 bg-brand text-white font-semibold rounded-full text-base hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-1"
           >
             {isSubmitting ? "Logging in..." : "Log In"}
           </button>
@@ -166,7 +168,7 @@ export default function Login({ onNavigateToSignup }: LoginProps) {
         onClick={onNavigateToSignup}
         className="fixed bottom-0 left-0 right-0 bg-surface-raised border-t border-border py-4 px-6 flex items-center justify-center gap-2 text-brand text-base font-medium"
       >
-        <AtSign className="w-4 h-4" />
+        
         Create account
         <ChevronRight className="w-4 h-4" />
       </button>

@@ -14,7 +14,7 @@ const FirstEntry: React.FC = () => {
       if (isLoggedIn) {
         navigate(ROUTES.home);
       } else {
-        navigate("/createAccount");
+        navigate("/login");
       }
     }, 2000);
 

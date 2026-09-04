@@ -11,7 +11,6 @@ import {
 } from "react-router-dom";
 import Home from "./pages/home";
 import Layout from "./components/Layout";
-import FirstEntry from "./auth/firstEntry";
 import CreateAccount from "./auth/createAccount";
 import Login from "./auth/login";
 import Profile from "./pages/profile";
@@ -64,7 +63,7 @@ export default function App() {
     <UIProvider>
       <Routes>
         {/* FirstEntry ገጽ */}
-        <Route path="/" element={<FirstEntry/>}/>
+        <Route path="/" element={<Navigate to={ROUTES.home} replace />} />
         {/* ✅ የተጠበቁ ገጾች (Protected Routes) */}
         <Route
           element={
@@ -142,11 +141,18 @@ export default function App() {
 }
 
 function RequireAuth({ children }: { children: React.ReactNode }) {
- const {isLoggedIn} = useAuth();
- const location= useLocation();
- if(!isLoggedIn) {
- return <Navigate to="/login" state={{ from:location}} replace/>
- }
- return <>{children}</>
+  // ⚠️ TEMPORARY DEV BYPASS — Login ሳያደርጉ Home/Profile/Settings ማየት
+  // እንዲችሉ። ወደ ነበረበት ለመመለስ: ይህን 1 መስመር (return <>{children}</>;) ብቻ
+  // ያጥፉ — ከታች ያለው እውነተኛው check በራሱ ይሰራል።
+  return <>{children}</>;
 
+  // eslint-disable-next-line no-unreachable
+  const { isLoggedIn } = useAuth();
+  const location = useLocation();
+
+  if (!isLoggedIn) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  return <>{children}</>;
 }
