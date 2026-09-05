@@ -10,7 +10,7 @@ import type { FeedPost } from "../types";
 // ProfileVideo.tsx የProp ዓይነቶች መግለጫ (Props Interface for ProfileVideo.tsx)
 interface ProfileVideoProps {
   filteredPosts: FeedPost[];
-  viewMode: "me" | "other";
+  viewMode?: "me" | "other";
   handleOpenPlayer: (post: FeedPost) => void;
   handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
   
@@ -18,7 +18,7 @@ interface ProfileVideoProps {
 
 export default function ProfileVideo({
   filteredPosts,
-  viewMode,
+  viewMode="me",
   handleOpenPlayer,
   handleDeletePost,
 }: ProfileVideoProps) {

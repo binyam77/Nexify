@@ -121,7 +121,7 @@ export default function NewChannelModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-white z-50 flex flex-col animate-in fade-in duration-150">
+    <div className="fixed inset-0 h-[100svh] bg-white z-50 flex flex-col animate-in fade-in duration-150">
       <header className="px-4 py-4 border-b border-gray-100 flex items-center gap-3 shrink-0">
         <button
           onClick={onClose}
@@ -283,16 +283,18 @@ export default function NewChannelModal({
         </div>
       </form>
 
-      <div className="p-4 border-t border-gray-100 shrink-0">
-        <button
-          onClick={handleSubmit}
-          disabled={!name.trim()}
-          className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600 text-white text-sm font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md shadow-blue-200"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Create Channel</span>
-        </button>
+           <div className="p-4 pb-[max(1.5rem,calc(env(safe-area-inset-bottom)+1rem))] border-t border-gray-100 shrink-0 shadow-[0_-4px_12px_rgba(0,0,0,0.04)]">
+        <div className="max-w-lg mx-auto">
+          <button
+            onClick={handleSubmit}
+            disabled={!name.trim()}
+            className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600 text-white text-sm font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md shadow-blue-200"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Create Channel</span>
+          </button>
+        </div>
       </div>
-    </div>
+      </div>
   );
 }

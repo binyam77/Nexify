@@ -11,7 +11,8 @@ import { fetchUserPosts } from "../api/posts.api";
 import type { FeedPost } from "../types";
 import ProfileVideo from "../components/ProfileVideo";
 import ViewVideo from "../components/ViewVideo";
-
+import ShareModal from "../components/ShareModal";
+import { Trash2 } from "lucide-react";
 interface OtherProfileData {
   userId: string;
   username: string;
@@ -40,20 +41,21 @@ export default function UserProfile() {
     addReply,
     editComment,
   } = useFeed();
-
-  // ራስህ ራስህ profile ውስጥ ከከፈትክ ወደ /profile (own page) ውሰድ — duplicate logic ማስወገጃ
-  if (username && user?.username === username) {
-    return <Navigate to="/profile" replace />;
-  }
-
   const [otherProfile, setOtherProfile] = useState<OtherProfileData | null>(
     null,
   );
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
+  const [hasMorePosts, setHasMorePosts] = useState(false);
+  const postsCursorRef = useRef<string | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [isFollowPending, setIsFollowPending] = useState(false);
-
+  const [shareModalPost, setShareModalPost] = useState<FeedPost | null>(null);
+  const [deleteConfirmState, setDeleteConfirmState] = useState<{
+    isOpen: boolean;
+    postId: string;
+    commentId: string;
+  } | null>(null);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedMediaSrc, setSelectedMediaSrc] = useState<string | null>(null);
   const viewedKeyRef = useRef("viewedPostIds");
@@ -85,7 +87,11 @@ export default function UserProfile() {
       setIsLoadingPosts(true);
       try {
         const page = await fetchUserPosts(otherProfile!.userId);
-        if (!cancelled) setPosts(page.items);
+        if (!cancelled) {
+          setPosts(page.items);
+          setHasMorePosts(page.hasMore);
+          postsCursorRef.current = page.nextCursor;
+        }
       } catch (e) {
         console.error("Failed to load user's posts:", e);
       } finally {
@@ -96,8 +102,25 @@ export default function UserProfile() {
     return () => {
       cancelled = true;
     };
+     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [otherProfile?.userId]);
+  // ራስህ ራስህ profile ውስጥ ከከፈትክ ወደ /profile (own page) ውሰድ — duplicate logic ማስወገጃ
+  if (username && user?.username === username) {
+   
+    return <Navigate to="/profile" replace />;
+  }
 
+  const loadMorePosts = async () => {
+    if (!otherProfile?.userId || !hasMorePosts || !postsCursorRef.current)
+      return;
+    const page = await fetchUserPosts(
+      otherProfile.userId,
+      postsCursorRef.current,
+    );
+    setPosts((prev) => [...prev, ...page.items]);
+    setHasMorePosts(page.hasMore);
+    postsCursorRef.current = page.nextCursor;
+  };
   const handleToggleFollow = async () => {
     if (!otherProfile || isFollowPending) return;
     setIsFollowPending(true);
@@ -146,6 +169,14 @@ export default function UserProfile() {
       incrementView(post.id);
     }
   };
+  const handleDeleteComment = (postId: string, commentId: string) => {
+    setDeleteConfirmState({ isOpen: true, postId, commentId });
+  };
+  const executeDeleteComment = () => {
+    if (!deleteConfirmState) return;
+    deleteComment(deleteConfirmState.postId, deleteConfirmState.commentId);
+    setDeleteConfirmState(null);
+  };
   const handleClosePlayer = () => {
     setSelectedPostId(null);
     setSelectedMediaSrc(null);
@@ -160,6 +191,14 @@ export default function UserProfile() {
       setSelectedMediaSrc(nextPost.mediaUrls[0] || "");
       void loadComments(nextPost.id);
     }
+  };
+
+  const handleSharePost = (postId: string) => {
+    const found = posts.find((p) => p.id === postId) || null;
+    setShareModalPost(found);
+  };
+  const handleIncrementShare = (postId: string) => {
+    incrementShare(postId);
   };
 
   const formatCount = (num: number) => {
@@ -298,6 +337,16 @@ export default function UserProfile() {
             handleDeletePost={() => {}}
           />
         )}
+        {hasMorePosts && !isLoadingPosts && (
+          <div className="flex justify-center mt-4">
+            <button
+              onClick={loadMorePosts}
+              className="px-4 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg"
+            >
+              Load more
+            </button>
+          </div>
+        )}
       </div>
 
       {selectedPost && user && (
@@ -316,15 +365,51 @@ export default function UserProfile() {
           handleNavigatePost={handleNavigatePost}
           handleToggleLikePost={toggleLike}
           handleToggleSavePost={toggleSave}
-          handleSharePost={() => {}}
+          handleSharePost={handleSharePost}
           handleDeletePost={() => {}}
           handleAddComment={addComment}
-          handleDeleteComment={deleteComment}
+          handleDeleteComment={handleDeleteComment}
           handleAddReply={addReply}
           handleEditComment={editComment}
           handleNavigateToUserProfile={() => {}}
           formatCount={formatCount}
         />
+      )}
+      <ShareModal
+        post={shareModalPost}
+        isOpen={shareModalPost !== null}
+        onClose={() => setShareModalPost(null)}
+        onShareIncrement={handleIncrementShare}
+      />
+      {deleteConfirmState?.isOpen && (
+        <div className="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+          <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-gray-100 flex flex-col text-center">
+            <div className="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4 text-rose-500">
+              <Trash2 className="w-7 h-7" />
+            </div>
+            <h3 className="text-lg font-black text-slate-800 mb-2">
+              Delete Comment?
+            </h3>
+            <p className="text-xs text-slate-500 font-semibold mb-6">
+              Are you sure you want to delete this permanently? This action
+              cannot be undone.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeleteConfirmState(null)}
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-black text-slate-500 transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={executeDeleteComment}
+                className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black text-white shadow-lg transition-all"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

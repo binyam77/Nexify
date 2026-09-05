@@ -11,6 +11,8 @@ import {
   VolumeX,
   MoreHorizontal,
   MessagesSquare,
+  WifiOff,
+  RotateCw,
 } from "lucide-react";
 import { useShare } from "../hooks/useShare";
 import CommentModal from "./CommentModal";
@@ -61,19 +63,47 @@ export default function PostCard({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isVertical, setIsVertical] = useState(true);
+  // (ተወግዷል — post.isFollowing ከ FeedContext/backend ነው የሚመጣው)
   const [imgIsVertical, setImgVertical] = useState<boolean>(true);
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [volume, setVolume] = useState<number>(0.8);
   const [captionExpanded, setCaptionExpanded] = useState<boolean>(false);
-  const isOwnPost =
-    currentUser.fullName === post.username || currentUser.id === post.userId;
+
+  // Media load failure (e.g. dropped network mid-scroll/mid-watch) — shows
+  // a Retry overlay instead of a blank/broken video or image.
+  const [mediaError, setMediaError] = useState(false);
+  // Bumped on retry to cache-bust and (for video) force a full remount via
+  // `key`, so the browser actually re-attempts the network request rather
+  // than serving the same failed state.
+  const [retryNonce, setRetryNonce] = useState(0);
+
+  // Swiping to a different carousel slide should reset any previous
+  // slide's error — each slide gets a clean attempt. Compared during
+  // render (React's recommended "adjusting state on a value change"
+  // pattern) instead of a useEffect, so no extra render cycle and no
+  // "synchronous setState in an effect" warning.
+  const [lastIndexForError, setLastIndexForError] = useState(currentIndex);
+  if (currentIndex !== lastIndexForError) {
+    setLastIndexForError(currentIndex);
+    setMediaError(false);
+  }
+
   // Comments modal ሲከፈት ብቻ ነው ከ backend የምንጭነው (Comments unbounded list ስለሆነ
-  // ሁልጊዜ preload አናደርግም — database-design.md Section 19)
+  // ሁልጊዜ preload አናደርግም — database-design.md Section 19). Legitimate
+  // effect use (fetches from an external system), not a "state sync" case.
   useEffect(() => {
     if (isCommentsOpen) {
       void loadComments(post.id);
     }
   }, [isCommentsOpen, post.id, loadComments]);
+
+  function handleRetryMedia() {
+    setMediaError(false);
+    setRetryNonce((n) => n + 1);
+  }
+  const isOwnPost =
+    currentUser.fullName === post.username || currentUser.id === post.userId;
+  
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.muted = isMuted;
@@ -154,6 +184,22 @@ export default function PostCard({
         </div>
       )}
 
+      {/* Media load failure overlay — replaces a blank/broken video/image
+          with an explicit, actionable state (network drop mid-watch etc.) */}
+      {mediaError && (
+        <div className="absolute inset-0 z-20 bg-black flex flex-col items-center justify-center gap-3 text-white">
+          <WifiOff className="w-10 h-10 opacity-70" />
+          <p className="text-sm opacity-80">ግንኙነት ችግር ገጥሟል</p>
+          <button
+            onClick={handleRetryMedia}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 text-sm font-semibold active:scale-95 transition-transform"
+          >
+            <RotateCw className="w-4 h-4" />
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* ===== Media Area ===== */}
       {post.type === "video" ? (
         <div
@@ -162,6 +208,7 @@ export default function PostCard({
           onClick={handleVideoClick}
         >
           <video
+            key={`video-${retryNonce}`}
             ref={videoRef}
             src={post.mediaUrls[0]}
             className={`h-full w-full ${isVertical ? " object-cover" : "object-contain"}`}
@@ -169,6 +216,7 @@ export default function PostCard({
             autoPlay
             muted
             playsInline
+            onError={() => setMediaError(true)}
             onLoadedMetadata={(e) => {
               const v = e.currentTarget;
               setIsVertical(v.videoHeight / v.videoWidth >= 1.3);
@@ -261,13 +309,20 @@ export default function PostCard({
               >
                 {url ? (
                   <img
-                    src={url}
+                    src={
+                      i === currentIndex && retryNonce > 0
+                        ? `${url}${url.includes("?") ? "&" : "?"}retry=${retryNonce}`
+                        : url
+                    }
                     alt={`post-${i}`}
                     onLoad={(e) => {
                       const img = e.currentTarget;
                       setImgVertical(
                         img.naturalHeight / img.naturalWidth >= 1.3,
                       );
+                    }}
+                    onError={() => {
+                      if (i === currentIndex) setMediaError(true);
                     }}
                     className={`h-full w-full ${imgIsVertical ? "object-cover" : "object-contain bg-black"}`}
                   />
@@ -335,7 +390,7 @@ export default function PostCard({
             <span className="text-input font-bold text-sm drop-shadow md:text-ink">
               {post.username}
             </span>
-                       {!isOwnPost && (
+            {!isOwnPost && (
               <button
                 onClick={() => toggleFollow(post.userId)}
                 className={`text-[11px] font-bold px-2.5 py-0.5  rounded-full border transition-colors

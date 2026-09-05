@@ -117,10 +117,16 @@ export default function Community() {
   });
   const location = useLocation();
 
+  // Trigger toast notification
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
   // ================= LOAD COMMUNITIES (mine + suggested) =================
   useEffect(() => {
     if (!accessToken || !user) return;
     const token = accessToken; // narrowed local const - nested closures below can safly use this
+    const currentUserId = user.id; // same reason — .map() callbacks below are nested closures too
     let cancelled = false;
 
     async function loadCommunities() {
@@ -132,7 +138,7 @@ export default function Community() {
         if (cancelled) return;
 
         const mineChats = mine.items.map((item) =>
-          mapCommunityListItemToChat(item, user.id),
+          mapCommunityListItemToChat(item, currentUserId),
         );
         const suggestedChats = suggested.items.map(mapCommunitySuggestedToChat);
 
@@ -268,11 +274,6 @@ export default function Community() {
     return `${dateStr}, ${timeStr}`;
   };
 
-  // Trigger toast notification
-  const triggerToast = (msg: string) => {
-    setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
-  };
   const isCommunityChat = (chat: Chat | undefined | null) =>
     chat?.type === "channel" || chat?.type === "group";
 
@@ -405,6 +406,7 @@ export default function Community() {
 
     const target = chats.find((c) => c.id === chatId);
     if (!isCommunityChat(target) || !accessToken || !user) return;
+    const currentUserId = user.id; // narrowed — the .map() callback below is a nested closure
 
     try {
       await joinRoom("community", chatId);
@@ -417,7 +419,7 @@ export default function Community() {
     try {
       const result = await listMessagesRequest(accessToken, chatId);
       const mapped = result.items
-        .map((m) => mapCommunityMessageToMessage(m, user.id))
+        .map((m) => mapCommunityMessageToMessage(m, currentUserId))
         .reverse();
       setMessagesDb((prev) => ({ ...prev, [chatId]: mapped }));
     } catch (err) {

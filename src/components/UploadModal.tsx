@@ -14,6 +14,7 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
   const [isUploading, setIsUploading] = useState(false);
   const [isVideo, setIsVideo] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [hashtags, setHashtags] = useState("");
   if (!isOpen) return null;
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,7 +32,11 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
     setError(null);
     try {
       // TODO(object-storage): R2/S3 ሲዘጋጅ፣ selectedFile ን upload አድርገህ
-      // resulting URL ን ወደ createPost({ caption, hashtags, media: [{url,type}] }) አስገባ
+      // resulting URL ን ወደ createPost({
+      //   caption,
+      //   hashtags: hashtags.split(/[\s,]+/).filter(Boolean).map(h => h.startsWith("#") ? h : `#${h}`),
+      //   media: [{ url, type }],
+      // }) አስገባ
       throw new Error("STORAGE_NOT_CONFIGURED");
     } catch (e) {
       if (e instanceof Error && e.message === "STORAGE_NOT_CONFIGURED") {
@@ -92,6 +97,7 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
               onClick={() => {
                 setSelectedFile(null);
                 setPreviewUrl("");
+                setHashtags("");
               }}
               className="absolute top-2 right-2 bg-black/50 rounded-full p-1"
             >
@@ -103,10 +109,23 @@ export default function UploadModal({ isOpen, onClose }: UploadModalProps) {
         <textarea
           value={caption}
           onChange={(e) => setCaption(e.target.value)}
-          placeholder="Write a caption... #hashtags"
+          placeholder="Write a caption..."
           rows={3}
+          maxLength={2200}
           className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
         />
+
+        <div className="flex items-center gap-2 border border-slate-200 rounded-lg px-3 py-2 focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500">
+          <span className="text-slate-400 font-bold text-sm">#</span>
+          <input
+            type="text"
+            value={hashtags}
+            onChange={(e) => setHashtags(e.target.value)}
+            placeholder="Add hashtags (e.g. travel, sunset)"
+            maxLength={200}
+            className="flex-1 text-sm text-slate-800 outline-none placeholder:text-slate-400"
+          />
+        </div>
         {error && (
           <p className="text-xs font-semibold text-amber-600 bg-amber-50 border-amber-200 rounded-lg px-3 py-2">
             {error}

@@ -30,8 +30,9 @@ interface FeedContextType {
   isLoadingMore: boolean;
   hasMore: boolean;
   error: string | null;
+  loadMoreError: string | null;
   loadMore: () => Promise<void>;
-
+  retryFeed: () => Promise<boolean>;
   commentsMap: Record<string, CommentItem[]>;
   isLoadingComments: boolean;
   loadComments: (postId: string) => Promise<void>;
@@ -59,6 +60,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadMoreError, setLoadMoreError] = useState<string | null>(null);
   // Cursor is a ref, not state — advancing it should never itself trigger a
   // re-render; only the derived `posts`/`hasMore` updates should.
   const nextCursorRef = useRef<string | null>(null);
@@ -68,10 +70,30 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   );
   const [isLoadingComments, setIsLoadingComments] = useState(false);
 
-  // --- Initial feed load ---
-  useEffect(() => {
+  // --- Initial feed load — extracted so the same logic backs both the
+  // automatic mount-time fetch AND the user-facing Retry button (no
+  // duplicated fetch/setState logic between the two call sites).
+  const retryFeed = useCallback(async (): Promise<boolean> => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const page = await fetchFeed();
+      setPosts(page.items);
+      setHasMore(page.hasMore);
+      nextCursorRef.current = page.nextCursor;
+      return true;
+    } catch (e) {
+      setError("Couldn't load the feed. Please try again.");
+      console.error("Feed load error:", e);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+   useEffect(() => {
     let cancelled = false;
-    async function loadInitial() {
+    async function run() {
       setIsLoading(true);
       setError(null);
       try {
@@ -81,13 +103,15 @@ export function FeedProvider({ children }: { children: ReactNode }) {
         setHasMore(page.hasMore);
         nextCursorRef.current = page.nextCursor;
       } catch (e) {
-        if (!cancelled) setError("Feed መጫን አልተቻለም። እንደገና ይሞክሩ።");
-        console.error("Feed load error:", e);
+        if (!cancelled) {
+          setError("Couldn't load the feed. Please try again.");
+          console.error("Feed load error:", e);
+        }
       } finally {
         if (!cancelled) setIsLoading(false);
       }
     }
-    void loadInitial();
+    void run();
     return () => {
       cancelled = true;
     };
@@ -109,6 +133,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   const loadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore || !nextCursorRef.current) return;
     setIsLoadingMore(true);
+    setLoadMoreError(null);
     try {
       const page = await fetchFeed(nextCursorRef.current);
       setPosts((prev) => [...prev, ...page.items]);
@@ -116,6 +141,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       nextCursorRef.current = page.nextCursor;
     } catch (e) {
       console.error("Feed loadMore error:", e);
+      setLoadMoreError("ተጨማሪ ፖስቶች መጫን አልተቻለም።");
     } finally {
       setIsLoadingMore(false);
     }
@@ -383,7 +409,9 @@ export function FeedProvider({ children }: { children: ReactNode }) {
         isLoadingMore,
         hasMore,
         error,
+        loadMoreError,
         loadMore,
+        retryFeed,
         ensureSinglePost,
         toggleFollow,
         commentsMap,

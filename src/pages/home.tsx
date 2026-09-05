@@ -5,7 +5,7 @@ import PostCard from "../components/PostCard";
 import avatarImg from "../assets/user.png";
 import { useAuth } from "../context/AuthContext";
 import { useFeed } from "../context/FeedContext";
-import { ChevronUp, ChevronDown, Loader2, Search } from "lucide-react";
+import { ChevronUp, ChevronDown, Loader2, Search, WifiOff, } from "lucide-react";
 import type { User } from "../types";
 import SearchOverlay from "../components/SearchOverlay";
 
@@ -21,7 +21,9 @@ export default function Home() {
     isLoadingMore,
     hasMore,
     error,
+    loadMoreError,
     loadMore,
+    retryFeed,
   } = useFeed();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -120,11 +122,17 @@ export default function Home() {
       </div>
     );
   }
-
   if (error) {
     return (
       <div className="h-full w-full flex flex-col items-center justify-center bg-surface text-slate-400 gap-3">
+        <WifiOff className="w-10 h-10 opacity-60" />
         <p className="text-lg font-semibold">{error}</p>
+        <button
+          onClick={() => void retryFeed()}
+          className="mt-2 px-5 py-2 rounded-full bg-brand text-white text-sm font-semibold active:scale-95 transition-transform"
+        >
+          Retry
+        </button>
       </div>
     );
   }
@@ -167,22 +175,30 @@ export default function Home() {
         />
       </div>
 
-      {/* Desktop scroll arrows only */}
+           {/* Desktop scroll arrows only */}
       {posts.length > 1 && (
         <div className="hidden md:flex fixed right-8 top-1/2 -translate-y-1/2 flex-col gap-3 z-50">
-          <button
-            onClick={goPrev}
-            disabled={currentIndex === 0}
-            className="w-10 h-10 rounded-full bg-input/90 hover:bg-input shadow-lg flex items-center justify-center text-input-text disabled:opacity-30 transition-all"
-          >
+          <button onClick={goPrev} disabled={currentIndex === 0}
+            className="w-10 h-10 rounded-full bg-input/90 hover:bg-input shadow-lg flex items-center justify-center text-input-text disabled:opacity-30 transition-all">
             <ChevronUp className="w-5 h-5" />
           </button>
-          <button
-            onClick={goNext}
-            disabled={currentIndex === posts.length - 1 && !hasMore}
-            className="w-10 h-10 rounded-full bg-input/90 hover:bg-input shadow-lg flex items-center justify-center text-input-text disabled:opacity-30 transition-all"
-          >
+          <button onClick={goNext} disabled={currentIndex === posts.length - 1 && !hasMore}
+            className="w-10 h-10 rounded-full bg-input/90 hover:bg-input shadow-lg flex items-center justify-center text-input-text disabled:opacity-30 transition-all">
             <ChevronDown className="w-5 h-5" />
+          </button>
+        </div>
+      )}
+
+      {/* Pagination (loadMore) failure — feed itself still shows fine,
+          just the "load more" step failed (e.g. network drop mid-scroll) */}
+      {loadMoreError && (
+        <div className="absolute bottom-24 left-1/2 -translate-x-1/2 z-40 flex items-center gap-3 bg-black/80 text-white text-sm px-4 py-2.5 rounded-full">
+          <span>{loadMoreError}</span>
+          <button
+            onClick={() => void loadMore()}
+            className="font-semibold text-brand-light underline underline-offset-2"
+          >
+            Retry
           </button>
         </div>
       )}
