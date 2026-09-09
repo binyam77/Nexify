@@ -22,6 +22,8 @@ import type { FeedPost, CommentItem } from "../types";
 interface LeftProps {
   selectedPost: FeedPost;
   comments: CommentItem[];
+  isLoadingComments: boolean;
+  commentsError: string | null;
   shares: number;
   isOwnPost: boolean;
   postAuthor: {
@@ -55,6 +57,11 @@ interface LeftProps {
   handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
   handleAddComment: (postId: string, text: string) => void;
   handleDeleteComment: (postId: string, commentId: string) => void;
+  handleDeleteReply: (
+    postId: string,
+    commentId: string,
+    replyId: string,
+  ) => void;
   handleAddReply: (postId: string, commentId: string, text: string) => void;
   handleEditComment: (
     postId: string,
@@ -69,6 +76,8 @@ interface LeftProps {
 export default function Left({
   selectedPost,
   comments,
+  isLoadingComments,
+  commentsError,
   shares,
   isOwnPost,
   postAuthor,
@@ -87,6 +96,7 @@ export default function Left({
   handleDeletePost,
   handleAddComment,
   handleDeleteComment,
+  handleDeleteReply,
   handleAddReply,
   handleEditComment,
   handleNavigateToUserProfile,
@@ -147,7 +157,7 @@ export default function Left({
           </div>
         </div>
 
-               {isOwnPost && (
+        {isOwnPost && (
           <button
             onClick={(e) => handleDeletePost(selectedPost.id, e)}
             className="px-3.5 py-1.5 rounded-lg bg-rose-50 text-rose-600 hover:bg-rose-100 flex items-center gap-1.5 text-xs font-black transition-all"
@@ -230,7 +240,15 @@ export default function Left({
         </h3>
 
         <div className="flex-1 overflow-y-auto space-y-4 pb-4 pr-1 scrollbar-thin">
-          {comments.length === 0 ? (
+          {isLoadingComments ? (
+            <div className="text-center text-slate-400 text-sm py-12">
+              Loading comments...
+            </div>
+          ) : commentsError ? (
+            <div className="text-center text-rose-500 text-sm py-12 font-semibold">
+              {commentsError}
+            </div>
+          ) : comments.length === 0 ? (
             <div className="text-center text-slate-400 text-sm py-12 flex flex-col items-center justify-center">
               <span className="text-3xl mb-2">💬</span>
               <p className="font-bold text-slate-500">No comments yet</p>

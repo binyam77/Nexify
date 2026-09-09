@@ -9,7 +9,7 @@ interface CommentCardProps {
   currentUsername: string;
   onDelete: (commentId: string) => void;
   onEdit: (commentId: string, newText: string) => void;
-  onAddReply: (commentId: string, text: string) => void;
+  onAddReply: (commentId: string, text: string) => Promise<boolean>;
   onDeleteReply: (commentId: string, replyId: string) => void;
 }
 
@@ -24,7 +24,8 @@ export default function CommentCard({
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.text);
   const [showReplyInput, setShowReplyInput] = useState(false);
-  const [replyText, setReplyText] = useState("");
+   const [replyText, setReplyText] = useState("");
+    const [replyFailed, setReplyFailed] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState(false);
 
   const isOwner = comment.username === currentUsername;
@@ -40,12 +41,17 @@ export default function CommentCard({
     setIsEditing(false);
   }
 
-  function submitReply() {
+    async function submitReply() {
     const trimmed = replyText.trim();
     if (!trimmed) return;
-    onAddReply(comment.id, trimmed);
-    setReplyText("");
-    setShowReplyInput(false);
+    setReplyFailed(false);
+    const success = await onAddReply(comment.id, trimmed);
+    if (success) {
+      setReplyText("");
+      setShowReplyInput(false);
+    } else {
+      setReplyFailed(true);
+    }
   }
 return (
     <div className="flex items-start gap-2.5">
@@ -127,28 +133,37 @@ return (
             </>
           )}
         </div>
-
         {showReplyInput && (
-          <div className="mt-2 flex items-center gap-2 rounded-xl bg-zinc-900 p-2">
-            <EmojiPicker onSelect={(emoji) => setReplyText((t) => t + emoji)} />
-            <input
-              value={replyText}
-              maxLength={300}
-              placeholder="Write a reply..."
-              onChange={(e) => setReplyText(e.target.value)}
-              onKeyDown={(e) => e.key === "Enter" && submitReply()}
-              className="flex-1 rounded-full border border-zinc-700 bg-black px-3.5 py-1.5 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-zinc-500"
-            />
-            <button
-              type="button"
-              onClick={submitReply}
-              className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-white hover:brightness-110"
-            >
-              <Send size={14} />
-            </button>
+          <div className="mt-2 flex flex-col gap-1">
+            {replyFailed && (
+              <p className="text-[11px] font-medium text-rose-400">
+                አልተላከም — ግንኙነት ይፈትሹ እና እንደገና ይሞክሩ
+              </p>
+            )}
+            <div className="flex items-center gap-2 rounded-xl bg-zinc-900 p-2">
+              <EmojiPicker onSelect={(emoji) => setReplyText((t) => t + emoji)} />
+              <input
+                value={replyText}
+                maxLength={300}
+                placeholder="Write a reply..."
+                onChange={(e) => {
+                  setReplyText(e.target.value);
+                  if (replyFailed) setReplyFailed(false);
+                }}
+                onKeyDown={(e) => e.key === "Enter" && void submitReply()}
+                className="flex-1 rounded-full border border-zinc-700 bg-black px-3.5 py-1.5 text-xs text-white placeholder:text-zinc-500 outline-none focus:border-zinc-500"
+              />
+              <button
+                type="button"
+                onClick={() => void submitReply()}
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand text-white hover:brightness-110"
+              >
+                <Send size={14} />
+              </button>
+            </div>
           </div>
         )}
-
+       
         {comment.replies.length > 0 && (
           <div className="mt-2 flex flex-col gap-2 border-l-2 border-zinc-800 pl-3">
             {visibleReplies.map((reply) => (

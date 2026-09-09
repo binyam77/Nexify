@@ -2,11 +2,12 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef,useCallback } from "react";
 import { useParams, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useFeed } from "../context/FeedContext";
-import { fetchProfile, followUser, unfollowUser } from "../api/profile.api";
+import { fetchProfile } from "../api/profile.api";
+import { followUser, unfollowUser } from "../api/follow.api";
 import { fetchUserPosts } from "../api/posts.api";
 import type { FeedPost } from "../types";
 import ProfileVideo from "../components/ProfileVideo";
@@ -31,6 +32,8 @@ export default function UserProfile() {
   const { user } = useAuth();
   const {
     commentsMap,
+    isLoadingComments,
+    commentsError,
     loadComments,
     incrementView,
     toggleLike,
@@ -49,7 +52,9 @@ export default function UserProfile() {
   const postsCursorRef = useRef<string | null>(null);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
+  const [postsError, setPostsError] = useState<string | null>(null);
   const [isFollowPending, setIsFollowPending] = useState(false);
+  const [followError, setFollowError] = useState<string | null>(null);
   const [shareModalPost, setShareModalPost] = useState<FeedPost | null>(null);
   const [deleteConfirmState, setDeleteConfirmState] = useState<{
     isOpen: boolean;
@@ -59,6 +64,8 @@ export default function UserProfile() {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedMediaSrc, setSelectedMediaSrc] = useState<string | null>(null);
   const viewedKeyRef = useRef("viewedPostIds");
+  const [isDeletingComment, setIsDeletingComment] =useState(false);
+  const [deleteCommentError, setDeleteCommentError] = useState<string | null >(null);
 
   useEffect(() => {
     if (!username) return;
@@ -80,33 +87,28 @@ export default function UserProfile() {
     };
   }, [username]);
 
-  useEffect(() => {
+   const loadPosts = useCallback(async () => {
     if (!otherProfile?.userId) return;
-    let cancelled = false;
-    async function loadPosts() {
-      setIsLoadingPosts(true);
-      try {
-        const page = await fetchUserPosts(otherProfile!.userId);
-        if (!cancelled) {
-          setPosts(page.items);
-          setHasMorePosts(page.hasMore);
-          postsCursorRef.current = page.nextCursor;
-        }
-      } catch (e) {
-        console.error("Failed to load user's posts:", e);
-      } finally {
-        if (!cancelled) setIsLoadingPosts(false);
-      }
+    setIsLoadingPosts(true);
+    setPostsError(null);
+    try {
+      const page = await fetchUserPosts(otherProfile.userId);
+      setPosts(page.items);
+      setHasMorePosts(page.hasMore);
+      postsCursorRef.current = page.nextCursor;
+    } catch (e) {
+      console.error("Failed to load user's posts:", e);
+      setPostsError("ልጥፎች መጫን አልተቻለም።");
+    } finally {
+      setIsLoadingPosts(false);
     }
-    void loadPosts();
-    return () => {
-      cancelled = true;
-    };
-     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [otherProfile?.userId]);
+
+  useEffect(() => {
+    void loadPosts();
+  }, [loadPosts]);
   // ራስህ ራስህ profile ውስጥ ከከፈትክ ወደ /profile (own page) ውሰድ — duplicate logic ማስወገጃ
   if (username && user?.username === username) {
-   
     return <Navigate to="/profile" replace />;
   }
 
@@ -124,6 +126,7 @@ export default function UserProfile() {
   const handleToggleFollow = async () => {
     if (!otherProfile || isFollowPending) return;
     setIsFollowPending(true);
+    setFollowError(null);
     const wasFollowing = otherProfile.isFollowedByMe;
     try {
       if (wasFollowing) {
@@ -151,6 +154,7 @@ export default function UserProfile() {
       }
     } catch (e) {
       console.error("Follow toggle failed:", e);
+      setFollowError("Failed try again.")
     } finally {
       setIsFollowPending(false);
     }
@@ -172,10 +176,16 @@ export default function UserProfile() {
   const handleDeleteComment = (postId: string, commentId: string) => {
     setDeleteConfirmState({ isOpen: true, postId, commentId });
   };
-  const executeDeleteComment = () => {
+  const executeDeleteComment = async () => {
     if (!deleteConfirmState) return;
+    setIsDeletingComment(true);
+    setDeleteCommentError(null);
+    try{
     deleteComment(deleteConfirmState.postId, deleteConfirmState.commentId);
     setDeleteConfirmState(null);
+    } finally{
+      setIsDeletingComment(false);
+    }
   };
   const handleClosePlayer = () => {
     setSelectedPostId(null);
@@ -313,6 +323,10 @@ export default function UserProfile() {
           >
             Message
           </button>
+
+          {followError && (
+            <p className="text-xs font-semibold text-rose-600 basis-full mt-1">{followError}</p>
+          )}
         </div>
 
         {otherProfile.bio && (
@@ -325,9 +339,17 @@ export default function UserProfile() {
       </div>
 
       <div className="max-w-4xl w-full mx-auto px-4 md:px-8 mb-6">
-        {isLoadingPosts ? (
-          <div className="text-center text-xs text-slate-400 py-10">
-            Loading posts...
+                {isLoadingPosts ? (
+          <div className="text-center text-xs text-slate-400 py-10">Loading posts...</div>
+        ) : postsError ? (
+          <div className="flex flex-col items-center justify-center py-10 gap-3">
+            <p className="text-sm text-rose-500 font-semibold">{postsError}</p>
+            <button
+              onClick={loadPosts}
+              className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
+            >
+              Retry
+            </button>
           </div>
         ) : (
           <ProfileVideo
@@ -353,6 +375,8 @@ export default function UserProfile() {
         <ViewVideo
           selectedPost={selectedPost}
           commentsMap={commentsMap}
+          isLoadingComments={isLoadingComments}
+          commentsError={commentsError}
           profile={{
             name: user.name || user.username,
             username: user.username,
@@ -397,12 +421,14 @@ export default function UserProfile() {
             <div className="flex gap-3">
               <button
                 onClick={() => setDeleteConfirmState(null)}
+                disabled={isDeletingComment}
                 className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-black text-slate-500 transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={executeDeleteComment}
+                disabled={isDeletingComment}
                 className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black text-white shadow-lg transition-all"
               >
                 Delete

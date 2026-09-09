@@ -3,10 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { ROUTES } from "../routes";
 import { X, Camera, Trash2 } from "lucide-react";
 import ShareModal from "../components/ShareModal";
 import { useFeed } from "../context/FeedContext";
@@ -34,13 +33,20 @@ interface ProfileProps {
 export default function Profile({
   triggerGlobalUpload,
   onClearGlobalUpload,
-  onStartChat,
 }: ProfileProps) {
   // --- መለያ ፍቃድ መቆጣጠሪያ (Auth System Hooks) ---
-  const { user, updateUser, updateProfile } = useAuth();
+  const {
+    user,
+    updateUser,
+    updateProfile,
+    profileLoadError,
+    retryLoadProfile,
+  } = useAuth();
   const navigate = useNavigate();
   const {
     commentsMap,
+    isLoadingComments,
+    commentsError,
     loadComments,
     incrementView,
     toggleLike,
@@ -55,30 +61,29 @@ export default function Profile({
   const [myPosts, setMyPosts] = useState<FeedPost[]>([]);
   const [isLoadingMyPosts, setIsLoadingMyPosts] = useState(true);
   const [hasMoreMyPosts, setHasMoreMyPosts] = useState(false);
+  const [myPostsError, setMyPostsError] = useState<string | null>(null);
   const myPostsCursorRef = useRef<string | null>(null);
 
-  useEffect(() => {
+  const loadInitialMyPosts = useCallback(async () => {
     if (!user?.id) return;
-    let cancelled = false;
-    async function loadInitialMyPosts() {
-      setIsLoadingMyPosts(true);
-      try {
-        const page = await fetchUserPosts(user!.id);
-        if (cancelled) return;
-        setMyPosts(page.items);
-        setHasMoreMyPosts(page.hasMore);
-        myPostsCursorRef.current = page.nextCursor;
-      } catch (e) {
-        console.error("Failed to load my posts:", e);
-      } finally {
-        if (!cancelled) setIsLoadingMyPosts(false);
-      }
+    setIsLoadingMyPosts(true);
+    setMyPostsError(null);
+    try {
+      const page = await fetchUserPosts(user.id);
+      setMyPosts(page.items);
+      setHasMoreMyPosts(page.hasMore);
+      myPostsCursorRef.current = page.nextCursor;
+    } catch (e) {
+      console.error("Failed to load my posts:", e);
+      setMyPostsError("Failed to load posts.");
+    } finally {
+      setIsLoadingMyPosts(false);
     }
-    void loadInitialMyPosts();
-    return () => {
-      cancelled = true;
-    };
   }, [user?.id]);
+
+  useEffect(() => {
+    void loadInitialMyPosts();
+  }, [loadInitialMyPosts]);
 
   const loadMoreMyPosts = async () => {
     if (!user?.id || !hasMoreMyPosts || !myPostsCursorRef.current) return;
@@ -137,6 +142,8 @@ export default function Profile({
     postId: string;
     commentId?: string;
   } | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeletingPost, setIsDeletingPost] = useState(false);
 
   // --- ፎርም ሁኔታ መቆጣጠሪያዎች (Upload & Edit profile form inputs) ---
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -160,21 +167,6 @@ export default function Profile({
   // --- በቀጥታ የሚዲያ መጫኛ ማጣቀሻዎች (Direct profile & cover upload refs) ---
   const directPhotoInputRef = useRef<HTMLInputElement>(null);
   const directCoverInputRef = useRef<HTMLInputElement>(null);
-
-  // --- የመልእክት መላኪያ ተግባር (Start communication with another creator) ---
-  const handleMessageUser = (creator: {
-    name: string;
-    username: string;
-    photo: string;
-  }) => {
-    if (onStartChat) {
-      onStartChat(creator);
-    } else {
-      navigate(ROUTES.community, {
-        state: { openChatWith: creator },
-      });
-    }
-  };
 
   // --- ውጫዊ ሚዲያ መጫኛ መቆጣጠሪያ (Manage background uploads from outside) ---
   useEffect(() => {
@@ -340,19 +332,26 @@ export default function Profile({
     if (!deleteConfirmState) return;
     const { type, postId, commentId } = deleteConfirmState;
     if (type === "post") {
+      setIsDeletingPost(true);
+      setDeleteError(null);
       try {
         await deletePost(postId);
         setMyPosts((prev) => prev.filter((p) => p.id !== postId));
         if (selectedPost?.id === postId) {
           handleClosePlayer();
         }
+        setDeleteConfirmState(null);
       } catch (err) {
         console.error("Failed to delete post:", err);
+        setDeleteError("ልጥፍ ማጥፋት አልተቻለም። እንደገና ይሞክሩ።");
+        // Modal ክፍት ይቀራል — user "ተሳክቷል" ብሎ እንዳያምን
+      } finally {
+        setIsDeletingPost(false);
       }
     } else if (type === "comment" && commentId !== undefined) {
       deleteComment(postId, commentId);
+      setDeleteConfirmState(null);
     }
-    setDeleteConfirmState(null);
   };
 
   // --- ፖስት ማጋሪያ መቆጣጠሪያ (Delegate to FeedContext) ---
@@ -519,7 +518,21 @@ export default function Profile({
         accept="image/*"
         className="hidden"
       />
-
+      {profileLoadError && (
+        <div className="max-w-4xl w-full mx-auto px-4 md:px-8 pt-3">
+          <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+            <p className="text-xs font-semibold text-amber-700">
+              {profileLoadError}
+            </p>
+            <button
+              onClick={retryLoadProfile}
+              className="text-xs font-bold text-amber-700 underline shrink-0 ml-3"
+            >
+              Retry
+            </button>
+          </div>
+        </div>
+      )}
       {/* 2. Top Profile Header & bio info */}
       <UserProfile
         profile={profile}
@@ -531,7 +544,6 @@ export default function Profile({
         activeTab={activeTab}
         setActiveTab={setActiveTab}
         handleOpenEditModal={handleOpenEditModal}
-        handleMessageUser={handleMessageUser}
         directPhotoInputRef={directPhotoInputRef}
         directCoverInputRef={directCoverInputRef}
         formatCount={formatCount}
@@ -542,6 +554,18 @@ export default function Profile({
         {isLoadingMyPosts ? (
           <div className="text-center text-xs text-slate-400 py-10">
             Loading posts...
+          </div>
+        ) : myPostsError ? (
+          <div className="flex flex-col items-center justify-center py-10 gap-3">
+            <p className="text-sm text-rose-500 font-semibold">
+              {myPostsError}
+            </p>
+            <button
+              onClick={loadInitialMyPosts}
+              className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
+            >
+              Retry
+            </button>
           </div>
         ) : (
           <ProfileVideo
@@ -798,6 +822,8 @@ export default function Profile({
         <ViewVideo
           selectedPost={selectedPost}
           commentsMap={commentsMap}
+          isLoadingComments={isLoadingComments}
+          commentsError={commentsError}
           profile={profile}
           followersCount={followersCount}
           selectedMediaSrc={selectedMediaSrc}
@@ -841,24 +867,34 @@ export default function Profile({
                 ? "Delete Post?"
                 : "Delete Comment?"}
             </h3>
-
-            <p className="text-xs text-slate-500 font-semibold mb-6">
+            <p className="text-xs text-slate-500 font-semibold mb-4">
               Are you sure you want to delete this permanently? This action
               cannot be undone.
             </p>
 
+            {deleteError && (
+              <p className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 mb-4">
+                {deleteError}
+              </p>
+            )}
+
             <div className="flex gap-3">
               <button
-                onClick={() => setDeleteConfirmState(null)}
-                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-black text-slate-500 transition-all"
+                onClick={() => {
+                  setDeleteConfirmState(null);
+                  setDeleteError(null);
+                }}
+                disabled={isDeletingPost}
+                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-black text-slate-500 transition-all disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={executeDeleteAction}
-                className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black text-white shadow-lg transition-all"
+                disabled={isDeletingPost}
+                className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black text-white shadow-lg transition-all disabled:opacity-50"
               >
-                Delete
+                {isDeletingPost ? "Deleting..." : "Delete"}
               </button>
             </div>
           </div>

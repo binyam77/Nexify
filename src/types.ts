@@ -12,9 +12,9 @@ export interface VideoData {
   authorAvatarUrl: string;
   caption: string;
   hashtags?: string[];
-  isVideo?:boolean;
-  thumbnail?:string;
-  likes?:number;
+  isVideo?: boolean;
+  thumbnail?: string;
+  likes?: number;
   views?: number;
 }
 
@@ -35,9 +35,7 @@ export interface CommentItem {
   replies: CommentReply[];
 }
 
-export type CommentSort = 'newest' | 'oldest';
-
-
+export type CommentSort = "newest" | "oldest";
 
 /**
  * @license
@@ -63,17 +61,16 @@ export interface Chat {
   membersCount: number; // የግሩፑ/የቻናሉ ጠቅላላ አባላት ብዛት (Total number of members in group/channel)
   onlineCount: number; // አሁን መስመር ላይ ያሉ አባላት ብዛት (Current number of online members)
   isJoined: boolean; // ተጠቃሚው ይህን ግሩፕ የተቀላቀለ መሆኑን ማሳያ (Whether the current user has joined this room)
-  type?: 'group' | 'chat' | 'channel' | 'privateGroup'; // የቻቱ አይነት፦ ግሩፕ፣ የግል ቻት ወይም ቻናል (Type of room: group, private direct chat, or public channel)
-  participantUsername?:string;//1:1 chat ብቻ፤ ተነጋጋሪው ልዩ (unique) - ስም፟ ተኮር matching ደህንነት ችግር ስለፈጠረ
+  type?: "group" | "chat" | "channel" | "privateGroup"; // የቻቱ አይነት፦ ግሩፕ፣ የግል ቻት ወይም ቻናል (Type of room: group, private direct chat, or public channel)
+  participantUsername?: string; //1:1 chat ብቻ፤ ተነጋጋሪው ልዩ (unique) - ስም፟ ተኮር matching ደህንነት ችግር ስለፈጠረ
   avatarUrl?: string; // የአምሳያ ምስል ሊንክ (Optional image URL or Base64 data URL for avatar)
   isCreatedByMe?: boolean; // በኔ የተፈጠረ መሆኑን ማሳያ (True if created by the current user to authorize posts)
   isOnline?: boolean; // መስመር ላይ መሆን አለመሆኑን ማሳያ - ለግል ቻት (Online status for direct private chats)
   lastSeen?: string; // በመጨረሻ የታየበት ሰዓት (Last seen timestamp)
-  cover?:string;// Channel/chat detail-view ላይ የሚታይ cover banner(Based64/URL)
-  description?:string;//Channel ርእስ/ መግለጫ
-  bio?:string;//1:1 only chat:speak bio(Profile identity single source of truth)
+  cover?: string; // Channel/chat detail-view ላይ የሚታይ cover banner(Based64/URL)
+  description?: string; //Channel ርእስ/ መግለጫ
+  bio?: string; //1:1 only chat:speak bio(Profile identity single source of truth)
   typingUsers?: string[]; // አሁን የሚፅፉ ሰዎች (ephemeral, persist አይደረግም) — TODO: backend ሲመጣ Socket.IO 'typing' event ይህን ይሞላል/ያራግፋል
-  
 }
 
 export interface Message {
@@ -83,43 +80,42 @@ export interface Message {
   time: string; // መልዕክቱ የተላከበት ሰዓት (Message sent time/date string)
   isSentByMe: boolean; // መልዕክቱን የላኩት እኔ መሆኔን ማሳያ (Flag to indicate if the message was sent by the current user)
   mediaUrl?: string; // በአባሪነት የተላከ ምስል ወይም ቪዲዮ (Optional URL/Base64 string for photo, video, etc.)
-  mediaType?: 'image' | 'video' | 'audio' | 'pdf'; // የአባሪው ፋይል አይነት (Type of attached media file)
+  mediaType?: "image" | "video" | "audio" | "pdf"; // የአባሪው ፋይል አይነት (Type of attached media file)
   isEdited?: boolean; // መልዕክቱ የተቀየረ መሆኑን ማሳያ (Flag to indicate if the message has been edited)
   reactions?: { emoji: string; count: number; users: string[] }[]; // ተጠቃሚዎች የሰጡት ምላሽ (List of user reactions to this message)
-  seen?:boolean;//ተቀባይ አይቶታል ወይ (Read receipt) — TODO: backend ሲመጣ Socket.IO 'message:read' event ይህን ያዘምናል
+  seen?: boolean; //ተቀባይ አይቶታል ወይ (Read receipt) — TODO: backend ሲመጣ Socket.IO 'message:read' event ይህን ያዘምናል
   isPinned?: boolean; // Group/Channel admin የሰካው መልዕክት
+  pending?: boolean; // Offline queue ውስጥ እየጠበቀ ነው ወይም እየተላከ ነው (not yet server-confirmed)
+  clientMessageId?: string; // Optimistic entry ን ከ real broadcast ጋር ለማዛመድ (reconciliation) ብቻ ጥቅም ላይ ይውላል — UI ላይ አይታይም
 }
 export interface ChannelStats {
-subscribers:number;
-totalPosts:number;
-totalReactions:number;
-totalComments:number;
+  subscribers: number;
+  totalPosts: number;
+  totalReactions: number;
+  totalComments: number;
 }
 
-
-
-export interface FeedPost{
+export interface FeedPost {
   id: string;
-  userId:string;  // PostagraSQL: usres.id
-  username:string;
-  userAvatar:string;
-  type:'video' | 'photo';
-  mediaUrls: string[];// carousel = array, video=[0]
-  caption:string;
+  userId: string; // PostagraSQL: usres.id
+  username: string;
+  userAvatar: string;
+  type: "video" | "photo";
+  mediaUrls: string[]; // carousel = array, video=[0]
+  caption: string;
   hashtags: string[];
   likesCount: number;
-  commentsCount :number;
-  sharesCount:number;
-  savesCount : number;
-  viewsCount:number;
-  createdAt:string;
-  liked:boolean;
-  saved:boolean;
-  isFollowing:boolean; // Home/search endpoints only — Profile's Follow domain, composed by Home's backend
-
+  commentsCount: number;
+  sharesCount: number;
+  savesCount: number;
+  viewsCount: number;
+  createdAt: string;
+  liked: boolean;
+  saved: boolean;
+  isFollowing: boolean; // Home/search endpoints only — Profile's Follow domain, composed by Home's backend
 }
 
-export type NavTab = 'home' | 'community' | 'profile' | 'settings' | 'explore';
+export type NavTab = "home" | "community" | "profile" | "settings" | "explore";
 
 // Group ፈጣሪ member-select ሲያደርግ የሚያገለግል generic shape (ወደፊት real follow-data ጋር ተመሳሳይ ይሆናል)
 export interface SelectableUser {
@@ -128,6 +124,6 @@ export interface SelectableUser {
   username: string;
   photo: string;
 }
-export interface GroupMember extends SelectableUser{
-  isAdmin?:boolean;
+export interface GroupMember extends SelectableUser {
+  isAdmin?: boolean;
 }

@@ -35,6 +35,8 @@ interface AuthContextType {
   loginWithTokens: (accessToken: string) => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
   updateProfile: (input: UpdateProfileInput) => Promise<void>;
+  profileLoadError: string | null;
+  retryLoadProfile: () => Promise<void>;
   updateFollowCount: (
     type: "followers" | "following",
     increment: boolean,
@@ -49,10 +51,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // (XSS ቢኖር እንኳ ስርቆት እንዳይቻል)
   const [accessToken, setAccessToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
+  const [profileLoadError,setProfileLoadError] =useState<string | null>(null);
   // --- Silent Refresh on App Load ---
   // Page reload ሲደረግ accessToken (in-memory) ይጠፋል፣ ግን refresh_token
   // httpOnly cookie አሁንም አለ — ይህን ተጠቅመን በራሱ አዲስ accessToken እናገኛለን
+   const loadProfileData = async (): Promise<void> => {
+    setProfileLoadError(null);
+    try {
+      const profileData = await fetchMyProfile();
+      setUser((prev) => (prev ? { ...prev, ...profileData } : prev));
+    } catch (e) {
+      console.error("Failed to load profile data:", e);
+      setProfileLoadError("Profile data መጫን አልተቻለም።");
+    }
+  };
+
   useEffect(() => {
     async function silentRefresh() {
       try {
@@ -60,14 +73,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAccessToken(newToken);
         const me = await meRequest(newToken);
         setUser(me);
-        try {
-          const profileData = await fetchMyProfile();
-          setUser((prev) => (prev ? { ...prev, ...profileData } : prev));
-        } catch (e) {
-          console.error("Failed to load profile data:", e);
-        }
+        await loadProfileData();
       } catch {
-        // Refresh token የለም/expired ነው — ተጠቃሚው logged out ነው ማለት ብቻ ነው (error አይደለም)
         setAccessToken(null);
         setUser(null);
       } finally {
@@ -77,17 +84,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void silentRefresh();
   }, []);
 
-  const login = async (email: string, password: string) => {
+    const login = async (email: string, password: string) => {
     const { accessToken: newToken } = await loginRequest({ email, password });
     setAccessToken(newToken);
     const me = await meRequest(newToken);
     setUser(me);
-    try {
-      const profileData = await fetchMyProfile();
-      setUser((prev) => (prev ? { ...prev, ...profileData } : prev));
-    } catch (e) {
-      console.error("Failed to load profile data:", e);
-    }
+    await loadProfileData();
   };
   // Complete Registration ራሱ accessToken ስለሚመልስ (refresh cookie already
   // Backend ራሱ አዘጋጅቶታል) - loginRequest() ደግመን አንጠራም፣ /auth/me ብቻ እንጠራለን
@@ -102,14 +104,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccessToken(newToken);
     const me = await meRequest(newToken);
     setUser(me);
-    try {
-      const profileData = await fetchMyProfile();
-      setUser((prev) => (prev ? { ...prev, ...profileData } : prev));
-    } catch (e) {
-      console.error("Failed to load profile data:", e);
-    }
+       await loadProfileData();
   };
-
   const logout = async () => {
     try {
       await logoutRequest();
@@ -167,6 +163,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updateUser,
         updateProfile,
         updateFollowCount,
+        profileLoadError,
+        retryLoadProfile: loadProfileData,
       }}
     >
       {children}

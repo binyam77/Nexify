@@ -52,16 +52,21 @@ export default function Home() {
     setCurrentIndex((i) => Math.max(i - 1, 0));
   }, []);
 
-  // Infinite scroll — feed's end ጋር ስንደርስ ቀጣይ page በራሱ ይጫናል
+   // Infinite scroll — feed's end ጋር ስንደርስ ቀጣይ page በራሱ ይጫናል።
+  // `!loadMoreError` ካልጨመርን፣ 1 failure ከሆነ በኋላ isLoadingMore→false ተመልሶ
+  // effect ራሱ ወዲያውኑ ደግሞ loadMore() ይጠራል (Retry banner ቢታይም ጀርባ ላይ
+  // ደጋግሞ ይሞክራል) — ይሄ ያንን silent retry-storm ያስቆማል፣ ተጠቃሚው Retry
+  // banner ን ራሱ ካልነካ ድረስ ተጨማሪ automatic attempt አይደረግም።
   useEffect(() => {
     if (
       hasMore &&
       !isLoadingMore &&
+      !loadMoreError &&
       currentIndex >= posts.length - PREFETCH_THRESHOLD
     ) {
       void loadMore();
     }
-  }, [currentIndex, posts.length, hasMore, isLoadingMore, loadMore]);
+  }, [currentIndex, posts.length, hasMore, isLoadingMore, loadMoreError, loadMore]);
 
   // ① Keyboard — desktop
   useEffect(() => {

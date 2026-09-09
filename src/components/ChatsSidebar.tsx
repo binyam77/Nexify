@@ -15,6 +15,11 @@ interface ChatsSidebarProps {
   onDeleteChat: (chatId: string) => void;
   onJoinChat: (chatId: string) => void;
   onToggleJoin: (chatId: string) => void;
+  isLoadingSuggested?:boolean;
+  suggestedError?:string | null;
+  onRetrySuggested?: () => void;
+  suggestedSearchQuery?:string;
+  onSuggestedSearchChange?:(query:string) => void;
 }
 
 type SidebarTab = "messages" | "communities";
@@ -27,6 +32,11 @@ export default function ChatsSidebar({
   onCreatePlusClick,
   onDeleteChat,
   onToggleJoin,
+  isLoadingSuggested = false,
+  suggestedError = null,
+  onRetrySuggested,
+  suggestedSearchQuery="",
+  onSuggestedSearchChange,
 }: ChatsSidebarProps) {
   const [activeTab, setActiveTab] = useState<SidebarTab>("messages");
   const [searchQuery, setSearchQuery] = useState("");
@@ -76,8 +86,8 @@ export default function ChatsSidebar({
     onSelectChat(chat.id);
   };
 
-  // መልዕክቶችን በስም ለመፈለግ
-  const searchFiltered = chats.filter((chat) => {
+    // መልዕክቶችን በስም ለመፈለግ — Chats tab ብቻ (local, private — ራስህ የገባህባቸው ብቻ ናቸው የሚፈለጉት)
+  const chatSearchFiltered = chats.filter((chat) => {
     return (
       chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       chat.lastMsgText.toLowerCase().includes(searchQuery.toLowerCase())
@@ -85,14 +95,17 @@ export default function ChatsSidebar({
   });
 
   // Messages tab: ተቀላቅሏቸው ያሉት ብቻ
-  const joinedChats = searchFiltered.filter((c) => c.isJoined);
-  // Communities tab: ሁሉም groups/channels ይታያሉ (joined ይሁን አልሆነ)፣ button ብቻ state ያሳያል፣
-  // ራስህ የፈጠርካቸው ግን አይታዩም (ራስህ ፈጥረህ "Suggested" ብለህ ማየት ትርጉም የለውም)
-  const suggestedGroups = searchFiltered.filter(
-    (c) => c.type === "group" && !c.isCreatedByMe,
+  const joinedChats = chatSearchFiltered.filter((c) => c.isJoined);
+
+  // Communities tab: backend ራሱ (GET /communities?scope=suggested&search=...)
+  // name-based search ስለሚያደርግ፣ እዚህ ላይ ተጨማሪ local filter አያስፈልግም — `chats`
+  // ውስጥ ያሉት suggested entries already ከ search query ጋር የሚዛመዱ ብቻ ናቸው
+  // (ራስህ የፈጠርካቸው ግን አይታዩም — "Suggested" ብለህ ራስህን ማየት ትርጉም የለውም)
+  const suggestedGroups = chats.filter(
+    (c) => c.type === "group" && !c.isCreatedByMe && !c.isJoined,
   );
-  const suggestedChannels = searchFiltered.filter(
-    (c) => c.type === "channel" && !c.isCreatedByMe,
+  const suggestedChannels = chats.filter(
+    (c) => c.type === "channel" && !c.isCreatedByMe && !c.isJoined,
   );
   return (
     <section
@@ -146,17 +159,21 @@ export default function ChatsSidebar({
         </button>
       </div>
 
-      {/* የፍለጋ ሳጥን (Search Bar) */}
+           {/* የፍለጋ ሳጥን (Search Bar) — Chats tab: local/private filter, Communities tab: public backend search */}
       <div className="px-4 py-3 bg-input shadow-input shrink-0">
         <div className="relative">
           <input
             type="search"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
+            value={activeTab === "messages" ? searchQuery : suggestedSearchQuery}
+            onChange={(e) =>
+              activeTab === "messages"
+                ? setSearchQuery(e.target.value)
+                : onSuggestedSearchChange?.(e.target.value)
+            }
             placeholder={
               activeTab === "messages"
                 ? "Search chats..."
-                : "Search communities..."
+                : "Search public channels & groups..."
             }
             className="w-full pl-10 pr-4 py-2.5 bg-surface-raised border border-input-border rounded-xl text-sm text-input-text placeholder:placeholder-input-text focus:bg-input
              focus:border-input-focus  outline-none transition-all "
@@ -251,10 +268,31 @@ export default function ChatsSidebar({
           )}
         </div>
       )}
-
       {/* ===== COMMUNITIES TAB (Discovery) ===== */}
       {activeTab === "communities" && (
         <div className="flex-1 overflow-y-auto">
+          {suggestedError ? (
+            <div className="flex flex-col items-center justify-center p-8 text-center h-full gap-3">
+              <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center">
+                <Globe className="w-6 h-6 text-rose-400" />
+              </div>
+              <p className="text-sm font-bold text-gray-700 max-w-[240px]">
+                {suggestedError}
+              </p>
+              <button
+                onClick={onRetrySuggested}
+                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all"
+              >
+                Retry
+              </button>
+            </div>
+          ) : isLoadingSuggested ? (
+            <div className="flex flex-col items-center justify-center p-8 text-center h-full gap-2">
+              <div className="w-8 h-8 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+              <p className="text-xs text-gray-400 font-semibold">Loading communities...</p>
+            </div>
+          ) : (
+            <>
           {/* Suggested Groups — horizontal scroll (Facebook-style) */}
           {suggestedGroups.length > 0 && (
             <div className="py-4 border-b border-gray-100">
@@ -369,6 +407,8 @@ export default function ChatsSidebar({
               ))
             )}
           </div>
+          </>
+          )}
         </div>
       )}
 

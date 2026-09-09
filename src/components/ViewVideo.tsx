@@ -25,6 +25,8 @@ import Left from "./Left";
 interface ViewVideoProps {
   selectedPost: FeedPost;
   commentsMap: Record<string, CommentItem[]>;
+  isLoadingComments:boolean;
+  commentsError:string | null;
   profile: {
     name: string;
     username: string;
@@ -56,6 +58,8 @@ interface ViewVideoProps {
 export default function ViewVideo({
   selectedPost,
   commentsMap,
+  isLoadingComments,
+  commentsError,
   profile,
   followersCount,
   selectedMediaSrc,
@@ -258,6 +262,8 @@ export default function ViewVideo({
         <Left
           selectedPost={selectedPost}
           comments={comments}
+          isLoadingComments={isLoadingComments}
+          commentsError={commentsError}
           shares={shares}
           isOwnPost={isOwnPost}
           postAuthor={postAuthor}

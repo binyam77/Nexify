@@ -130,6 +130,7 @@ export function mapCommunityMessageToMessage(
     isEdited: msg.isEdited,
     reactions: aggregateReactions(msg.reactions, currentUserId),
     isPinned: msg.isPinned,
+    clientMessageId:msg.clientMessageId ?? undefined,
   };
 }
 

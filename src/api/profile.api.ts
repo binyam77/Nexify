@@ -72,16 +72,4 @@ export async function fetchProfile(
   };
 }
 
-export function followUser(userId: string): Promise<{ isFollowing: boolean }> {
-  return apiClient<{ isFollowing: boolean }>(`/profile/${userId}/follow`, {
-    method: "POST",
-  });
-}
 
-export function unfollowUser(
-  userId: string,
-): Promise<{ isFollowing: boolean }> {
-  return apiClient<{ isFollowing: boolean }>(`/profile/${userId}/follow`, {
-    method: "DELETE",
-  });
-}

@@ -146,7 +146,7 @@ export function listMyCommunitiesRequest(
 // ================= LIST — SUGGESTED (discovery) =================
 export function listSuggestedCommunitiesRequest(
   accessToken: string,
-  params: PaginationParams & { type?: CommunityType } = {},
+  params: PaginationParams & { type?: CommunityType; search?:string } = {},
 ): Promise<PaginatedResult<CommunityResponse>> {
   const qs = toQueryString({ scope: "suggested", ...params });
   return apiClient<PaginatedResult<CommunityResponse>>(`/communities${qs}`, {

@@ -38,6 +38,12 @@ import {
   mapCommunitySuggestedToChat,
   mapCommunityMessageToMessage,
 } from "../lib/realtime.mappers";
+import {
+  enqueue,
+  dequeue,
+  getQueue,
+  generateClientMessageId,
+} from "../lib/offline-queue";
 import { useRealtime } from "../context/RealtimeContext";
 // ==========================================
 // Title: This is the primary Community.tsx file
@@ -64,6 +70,9 @@ export default function Community() {
   ];
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isLoadingSuggested, setIsLoadingSuggested] = useState(false);
+  const [suggestedError, setSuggestedError] = useState<string | null>(null);
+  const [suggestedSearchQuery, setSuggestedSearchQuery] = useState("");
 
   // User profile details (Current member profile loaded dynamically from localStorage)
   const { user, accessToken } = useAuth();
@@ -122,41 +131,76 @@ export default function Community() {
     setToastMessage(msg);
     setTimeout(() => setToastMessage(null), 3000);
   };
-  // ================= LOAD COMMUNITIES (mine + suggested) =================
+
+  // ================= LOAD COMMUNITIES: "Mine" (joined) =================
+  const loadMine = async (token: string, currentUserId: string) => {
+    try {
+      const mine = await listMyCommunitiesRequest(token);
+      const mineChats = mine.items.map((item) =>
+        mapCommunityListItemToChat(item, currentUserId),
+      );
+      setChats((prev) => {
+        // ሁሌም isJoined:false ያላቸው (suggested) + chat-domain entries ብቻ ይቆያሉ
+        const withoutMine = prev.filter(
+          (c) => !c.isJoined || c.type === "chat",
+        );
+        return [...mineChats, ...withoutMine];
+      });
+    } catch (err) {
+      console.error("Failed to load your communities:", err);
+      triggerToast("⚠️ Could not load your communities.");
+    }
+  };
+
+  // ================= LOAD COMMUNITIES: "Suggested" (discovery) =================
+  const loadSuggested = async (token: string, search?: string) => {
+    setIsLoadingSuggested(true);
+    setSuggestedError(null);
+    try {
+      const suggested = await listSuggestedCommunitiesRequest(token, {
+        search,
+      });
+      const suggestedChats = suggested.items.map(mapCommunitySuggestedToChat);
+      setChats((prev) => {
+        const withoutSuggested = prev.filter(
+          (c) => c.isJoined || c.type === "chat",
+        );
+        return [...withoutSuggested, ...suggestedChats];
+      });
+    } catch (err) {
+      console.error("Failed to load suggested communities:", err);
+      setSuggestedError(
+        "Could not load suggested communities. Check your connection and try again.",
+      );
+    } finally {
+      setIsLoadingSuggested(false);
+    }
+  };
+
+  const handleRetrySuggested = () => {
+    if (!accessToken) return;
+    void loadSuggested(accessToken, suggestedSearchQuery);
+  };
+
   useEffect(() => {
     if (!accessToken || !user) return;
-    const token = accessToken; // narrowed local const - nested closures below can safly use this
-    const currentUserId = user.id; // same reason — .map() callbacks below are nested closures too
-    let cancelled = false;
-
-    async function loadCommunities() {
-      try {
-        const [mine, suggested] = await Promise.all([
-          listMyCommunitiesRequest(token),
-          listSuggestedCommunitiesRequest(token),
-        ]);
-        if (cancelled) return;
-
-        const mineChats = mine.items.map((item) =>
-          mapCommunityListItemToChat(item, currentUserId),
-        );
-        const suggestedChats = suggested.items.map(mapCommunitySuggestedToChat);
-
-        setChats((prev) => {
-          const chatOnly = prev.filter((c) => c.type === "chat");
-          return [...mineChats, ...suggestedChats, ...chatOnly];
-        });
-      } catch (err) {
-        console.error("Failed to load communities:", err);
-        triggerToast("⚠️ Could not load your communities.");
-      }
-    }
-
-    void loadCommunities();
-    return () => {
-      cancelled = true;
-    };
+    const token = accessToken;
+    const currentUserId = user.id;
+    void loadMine(token, currentUserId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadMine is recreated every render but called synchronously here with this render's values
   }, [accessToken, user]);
+
+  // Suggested list re-fetches whenever the search query changes, debounced
+  // by 400ms so we don't fire a request on every keystroke.
+  useEffect(() => {
+    if (!accessToken) return;
+    const token = accessToken;
+    const handle = setTimeout(() => {
+      void loadSuggested(token, suggestedSearchQuery);
+    }, 400);
+    return () => clearTimeout(handle);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadSuggested is recreated every render but called synchronously here with this render's values
+  }, [accessToken, suggestedSearchQuery]);
 
   // ================= REALTIME: incoming messages =================
   useEffect(() => {
@@ -167,17 +211,33 @@ export default function Community() {
       targetId: string;
       message: unknown;
     }) {
-      if (payload.scope !== "community") return;
+      if (payload.scope !== "community") return; // Chat domain untouched in this pass
 
       const mapped = mapCommunityMessageToMessage(
         payload.message as Parameters<typeof mapCommunityMessageToMessage>[0],
         user!.id,
       );
 
-      setMessagesDb((prev) => ({
-        ...prev,
-        [payload.targetId]: [...(prev[payload.targetId] || []), mapped],
-      }));
+      if (mapped.clientMessageId) {
+        dequeue(mapped.clientMessageId); // no-op if this send was never queued
+      }
+
+      setMessagesDb((prev) => {
+        const existing = prev[payload.targetId] || [];
+        const hadPending = mapped.clientMessageId
+          ? existing.some(
+              (m) => m.clientMessageId === mapped.clientMessageId && m.pending,
+            )
+          : false;
+        const nextMessages = hadPending
+          ? existing.map((m) =>
+              m.clientMessageId === mapped.clientMessageId && m.pending
+                ? mapped
+                : m,
+            )
+          : [...existing, mapped];
+        return { ...prev, [payload.targetId]: nextMessages };
+      });
 
       setChats((prev) =>
         prev.map((c) => {
@@ -250,7 +310,37 @@ export default function Community() {
       socket.off("typing:stop", handleTypingStop);
     };
   }, [socket, user, activeChatId, markRead]);
+// ================= OFFLINE QUEUE: flush on (re)connect =================
+  useEffect(() => {
+    if (!socket) return;
 
+    const flushQueue = () => {
+      getQueue().forEach((m) => {
+        sendMessage({
+          scope: "community",
+          targetId: m.communityId,
+          text: m.text,
+          mediaUrl: m.mediaUrl,
+          mediaType: m.mediaType,
+          clientMessageId: m.clientMessageId,
+        }).catch((err) => {
+          console.error("Retry from offline queue failed, will retry again later:", err);
+        });
+        // Not dequeued here — Patch F5's handleMessageNew dequeues once the
+        // server actually confirms the message (persisted or already-was).
+      });
+    };
+
+    socket.on("connect", flushQueue);
+    window.addEventListener("online", flushQueue);
+    flushQueue(); // also try immediately, in case we're already connected on mount
+
+    return () => {
+      socket.off("connect", flushQueue);
+      window.removeEventListener("online", flushQueue);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sendMessage is recreated every render; flushQueue reads current values via closure each time this effect re-runs on socket identity change
+  }, [socket]);
   // Total unread messages count for active chats to display on the sidebar
   // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Sidebar's unreadCommunityCount prop ላይ ጥክም ላይ ይውላል
   const unreadTotal = chats.reduce(
@@ -436,18 +526,46 @@ export default function Community() {
     if (!activeChatId) return;
     const targetChat = chats.find((c) => c.id === activeChatId);
 
-    if (isCommunityChat(targetChat)) {
+       if (isCommunityChat(targetChat)) {
+      const clientMessageId = generateClientMessageId();
+      const backendMediaType = mediaType ? (mediaType.toUpperCase() as BackendMessageMediaType) : undefined;
+
+      // Optimistic local entry — visible immediately; reconciled (replaced)
+      // once the real message arrives via 'message:new' (Patch F5 above).
+      const optimisticMsg: Message = {
+        id: `pending-${clientMessageId}`,
+        senderName: "Me",
+        text,
+        time: getFormattedDateTime(),
+        isSentByMe: true,
+        mediaUrl,
+        mediaType,
+        pending: true,
+        clientMessageId,
+      };
+      setMessagesDb((prev) => ({
+        ...prev,
+        [activeChatId]: [...(prev[activeChatId] || []), optimisticMsg],
+      }));
+
       sendMessage({
         scope: "community",
         targetId: activeChatId,
         text: text || undefined,
         mediaUrl,
-        mediaType: mediaType
-          ? (mediaType.toUpperCase() as BackendMessageMediaType)
-          : undefined,
+        mediaType: backendMediaType,
+        clientMessageId,
       }).catch((err) => {
-        console.error("Failed to send message:", err);
-        triggerToast("⚠️ Failed to send message.");
+        console.error("Failed to send message, queuing for retry:", err);
+        enqueue({
+          clientMessageId,
+          communityId: activeChatId,
+          text: text || undefined,
+          mediaUrl,
+          mediaType: backendMediaType,
+          createdAt: new Date().toISOString(),
+        });
+        triggerToast("📡 No connection — message queued, will send automatically.");
       });
       return;
     }
@@ -952,6 +1070,11 @@ export default function Community() {
                 onDeleteChat={handleDeleteChat}
                 onJoinChat={handleJoinChat}
                 onToggleJoin={handleToggleJoin}
+                isLoadingSuggested={isLoadingSuggested}
+                suggestedError={suggestedError}
+                onRetrySuggested={handleRetrySuggested}
+                suggestedSearchQuery={suggestedSearchQuery}
+                onSuggestedSearchChange={setSuggestedSearchQuery}
               />
             </div>
 

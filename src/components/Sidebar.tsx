@@ -24,7 +24,7 @@ import type { NavTab } from "../types";
 const footerLinks = [
   { label: "About", to: ROUTES.about },
 
-  { label: "Privacy", to: ROUTES.privacy },
+  { label: "Privacy Policy", to: ROUTES.privacy },
 
   { label: "Terms", to: ROUTES.terms },
 

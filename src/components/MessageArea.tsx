@@ -158,7 +158,7 @@ export default function MessageArea({
   const [isChatInfoOpen, setIsChatInfoOpen] = useState(false);
 
   // Timer references for long-press gesture -ብቻ hold options modal ይከፈታል ፈታን ንኪኪ አይደለም
- const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const longPressFiredRef = useRef(false);
   const touchStartPosRef = useRef<{ x: number; y: number } | null>(null);
   const MOVE_CANCEL_THRESHOLD = 10;
@@ -195,7 +195,7 @@ export default function MessageArea({
     }
   };
   //ፎቶ  ሲነካ ማየት እንጂ options box  መክፈት የለበትም: long-press ገና ከተነሳ ግን  ችላ እንል (double-trigger መከላከያ)
- const handleImageClick = (e: React.MouseEvent, url?: string) => {
+  const handleImageClick = (e: React.MouseEvent, url?: string) => {
     e.stopPropagation();
     if (longPressFiredRef.current) {
       longPressFiredRef.current = false;
@@ -204,7 +204,7 @@ export default function MessageArea({
     if (url) setViewingMedia(url);
   };
 
-  // Channel subscriber (creator ያልሆነ) ፖስት ላይ tap ብቻ ሲያደርግ emoji-reaction panel ይከፈታል 
+  // Channel subscriber (creator ያልሆነ) ፖስት ላይ tap ብቻ ሲያደርግ emoji-reaction panel ይከፈታል
   const handleBubbleClick = (msg: Message) => {
     if (longPressFiredRef.current) {
       longPressFiredRef.current = false;
@@ -589,6 +589,7 @@ export default function MessageArea({
                 )}
               </div>
               <h4 className="text-sm font-black text-gray-800">{chat.name}</h4>
+
               <p className="text-xs text-gray-400 max-w-xs">
                 No messages here yet - send the first one to start the
                 conversation!👋
@@ -623,7 +624,7 @@ export default function MessageArea({
                       onMouseUp={cancelPressTimer}
                       onTouchEnd={cancelPressTimer}
                       onMouseLeave={cancelPressTimer}
-                      onClick={()=>handleBubbleClick(msg)}
+                      onClick={() => handleBubbleClick(msg)}
                       onContextMenu={(e) => {
                         e.preventDefault();
                         setSelectedOptionsMessage(msg);
@@ -779,7 +780,7 @@ export default function MessageArea({
               const avatarBg = colors[colorIdx];
 
               return (
-               <div
+                <div
                   key={msg.id}
                   className={`w-full flex justify-start min-w-0 ${chat.type === "group" ? "" : "pl-2 md:pl-4"}`}
                 >
@@ -791,7 +792,7 @@ export default function MessageArea({
                     }`}
                   >
                     {/* Sender user avatar badge- private chat/channel ላይ አይታይም */}
-                   {chat.type !== "chat" && chat.type !== "channel" && (
+                    {chat.type !== "chat" && chat.type !== "channel" && (
                       <div
                         className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-[11px] text-white shrink-0 shadow-sm border border-white hover:scale-105 active:scale-95 transition-all select-none ${avatarBg}`}
                         title={msg.senderName}
@@ -1200,7 +1201,7 @@ export default function MessageArea({
           </p>
         )}
       </footer>
-{/* 4. Message Options — Icon-row (Telegram/WhatsApp style) */}
+      {/* 4. Message Options — Icon-row (Telegram/WhatsApp style) */}
       {selectedOptionsMessage && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4 animate-in fade-in duration-200"
@@ -1254,24 +1255,28 @@ export default function MessageArea({
               // Own chat/group message, or channel creator's own post — icon-row actions
               <div className="p-4">
                 <div className="flex items-center justify-center gap-3 flex-wrap">
-                  {selectedOptionsMessage.isSentByMe && chat.type !== "chat" && (
-                    <button
-                      onClick={() => {
-                        setEditingMessageId(selectedOptionsMessage.id);
-                        setInputText(selectedOptionsMessage.text);
-                        setSelectedOptionsMessage(null);
-                        setTimeout(() => textareaRef.current?.focus(), 85);
-                      }}
-                      className="flex flex-col items-center gap-1.5"
-                    >
-                      <div className="w-12 h-12 rounded-full bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600 transition-colors">
-                        <Pencil className="w-5 h-5" />
-                      </div>
-                      <span className="text-[10px] font-bold text-gray-600">Edit</span>
-                    </button>
-                  )}
+                  {selectedOptionsMessage.isSentByMe &&
+                    chat.type !== "chat" && (
+                      <button
+                        onClick={() => {
+                          setEditingMessageId(selectedOptionsMessage.id);
+                          setInputText(selectedOptionsMessage.text);
+                          setSelectedOptionsMessage(null);
+                          setTimeout(() => textareaRef.current?.focus(), 85);
+                        }}
+                        className="flex flex-col items-center gap-1.5"
+                      >
+                        <div className="w-12 h-12 rounded-full bg-blue-50 hover:bg-blue-100 flex items-center justify-center text-blue-600 transition-colors">
+                          <Pencil className="w-5 h-5" />
+                        </div>
+                        <span className="text-[10px] font-bold text-gray-600">
+                          Edit
+                        </span>
+                      </button>
+                    )}
 
-                  {(selectedOptionsMessage.isSentByMe || chat.type === "chat") && (
+                  {(selectedOptionsMessage.isSentByMe ||
+                    chat.type === "chat") && (
                     <button
                       onClick={() => {
                         onDeleteMessage(selectedOptionsMessage.id);
@@ -1282,7 +1287,9 @@ export default function MessageArea({
                       <div className="w-12 h-12 rounded-full bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-600 transition-colors">
                         <Trash2 className="w-5 h-5" />
                       </div>
-                      <span className="text-[10px] font-bold text-gray-600">Delete</span>
+                      <span className="text-[10px] font-bold text-gray-600">
+                        Delete
+                      </span>
                     </button>
                   )}
 
@@ -1310,7 +1317,9 @@ export default function MessageArea({
 
                   <button
                     onClick={() => {
-                      navigator.clipboard.writeText(selectedOptionsMessage.text);
+                      navigator.clipboard.writeText(
+                        selectedOptionsMessage.text,
+                      );
                       setSelectedOptionsMessage(null);
                     }}
                     className="flex flex-col items-center gap-1.5"
@@ -1318,7 +1327,9 @@ export default function MessageArea({
                     <div className="w-12 h-12 rounded-full bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center text-emerald-600 transition-colors">
                       <Check className="w-5 h-5" />
                     </div>
-                    <span className="text-[10px] font-bold text-gray-600">Copy</span>
+                    <span className="text-[10px] font-bold text-gray-600">
+                      Copy
+                    </span>
                   </button>
                 </div>
               </div>

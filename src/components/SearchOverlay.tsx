@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { ArrowLeft, X, Clock, Search as SearchIcon } from "lucide-react";
+import { ArrowLeft, X, Clock, Search as SearchIcon, WifiOff, RotateCw } from "lucide-react";
 import { searchPosts } from "../api/posts.api";
 import { useSearchHistory } from "../hooks/useSearchHistory";
 import type { FeedPost } from "../types";
@@ -22,6 +22,7 @@ export default function SearchOverlay({
   const [results, setResults] = useState<FeedPost[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+  const [searchError, setSearchError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const { history, addTerm, removeTerm } = useSearchHistory();
@@ -30,21 +31,24 @@ export default function SearchOverlay({
     inputRef.current?.focus();
   }, []);
 
-  const runSearch = useCallback(async (term: string) => {
+   const runSearch = useCallback(async (term: string) => {
     const trimmed = term.trim();
     if (!trimmed) {
       setResults([]);
       setHasSearched(false);
+      setSearchError(null);
       return;
     }
     setIsSearching(true);
     setHasSearched(true);
+    setSearchError(null);
     try {
       const page = await searchPosts(trimmed);
       setResults(page.items);
     } catch (e) {
       console.error("Search failed:", e);
       setResults([]);
+      setSearchError("ፍለጋ አልተሳካም። እንደገና ይሞክሩ።");
     } finally {
       setIsSearching(false);
     }
@@ -152,9 +156,19 @@ export default function SearchOverlay({
               ))}
             </div>
           )
-        ) : isSearching ? (
-          <div className="p-6 text-center text-sm text-input-placeholder">
-            በመፈለግ ላይ...
+               ) : isSearching ? (
+          <div className="p-6 text-center text-sm text-input-placeholder">በመፈለግ ላይ...</div>
+        ) : searchError ? (
+          <div className="flex flex-col items-center justify-center gap-3 p-10 text-center">
+            <WifiOff size={28} className="text-input-placeholder" />
+            <p className="text-sm text-input-placeholder">{searchError}</p>
+            <button
+              onClick={() => void runSearch(query)}
+              className="flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white active:scale-95 transition-transform"
+            >
+              <RotateCw size={14} />
+              Retry
+            </button>
           </div>
         ) : hasSearched && results.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 p-10 text-center">

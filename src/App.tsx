@@ -26,6 +26,7 @@ import Helps from "./footer/helps";
 import Notifications from "./pages/notfications";
 import OAuthCallbackPage from "./auth/OAuthCallbackPage";
 import SinglePostView from "./pages/singlePostView";
+import FirstEntry from "./auth/firstEntry";
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -63,7 +64,7 @@ export default function App() {
     <UIProvider>
       <Routes>
         {/* FirstEntry ገጽ */}
-        <Route path="/" element={<Navigate to={ROUTES.home} replace />} />
+        <Route path="/" element={<FirstEntry />} />
         {/* ✅ የተጠበቁ ገጾች (Protected Routes) */}
         <Route
           element={
@@ -139,20 +140,13 @@ export default function App() {
     </UIProvider>
   );
 }
-
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  // ⚠️ TEMPORARY DEV BYPASS — Login ሳያደርጉ Home/Profile/Settings ማየት
-  // እንዲችሉ። ወደ ነበረበት ለመመለስ: ይህን 1 መስመር (return <>{children}</>;) ብቻ
-  // ያጥፉ — ከታች ያለው እውነተኛው check በራሱ ይሰራል።
-  return <>{children}</>;
+const { isLoggedIn } = useAuth();
+const location = useLocation();
 
-  // eslint-disable-next-line no-unreachable
-  const { isLoggedIn } = useAuth();
-  const location = useLocation();
+if (!isLoggedIn) {
+return <Navigate to="/login" state={{ from: location }} replace />;
+}
 
-  if (!isLoggedIn) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
-  }
-
-  return <>{children}</>;
+return <>{children}</>;
 }

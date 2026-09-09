@@ -7,7 +7,6 @@ import {
   ChevronRight,
   Play,
   Volume2,
-  Volume1,
   VolumeX,
   MoreHorizontal,
   MessagesSquare,
@@ -18,6 +17,7 @@ import { useShare } from "../hooks/useShare";
 import CommentModal from "./CommentModal";
 import { useFeed } from "../context/FeedContext";
 import type { FeedPost, User } from "../types";
+
 interface PostCardProps {
   post: FeedPost;
   currentUser: User;
@@ -28,6 +28,14 @@ interface PostCardProps {
     photo: string;
   }) => void;
 }
+
+// Tap ≠ Hold detection tuning:
+// - Under DOUBLE_TAP_DELAY between two releases → treated as a double-tap (like)
+// - Held down longer than HOLD_ACTIVATION_MS without releasing → 2x speed
+// HOLD_ACTIVATION_MS is deliberately > DOUBLE_TAP_DELAY so a quick
+// double-tap can never be misread as the start of a hold.
+const DOUBLE_TAP_DELAY = 300;
+const HOLD_ACTIVATION_MS = 400;
 
 export default function PostCard({
   post,
@@ -40,6 +48,8 @@ export default function PostCard({
     toggleFollow,
     incrementShare,
     commentsMap,
+    isLoadingComments,
+    commentsError,
     addComment,
     deleteComment,
     editComment,
@@ -63,18 +73,15 @@ export default function PostCard({
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isVertical, setIsVertical] = useState(true);
-  // (ተወግዷል — post.isFollowing ከ FeedContext/backend ነው የሚመጣው)
   const [imgIsVertical, setImgVertical] = useState<boolean>(true);
   const [isMuted, setIsMuted] = useState<boolean>(true);
-  const [volume, setVolume] = useState<number>(0.8);
   const [captionExpanded, setCaptionExpanded] = useState<boolean>(false);
 
   // Media load failure (e.g. dropped network mid-scroll/mid-watch) — shows
-  // a Retry overlay instead of a blank/broken video or image.
+  // a Retry overlay instead of a blank/broken video or image. Only the
+  // media itself is blacked out — chrome (mute, like/comment/save/share,
+  // username/follow) stays visible and functional (see z-index notes below).
   const [mediaError, setMediaError] = useState(false);
-  // Bumped on retry to cache-bust and (for video) force a full remount via
-  // `key`, so the browser actually re-attempts the network request rather
-  // than serving the same failed state.
   const [retryNonce, setRetryNonce] = useState(0);
 
   // Swiping to a different carousel slide should reset any previous
@@ -88,34 +95,65 @@ export default function PostCard({
     setMediaError(false);
   }
 
+  function handleRetryMedia() {
+    setMediaError(false);
+    setRetryNonce((n) => n + 1);
+  }
+
   // Comments modal ሲከፈት ብቻ ነው ከ backend የምንጭነው (Comments unbounded list ስለሆነ
-  // ሁልጊዜ preload አናደርግም — database-design.md Section 19). Legitimate
-  // effect use (fetches from an external system), not a "state sync" case.
+  // ሁልጊዜ preload አናደርግም — database-design.md Section 19)
   useEffect(() => {
     if (isCommentsOpen) {
       void loadComments(post.id);
     }
   }, [isCommentsOpen, post.id, loadComments]);
 
-  function handleRetryMedia() {
-    setMediaError(false);
-    setRetryNonce((n) => n + 1);
-  }
   const isOwnPost =
     currentUser.fullName === post.username || currentUser.id === post.userId;
-  
+
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.muted = isMuted;
-      if (!isMuted) videoRef.current.volume = volume;
+      // ድምጽ ደረጃ ራሱ ከዚህ በኋላ በተጠቃሚው device (hardware) volume buttons ብቻ
+      // ነው የሚቆጣጠረው — in-app percentage slider ተወግዷል።
+      if (!isMuted) videoRef.current.volume = 1;
     }
-  }, [isMuted, volume]);
+  }, [isMuted]);
+
   // Video state
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
+  const [isFastForwarding, setIsFastForwarding] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const lastTapRef = useRef<number>(0);
   const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Press-and-hold → 2x playback (video only). Kept as refs (not state)
+  // since they're pure bookkeeping read inside pointer handlers, not
+  // something the render needs to react to.
+  const holdTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isHoldingRef = useRef(false);
+
+  function clearHoldTimer() {
+    if (holdTimeoutRef.current) {
+      clearTimeout(holdTimeoutRef.current);
+      holdTimeoutRef.current = null;
+    }
+  }
+
+  // Ends an active hold (if any) and reports whether one was ending, so
+  // the caller (pointer-up) knows whether to also run tap-detection.
+  function endHold(): boolean {
+    clearHoldTimer();
+    if (isHoldingRef.current) {
+      isHoldingRef.current = false;
+      setIsFastForwarding(false);
+      if (videoRef.current) videoRef.current.playbackRate = 1;
+      return true;
+    }
+    return false;
+  }
+
   // View tracking
   const viewedRef = useRef(false);
   useEffect(() => {
@@ -133,12 +171,14 @@ export default function PostCard({
     return () => observer.disconnect();
   }, [onView]);
 
-  const handleVideoClick = () => {
+  // Tap-classification (single = play/pause on video, double = like).
+  // Works for both video and photo — the play/pause branch is a no-op
+  // when there's no videoRef (photos).
+  function handleMediaTap() {
     const now = Date.now();
-    const DOUBLE_TAP_DELAY = 300;
 
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-      // Double tap → Like
+      // Double tap → Like (Instagram-style: only likes, never unlikes)
       if (tapTimeoutRef.current) {
         clearTimeout(tapTimeoutRef.current);
         tapTimeoutRef.current = null;
@@ -148,7 +188,7 @@ export default function PostCard({
     } else {
       lastTapRef.current = now;
       tapTimeoutRef.current = setTimeout(() => {
-        // Single tap → Play/Pause
+        // Single tap → Play/Pause (video only; no-op for photos)
         if (!videoRef.current) return;
         if (videoRef.current.paused) {
           videoRef.current.play();
@@ -159,14 +199,43 @@ export default function PostCard({
         }
       }, DOUBLE_TAP_DELAY);
     }
+  }
+
+  // Video-only: pointerdown starts the hold timer; pointerup either
+  // finishes a hold (revert to 1x, skip tap-detection) or — if released
+  // before HOLD_ACTIVATION_MS — runs normal tap-detection instead.
+  function handleVideoPointerDown() {
+    isHoldingRef.current = false;
+    holdTimeoutRef.current = setTimeout(() => {
+      isHoldingRef.current = true;
+      setIsFastForwarding(true);
+      if (videoRef.current) videoRef.current.playbackRate = 2;
+    }, HOLD_ACTIVATION_MS);
+  }
+
+  function handleVideoPointerUp() {
+    const wasHold = endHold();
+    if (wasHold) return; // hold just ended — not a tap
+    handleMediaTap();
+  }
+
+  function handleVideoPointerLeave() {
+    // Finger dragged off mid-press — cancel the hold without treating it
+    // as a tap (matches TikTok/Instagram: dragging off cancels, doesn't
+    // trigger pause/like).
+    endHold();
+  }
+
+  const handlePrev = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((i) => Math.max(0, i - 1));
+  };
+  const handleNext = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setCurrentIndex((i) => Math.min(post.mediaUrls.length - 1, i + 1));
   };
 
-  const handlePrev = () => setCurrentIndex((i) => Math.max(0, i - 1));
-  const handleNext = () =>
-    setCurrentIndex((i) => Math.min(post.mediaUrls.length - 1, i + 1));
-
   const isMultiPhoto = post.type === "photo" && post.mediaUrls.length > 1;
-  // FeedContext ማሳወቅ — backend ሲመጣ addPost ይቀራል፣ API ብቻ ይቀየራል
 
   return (
     <div
@@ -184,28 +253,15 @@ export default function PostCard({
         </div>
       )}
 
-      {/* Media load failure overlay — replaces a blank/broken video/image
-          with an explicit, actionable state (network drop mid-watch etc.) */}
-      {mediaError && (
-        <div className="absolute inset-0 z-20 bg-black flex flex-col items-center justify-center gap-3 text-white">
-          <WifiOff className="w-10 h-10 opacity-70" />
-          <p className="text-sm opacity-80">ግንኙነት ችግር ገጥሟል</p>
-          <button
-            onClick={handleRetryMedia}
-            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 text-sm font-semibold active:scale-95 transition-transform"
-          >
-            <RotateCw className="w-4 h-4" />
-            Retry
-          </button>
-        </div>
-      )}
-
       {/* ===== Media Area ===== */}
       {post.type === "video" ? (
         <div
           className="absolute inset-0 bg-black md:relative md:relative md:h-[92vh] md:w-auto 
         md:aspect-[9/16] md:max-w-[420px] md:rounded-2xl md:overflow-hidden"
-          onClick={handleVideoClick}
+          onPointerDown={handleVideoPointerDown}
+          onPointerUp={handleVideoPointerUp}
+          onPointerLeave={handleVideoPointerLeave}
+          onPointerCancel={handleVideoPointerLeave}
         >
           <video
             key={`video-${retryNonce}`}
@@ -223,32 +279,25 @@ export default function PostCard({
               // Mobile browser policy >>> muted autoplay only
               // ተጠካሚ  volume button ሲነካ unmute ይደረጋል
               v.muted = true;
-              v.volume = volume;
+              v.volume = 1;
               v.play().catch(() => {});
             }}
           />
-          {/* Sound toggle botton */}
+
+          {/* 2x speed indicator — visible only while actively holding */}
+          {isFastForwarding && (
+            <div className="absolute top-3 left-3 z-20 bg-black/60 text-white text-xs font-bold px-2.5 py-1 rounded-full pointer-events-none">
+              2×
+            </div>
+          )}
+
+          {/* Mute/unmute toggle — volume LEVEL itself is device-hardware
+              only, this only controls muted vs unmuted. z-30 so it stays
+              above the media-error overlay (z-10) regardless of nesting. */}
           <div
-            className="absolute top-3 right-3 z-20 flex items-center gap-2"
+            className="absolute top-3 right-3 z-30"
             onClick={(e) => e.stopPropagation()}
           >
-            {/*Volume slider  - unmuted ሲሆን ብቻ */}
-            {!isMuted && (
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={volume}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  setVolume(val);
-                  //eslint-disable-next-line react-hooks/immutability -- imperative video control ትክክለኛ ref pattern  ነው
-                  if (videoRef.current) videoRef.current.volume = val;
-                }}
-                className="w-20 h-1 accent-white cursor-pointer"
-              />
-            )}
             <button
               onClick={async (e) => {
                 e.stopPropagation();
@@ -258,7 +307,7 @@ export default function PostCard({
                 try {
                   // eslint-disable-next-line react-hooks/immutability -- imperative video control ትክክለኛ ref pattern ነው
                   videoRef.current.muted = next;
-                  videoRef.current.volume = next ? 0 : volume;
+                  videoRef.current.volume = next ? 0 : 1;
                   if (!videoRef.current.paused) {
                     return;
                   }
@@ -272,16 +321,14 @@ export default function PostCard({
             >
               {isMuted ? (
                 <VolumeX className="w-5 h-5 text-input" />
-              ) : volume > 0.5 ? (
-                <Volume2 className="w-5 h-5 text-input" />
               ) : (
-                <Volume1 className="w-5 h-5 text-input" />
+                <Volume2 className="w-5 h-5 text-input" />
               )}
             </button>
           </div>
 
-          {!isPlaying && (
-            <div className="absolute inset-0 flex items-center justify-center">
+          {!isPlaying && !isFastForwarding && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
               <div className="bg-black/40 rounded-full p-4">
                 <Play className="w-10 h-10 text-white" fill="white" />
               </div>
@@ -292,6 +339,7 @@ export default function PostCard({
         <div
           className="absolute inset-0 bg-black overflow-hidden md:relative md:h-[92vh] md:w-auto 
         md:aspect-[9/16] md:max-w-[420px] md:rounded-2xl"
+          onClick={handleMediaTap}
         >
           {/* Carousel or single photo */}
           <div
@@ -370,8 +418,26 @@ export default function PostCard({
         </div>
       )}
 
+      {/* Media load failure overlay — z-10: above the raw media (z-auto/0)
+          so it blacks it out, but BELOW every piece of persistent chrome
+          (mute z-30, user-info/action-bar z-20 below) so those stay
+          visible and fully functional while this shows. */}
+      {mediaError && (
+        <div className="absolute inset-0 z-10 bg-black flex flex-col items-center justify-center gap-3 text-white">
+          <WifiOff className="w-10 h-10 opacity-70" />
+          <p className="text-sm opacity-80">ግንኙነት ችግር ገጥሟል</p>
+          <button
+            onClick={handleRetryMedia}
+            className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/15 text-sm font-semibold active:scale-95 transition-transform"
+          >
+            <RotateCw className="w-4 h-4" />
+            Retry
+          </button>
+        </div>
+      )}
+
       {/* ===== User Info (bottom left) ===== */}
-      <div className="absolute bottom-20 left-3 right-16 z-10 md:bottom-8">
+      <div className="absolute bottom-20 left-3 right-16 z-20 md:bottom-8">
         <div className="flex items-center gap-2.5 mb-2">
           <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white bg-gray-400 shrink-0">
             {post.userAvatar ? (
@@ -431,7 +497,7 @@ export default function PostCard({
 
       {/* ===== Action Buttons (right side) ===== */}
       <div
-        className="absolute bottom-20 right-3 z-10 flex flex-col items-center gap-4
+        className="absolute bottom-20 right-3 z-20 flex flex-col items-center gap-4
 md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
       >
         {/* Like */}
@@ -498,6 +564,9 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
         <CommentModal
           comments={comments}
           currentUsername={currentUser.fullName}
+          isLoading={isLoadingComments}
+          error={commentsError}
+          onRetry={() => void loadComments(post.id)}
           onClose={() => setIsCommentsOpen(false)}
           onPostComment={(text) => addComment(post.id, text)}
           onDeleteComment={(commentId) => deleteComment(post.id, commentId)}

@@ -209,7 +209,7 @@ export default function Contact({ onNavigate = () => {} }: ContactProps) {
             }}
             className="text-white/70 no-underline transition-colors duration-200 hover:text-[#93c5fd]"
           >
-            Privacy
+            Privacy Policy
           </a>
           <a 
             href="/footer/terms"
