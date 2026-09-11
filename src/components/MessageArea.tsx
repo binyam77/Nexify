@@ -571,6 +571,61 @@ export default function MessageArea({
                     : "The channel owner hasn't posted anything yet.")}
               </p>
             </div>
+          ) : chat.type === "chat" ? (
+            <div className="flex flex-col items-center justify-center h-full py-16 animate-in fade-in duration-300 gap-4 px-6 text-center">
+              <style>{`
+                @keyframes nexify-wave {
+                  0%, 60%, 100% { transform: rotate(0deg); }
+                  10%, 30% { transform: rotate(14deg); }
+                  20% { transform: rotate(-8deg); }
+                  40% { transform: rotate(14deg); }
+                  50% { transform: rotate(-4deg); }
+                }
+                .nexify-wave-emoji {
+                  animation: nexify-wave 1.8s ease-in-out infinite;
+                  transform-origin: 70% 70%;
+                  display: inline-block;
+                }
+              `}</style>
+              <div className="relative">
+                <div className="w-20 h-20 rounded-full overflow-hidden shadow-md border-4 border-white ring-2 ring-blue-50 flex items-center justify-center shrink-0">
+                  {chat.avatarUrl ? (
+                    <img
+                      src={chat.avatarUrl}
+                      alt={chat.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div
+                      className={`w-full h-full ${chat.bgGradient} flex items-center justify-center text-white font-black text-xl`}
+                    >
+                      {chat.avatarLabel}
+                    </div>
+                  )}
+                </div>
+                <span className="absolute -bottom-1 -right-2 text-3xl nexify-wave-emoji select-none">
+                  👋
+                </span>
+              </div>
+              <div>
+                <h4 className="text-base font-black text-gray-800">
+                  {chat.name}
+                </h4>
+                <p className="text-xs text-gray-400 mt-1.5 max-w-[220px] mx-auto">
+                  This is the start of your conversation.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  setInputText("👋 Hi!");
+                  setTimeout(() => textareaRef.current?.focus(), 50);
+                }}
+                className="px-5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-full transition-all active:scale-95"
+              >
+                👋 Say Hi
+              </button>
+            </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 animate-in fade-in duration-300 gap-3 px-6 text-center">
               <div className="w-16 h-16 rounded-full overflow-hidden shadow-sm border-gray-100 bg-gray-100 flex items-center justify-center shrink-0">

@@ -401,18 +401,69 @@ export default function Left({
                         >
                           @{reply.username}
                         </h5>
-                        <p className="text-xs text-slate-600 leading-normal break-words">
-                          {reply.text}
-                        </p>
-                        <span className="text-[9px] text-slate-400 font-medium block mt-1">
-                          {new Date(reply.timestamp).toLocaleTimeString(
-                            undefined,
-                            {
-                              hour: "2-digit",
-                              minute: "2-digit",
-                            },
-                          )}
-                        </span>
+
+                        {editingCommentId === reply.id ? (
+                          <div className="flex items-center gap-2 mt-1">
+                            <input
+                              type="text"
+                              value={editInputText}
+                              onChange={(e) => setEditInputText(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") confirmEdit(reply.id);
+                                if (e.key === "Escape")
+                                  setEditingCommentId(null);
+                              }}
+                              autoFocus
+                              maxLength={500}
+                              className="flex-1 bg-white border border-teal-300 rounded-lg px-2.5 py-1 text-xs outline-none focus:border-teal-500"
+                            />
+                            <button
+                              onClick={() => confirmEdit(reply.id)}
+                              className="w-6 h-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full flex items-center justify-center shrink-0"
+                            >
+                              <Check className="w-3 h-3" />
+                            </button>
+                          </div>
+                        ) : (
+                          <p className="text-xs text-slate-600 leading-normal break-words">
+                            {reply.text}
+                          </p>
+                        )}
+
+                        <div className="flex items-center gap-3 mt-1">
+                          <span className="text-[9px] text-slate-400 font-medium">
+                            {new Date(reply.timestamp).toLocaleTimeString(
+                              undefined,
+                              {
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              },
+                            )}
+                          </span>
+                          {reply.username === profile.username &&
+                            editingCommentId !== reply.id && (
+                              <>
+                                <button
+                                  onClick={() => startEditing(reply)}
+                                  className="text-[9px] text-slate-400 hover:text-blue-600 font-bold"
+                                >
+                                  Edit
+                                </button>
+                                <button
+                                  onClick={() =>
+                                    handleDeleteReply(
+                                      selectedPost.id,
+                                      comment.id,
+                                      reply.id,
+                                    )
+                                  }
+                                  className="text-[9px] text-slate-400 hover:text-rose-600 font-bold"
+                                >
+                                  Delete
+                                </button>
+                              </>
+                            )}
+                        </div>
                       </div>
                     </div>
                   ))}

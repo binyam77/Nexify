@@ -138,9 +138,10 @@ export default function Profile({
   // --- የማረጋገጫ ሞዳል ሁኔታ መቆጣጠሪያ (Custom Styled Delete Confirmation Modal state) ---
   const [deleteConfirmState, setDeleteConfirmState] = useState<{
     isOpen: boolean;
-    type: "post" | "comment";
+    type: "post" | "comment" | "reply";
     postId: string;
     commentId?: string;
+    replyId?:string;
   } | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeletingPost, setIsDeletingPost] = useState(false);

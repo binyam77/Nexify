@@ -2,8 +2,8 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  */
-import { useState, useEffect, useRef,useCallback } from "react";
-import { useParams, Navigate } from "react-router-dom";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { useParams, useNavigate, Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useFeed } from "../context/FeedContext";
 import { fetchProfile } from "../api/profile.api";
@@ -29,6 +29,7 @@ interface OtherProfileData {
 
 export default function UserProfile() {
   const { username } = useParams<{ username: string }>();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const {
     commentsMap,
@@ -64,8 +65,10 @@ export default function UserProfile() {
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedMediaSrc, setSelectedMediaSrc] = useState<string | null>(null);
   const viewedKeyRef = useRef("viewedPostIds");
-  const [isDeletingComment, setIsDeletingComment] =useState(false);
-  const [deleteCommentError, setDeleteCommentError] = useState<string | null >(null);
+  const [isDeletingComment, setIsDeletingComment] = useState(false);
+  const [deleteCommentError, setDeleteCommentError] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!username) return;
@@ -87,7 +90,7 @@ export default function UserProfile() {
     };
   }, [username]);
 
-   const loadPosts = useCallback(async () => {
+  const loadPosts = useCallback(async () => {
     if (!otherProfile?.userId) return;
     setIsLoadingPosts(true);
     setPostsError(null);
@@ -154,12 +157,24 @@ export default function UserProfile() {
       }
     } catch (e) {
       console.error("Follow toggle failed:", e);
-      setFollowError("Failed try again.")
+      setFollowError("Failed try again.");
     } finally {
       setIsFollowPending(false);
     }
   };
-
+  const handleStartChat = () => {
+    if (!otherProfile) return;
+    navigate("/community", {
+      state: {
+        openChatWith: {
+          name: otherProfile.name,
+          username: otherProfile.username,
+          photo: otherProfile.photo,
+          bio: otherProfile.bio,
+        },
+      },
+    });
+  };
   const handleOpenPlayer = (post: FeedPost) => {
     setSelectedPostId(post.id);
     setSelectedMediaSrc(post.mediaUrls[0] || "");
@@ -180,10 +195,10 @@ export default function UserProfile() {
     if (!deleteConfirmState) return;
     setIsDeletingComment(true);
     setDeleteCommentError(null);
-    try{
-    deleteComment(deleteConfirmState.postId, deleteConfirmState.commentId);
-    setDeleteConfirmState(null);
-    } finally{
+    try {
+      deleteComment(deleteConfirmState.postId, deleteConfirmState.commentId);
+      setDeleteConfirmState(null);
+    } finally {
       setIsDeletingComment(false);
     }
   };
@@ -316,16 +331,17 @@ export default function UserProfile() {
           </button>
 
           {/* TODO(chat-module): Message ቁልፍ Chat module ሲገነባ ይሰራል */}
-          <button
-            disabled
-            title="Coming soon"
-            className="px-4 py-2.5 rounded-xl bg-surface border border-border text-text-secondary font-black text-xs uppercase tracking-wider opacity-50 cursor-not-allowed"
+                    <button
+            onClick={handleStartChat}
+            className="px-4 py-2.5 rounded-xl bg-[#2481cc] hover:bg-[#2075b8] text-white font-black text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2"
           >
             Message
           </button>
 
           {followError && (
-            <p className="text-xs font-semibold text-rose-600 basis-full mt-1">{followError}</p>
+            <p className="text-xs font-semibold text-rose-600 basis-full mt-1">
+              {followError}
+            </p>
           )}
         </div>
 
@@ -339,8 +355,10 @@ export default function UserProfile() {
       </div>
 
       <div className="max-w-4xl w-full mx-auto px-4 md:px-8 mb-6">
-                {isLoadingPosts ? (
-          <div className="text-center text-xs text-slate-400 py-10">Loading posts...</div>
+        {isLoadingPosts ? (
+          <div className="text-center text-xs text-slate-400 py-10">
+            Loading posts...
+          </div>
         ) : postsError ? (
           <div className="flex flex-col items-center justify-center py-10 gap-3">
             <p className="text-sm text-rose-500 font-semibold">{postsError}</p>

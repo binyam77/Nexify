@@ -45,6 +45,7 @@ interface ViewVideoProps {
   handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
   handleAddComment: (postId: string, text: string) => void;
   handleDeleteComment: (postId: string, commentId: string) => void;
+  handleDeleteReply:(postId:string,commentId:string, replyId:string) => void;
   handleAddReply: (postId: string, commentId: string, text: string) => void;
   handleNavigateToUserProfile: (username: string) => void;
   handleEditComment: (
@@ -71,6 +72,7 @@ export default function ViewVideo({
   handleDeletePost,
   handleAddComment,
   handleDeleteComment,
+  handleDeleteReply,
   handleAddReply,
   handleNavigateToUserProfile,
   handleEditComment,
@@ -282,6 +284,7 @@ export default function ViewVideo({
           handleDeletePost={handleDeletePost}
           handleAddComment={handleAddComment}
           handleDeleteComment={handleDeleteComment}
+          handleDeleteReply={handleDeleteReply}
           handleAddReply={handleAddReply}
           handleEditComment={handleEditComment}
           handleNavigateToUserProfile={handleNavigateToUserProfile}
