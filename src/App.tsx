@@ -19,7 +19,7 @@ import Community from "./pages/comminty";
 import Settings from "./pages/settings";
 import { ROUTES } from "./routes";
 import About from "./footer/about";
-import Privacy from "./footer/privacy";
+import Privacy from "./footer/privacypolicy";
 import Terms from "./footer/terms";
 import Contact from "./footer/contact";
 import Helps from "./footer/helps";
@@ -140,13 +140,21 @@ export default function App() {
     </UIProvider>
   );
 }
+
+
 function RequireAuth({ children }: { children: React.ReactNode }) {
-const { isLoggedIn } = useAuth();
-const location = useLocation();
-
-if (!isLoggedIn) {
-return <Navigate to="/login" state={{ from: location }} replace />;
-}
-
+  // ⚠️ TEMPORARY DEV BYPASS — Login ሳያደርጉ Home/Profile/Settings ማየት
+  // እንዲችሉ። ወደ ነበረበት ለመመለስ: ይህን 1 መስመር (return <>{children}</>;) ብቻ
+  // ያጥፉ — ከታች ያለው እውነተኛው check በራሱ ይሰራል።
 return <>{children}</>;
+
+  // eslint-disable-next-line no-unreachable
+  const { isLoggedIn } = useAuth();
+  const location = useLocation();
+
+  if (!isLoggedIn) {
+  return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+ return <>{children}</>;
 }

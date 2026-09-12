@@ -42,6 +42,7 @@ export default function UserProfile() {
     incrementShare,
     addComment,
     deleteComment,
+    deleteReply,
     addReply,
     editComment,
   } = useFeed();
@@ -59,8 +60,10 @@ export default function UserProfile() {
   const [shareModalPost, setShareModalPost] = useState<FeedPost | null>(null);
   const [deleteConfirmState, setDeleteConfirmState] = useState<{
     isOpen: boolean;
+    type: "comment" | "reply";
     postId: string;
     commentId: string;
+    replyId?: string;
   } | null>(null);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedMediaSrc, setSelectedMediaSrc] = useState<string | null>(null);
@@ -189,14 +192,35 @@ export default function UserProfile() {
     }
   };
   const handleDeleteComment = (postId: string, commentId: string) => {
-    setDeleteConfirmState({ isOpen: true, postId, commentId });
+    setDeleteConfirmState({ isOpen: true, type: "comment", postId, commentId });
+  };
+  const handleDeleteReply = (
+    postId: string,
+    commentId: string,
+    replyId: string,
+  ) => {
+    setDeleteConfirmState({
+      isOpen: true,
+      type: "reply",
+      postId,
+      commentId,
+      replyId,
+    });
   };
   const executeDeleteComment = async () => {
     if (!deleteConfirmState) return;
     setIsDeletingComment(true);
     setDeleteCommentError(null);
     try {
-      deleteComment(deleteConfirmState.postId, deleteConfirmState.commentId);
+      if (deleteConfirmState.type === "reply" && deleteConfirmState.replyId) {
+        deleteReply(
+          deleteConfirmState.postId,
+          deleteConfirmState.commentId,
+          deleteConfirmState.replyId,
+        );
+      } else {
+        deleteComment(deleteConfirmState.postId, deleteConfirmState.commentId);
+      }
       setDeleteConfirmState(null);
     } finally {
       setIsDeletingComment(false);
@@ -331,7 +355,7 @@ export default function UserProfile() {
           </button>
 
           {/* TODO(chat-module): Message ቁልፍ Chat module ሲገነባ ይሰራል */}
-                    <button
+          <button
             onClick={handleStartChat}
             className="px-4 py-2.5 rounded-xl bg-[#2481cc] hover:bg-[#2075b8] text-white font-black text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2"
           >
@@ -411,6 +435,7 @@ export default function UserProfile() {
           handleDeletePost={() => {}}
           handleAddComment={addComment}
           handleDeleteComment={handleDeleteComment}
+          handleDeleteReply={handleDeleteReply}
           handleAddReply={addReply}
           handleEditComment={editComment}
           handleNavigateToUserProfile={() => {}}
@@ -430,7 +455,9 @@ export default function UserProfile() {
               <Trash2 className="w-7 h-7" />
             </div>
             <h3 className="text-lg font-black text-slate-800 mb-2">
-              Delete Comment?
+              {deleteConfirmState.type === "reply"
+                ? "Delete Reply?"
+                : "Delete Comment?"}
             </h3>
             <p className="text-xs text-slate-500 font-semibold mb-6">
               Are you sure you want to delete this permanently? This action

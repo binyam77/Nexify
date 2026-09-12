@@ -98,7 +98,7 @@ export default function About({ onNavigate = () => {} }: AboutProps) {
             }}
             className="text-white/70 no-underline transition-colors duration-200 hover:text-blue-300"
           >
-            Terms
+            Terms & Service
           </a>
           <a
             href="/footer/contact"

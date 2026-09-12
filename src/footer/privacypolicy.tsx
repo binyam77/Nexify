@@ -250,7 +250,7 @@ export default function Privacy({ onNavigate = () => {} }: PrivacyProps) {
             }}
             className="text-white/70 no-underline transition-colors duration-200 hover:text-[#93c5fd]"
           >
-            Terms
+            Terms & Service
           </a>
           <a
             href="/footer/contact"

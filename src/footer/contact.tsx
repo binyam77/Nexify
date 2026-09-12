@@ -47,7 +47,7 @@ export default function Contact({ onNavigate = () => {} }: ContactProps) {
         </div>
         <div className="max-w-[1200px] mx-auto text-center">
           <h1 className="text-[32px] md:text-[42px] font-extrabold tracking-[1px] text-white flex items-center justify-center gap-1">
-            Contact Nex<p className="text-[#10b981] text-[38px] inline-block m-0 p-0 leading-none">i</p>fy
+            Contact Nexify
           </h1>
           <p className="text-white/60 text-base tracking-[2px] mt-2 uppercase font-medium">We'd love to hear from you</p>
         </div>
@@ -189,23 +189,14 @@ export default function Contact({ onNavigate = () => {} }: ContactProps) {
       </main>
 
       <footer className="bg-[#1d4ed8] py-[30px] px-5 text-center text-sm text-white/70 border-t border-white/10 mt-auto w-full">
-        <p className="mb-3">&copy; 2026 Nexify. All rights reserved.</p>
+        <p className="mb-3">&copy; 2026 Nexify</p>
         <div className="flex justify-center gap-5">
-          <a 
-            href="/footer/about"
-            onClick={(e) => {
-              e.preventDefault();
-              onNavigate("about");
-            }}
-            className="text-white/70 no-underline transition-colors duration-200 hover:text-[#93c5fd]"
-          >
-            About
-          </a>
+          
           <a 
             href="/footer/privacy"
             onClick={(e) => {
               e.preventDefault();
-              onNavigate("privacy");
+              onNavigate("privacypolicy");
             }}
             className="text-white/70 no-underline transition-colors duration-200 hover:text-[#93c5fd]"
           >
@@ -219,7 +210,7 @@ export default function Contact({ onNavigate = () => {} }: ContactProps) {
             }}
             className="text-white/70 no-underline transition-colors duration-200 hover:text-[#93c5fd]"
           >
-            Terms
+            Terms & Service
           </a>
           <a 
             href="/footer/helps"

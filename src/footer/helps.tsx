@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Zap, ArrowLeft } from "lucide-react";
+import {  ArrowLeft } from "lucide-react";
 
 interface HelpsProps {
   onNavigate?: (page: string) => void;
@@ -29,7 +29,7 @@ export default function Helps({ onNavigate = () => {} }: HelpsProps) {
             
             <header className="help-header text-center mb-[35px]">
               <div className="help-logo text-[28px] font-extrabold mb-[15px] flex items-center justify-center gap-2.5">
-                <Zap className="lightning-icon text-[#2563eb] filter drop-shadow-[0_0_8px_#2563eb] w-6 h-6 animate-pulse" />
+                
                 <span>Help</span>
               </div>
               <h1 className="text-2xl font-bold text-gray-900 mb-1.5">How can we help you?</h1>
@@ -88,7 +88,7 @@ export default function Helps({ onNavigate = () => {} }: HelpsProps) {
                 href="/modules/home/home.html" 
                 onClick={(e) => {
                   e.preventDefault();
-                  onNavigate("about");
+                  onNavigate("home");
                 }}
                 className="back-home-link inline-flex items-center gap-1.5 text-xs text-gray-800/40 hover:text-gray-900 transition-colors duration-200 cursor-pointer"
               >
@@ -102,21 +102,12 @@ export default function Helps({ onNavigate = () => {} }: HelpsProps) {
         <footer className="help-footer bg-[#1d4ed8] py-6 px-5 border-t border-white/10">
           <div className="footer-container max-w-[680px] mx-auto flex flex-col md:flex-row justify-between items-center gap-3 md:gap-0 text-center md:text-left">
             <div className="footer-links flex gap-5 text-xs text-white/70">
-              <a 
-                href="/footer/about/about.html" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate("about");
-                }}
-                className="hover:text-white transition-colors duration-200"
-              >
-                About
-              </a>
+              
               <a 
                 href="/footer/privacy/privacy.html" 
                 onClick={(e) => {
                   e.preventDefault();
-                  onNavigate("privacy");
+                  onNavigate("privacypolicy");
                 }}
                 className="hover:text-white transition-colors duration-200"
               >
@@ -130,18 +121,9 @@ export default function Helps({ onNavigate = () => {} }: HelpsProps) {
                 }}
                 className="hover:text-white transition-colors duration-200"
               >
-                Terms
+                Terms & Service
               </a>
-              <a 
-                href="/footer/contact/contact.html" 
-                onClick={(e) => {
-                  e.preventDefault();
-                  onNavigate("contact");
-                }}
-                className="hover:text-white transition-colors duration-200"
-              >
-                Contact
-              </a>
+             
             </div>
             <p className="copyright text-xs text-white/50">&copy; 2026 Nexify</p>
           </div>

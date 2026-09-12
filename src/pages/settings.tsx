@@ -163,12 +163,12 @@ function MainSettingsView({
         <ListRow
           icon={<ShieldCheck className="w-5 h-5 text-brand" />}
           label="Privacy Policy"
-          onClick={() => navigate("/privacy")}
+          onClick={() => navigate("/privacypolicy")}
         />
         <Divider />
         <ListRow
           icon={<FileText className="w-5 h-5 text-brand" />}
-          label="Terms"
+          label="Terms & Service"
           onClick={() => navigate("/terms")}
         />
       </ListCard>

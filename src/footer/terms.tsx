@@ -23,9 +23,9 @@ export default function Terms({ onNavigate = () => {} }: TermsProps) {
         </div>
         <div className="max-w-[900px] mx-auto text-center">
           <h1 className="text-[32px] md:text-[42px] font-extrabold tracking-[1px] bg-gradient-to-r from-white to-[#93c5fd] bg-clip-text text-transparent mb-2 flex items-center justify-center gap-[15px]">
-            <Gavel className="text-white w-8 h-8 md:w-10 md:h-10 shrink-0 filter drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" /> Terms & Conditions
+            <Gavel className="text-white w-8 h-8 md:w-10 md:h-10 shrink-0 filter drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]" /> Terms & Service
           </h1>
-          <p className="text-white/50 text-[15px] italic">Last Updated: April 09, 2026</p>
+          <p className="text-white/50 text-[15px] italic">Last Updated: Sep 12, 2026</p>
         </div>
       </header>
 
@@ -198,23 +198,14 @@ export default function Terms({ onNavigate = () => {} }: TermsProps) {
       </main>
 
       <footer className="bg-[#1d4ed8] py-[30px] px-5 text-center text-[14px] text-white/70 border-t border-white/10 mt-auto w-full">
-        <p className="mb-3">&copy; 2026 Nexify</p>
+      
         <div className="flex justify-center gap-5">
-          <a
-            href="/footer/about"
-            onClick={(e) => {
-              e.preventDefault();
-              onNavigate("about");
-            }}
-            className="text-white/70 no-underline transition-colors duration-200 hover:text-[#93c5fd]"
-          >
-            About
-          </a>
+          
           <a
             href="/footer/privacy"
             onClick={(e) => {
               e.preventDefault();
-              onNavigate("privacy");
+              onNavigate("privacypolicy");
             }}
             className="text-white/70 no-underline transition-colors duration-200 hover:text-[#93c5fd]"
           >
@@ -241,6 +232,7 @@ export default function Terms({ onNavigate = () => {} }: TermsProps) {
             Help
           </a>
         </div>
+          <p className="mb-3">&copy; 2026 Nexify</p>
       </footer>
     </div>
   );
