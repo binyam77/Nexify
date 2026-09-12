@@ -109,7 +109,7 @@ export default function ChatsSidebar({
   );
   return (
     <section
-      className="w-full md:w-[350px] border-r border-gray-100 bg-surface flex flex-col h-full shrink-0"
+      className="w-full md:w-[350px] border-r border-gray-100 bg-bodey-bg flex flex-col h-full shrink-0"
       aria-label="Chats List"
     >
       {/* ራስጌ - የአርዕስት ክፍል */}

@@ -121,7 +121,7 @@ export default function NewChannelModal({
   };
 
   return (
-    <div className="fixed inset-0 h-[100svh] bg-white z-50 flex flex-col animate-in fade-in duration-150">
+    <div className="fixed inset-0 h-[100svh] bg-bodey-bg z-50 flex flex-col animate-in fade-in duration-150">
       <header className="px-4 py-4 border-b border-gray-100 flex items-center gap-3 shrink-0">
         <button
           onClick={onClose}
@@ -156,7 +156,7 @@ export default function NewChannelModal({
               </button>
             </>
           ) : (
-            <div className="flex flex-col items-center text-gray-400">
+            <div className="flex flex-col  items-center text-gray-400">
               <ImageIcon className="w-7 h-7 mb-1 text-gray-300" />
               <span className="text-xs font-semibold">Add a cover photo</span>
             </div>
@@ -221,9 +221,7 @@ export default function NewChannelModal({
           </div>
 
           <div>
-            <label htmlFor="channelName" className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5">
-              Channel Name *
-            </label>
+           
             <input
               id="channelName"
               type="text"
@@ -231,15 +229,14 @@ export default function NewChannelModal({
               maxLength={MAX_NAME_LENGTH}
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="channel name"
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-800 placeholder-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200"
+              placeholder="Channel Name *"
+              className="w-full bg-input border border-2px rounded-xl px-4  py-3 text-sm font-medium text-input-text placeholder-gray-400 focus:bg-input focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all duration-200"
             />
+            <p className='text-sm text-small text-right'>0/60</p>
           </div>
 
           <div>
-            <label htmlFor="channelBio" className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5">
-              Bio
-            </label>
+           
             <textarea
               id="channelBio"
               rows={3}
@@ -247,8 +244,9 @@ export default function NewChannelModal({
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Describe what this channel is about..."
-              className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-800 placeholder-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200 resize-none"
+              className="w-full bg-input border border-2px rounded-xl px-4 py-3 text-sm font-medium text-input-text placeholder-gray-400 focus:bg-input focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all duration-200 resize-none"
             />
+            <p className='text-sm text-small text-right'>0/300</p>
           </div>
 
           {!avatarUrl && (
@@ -288,7 +286,7 @@ export default function NewChannelModal({
           <button
             onClick={handleSubmit}
             disabled={!name.trim()}
-            className="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600 text-white text-sm font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md shadow-blue-200"
+            className="w-full py-3 bg-brand hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-blue-600 text-white text-sm font-extrabold rounded-xl transition-all flex items-center justify-center gap-1.5 shadow-md "
           >
             <Plus className="w-4 h-4" />
             <span>Create Channel</span>

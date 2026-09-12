@@ -73,16 +73,16 @@ export default function UploadModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white flex flex-col">
+    <div className="fixed inset-0 z-[100] bg-bodey-bg flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
         <button
           onClick={handleClose}
           className="p-1 rounded-full hover:bg-slate-100"
         >
-          <X className="w-5 h-5 text-slate-600" />
+          <X className="w-5 h-5 text-small-text" />
         </button>
-        <h3 className="text-base font-bold text-slate-900">New Post</h3>
+        <h3 className="text-base font-bold text-text-h1">New Post</h3>
         <div className="w-7" /> {/* symmetry spacer */}
       </div>
 
@@ -125,7 +125,7 @@ export default function UploadModal({
                 setSelectedFile(null);
                 setPreviewUrl("");
               }}
-              className="absolute top-2 right-2 bg-black/50 rounded-full p-1"
+               className="absolute top-2 right-2 bg-black/50 rounded-full p-1"
             >
               <X className="w-4 h-4 text-white" />
             </button>
@@ -138,11 +138,11 @@ export default function UploadModal({
           placeholder="Write a caption... #hashtags"
           rows={4}
           maxLength={2200}
-          className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-800 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
+          className="w-full bg-input px-3 py-2 border border-input-border rounded-lg text-sm text-slate-800 resize-none focus:outline-none focus:ring-1 focus:ring-blue-500/20 focus:border-brand"
         />
 
         {error && (
-          <p className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+          <p className="text-xs font-semibold text-input-text bg-input border border-amber-200 rounded-lg px-3 py-2">
             {error}
           </p>
         )}
@@ -150,7 +150,7 @@ export default function UploadModal({
         <button
           onClick={handleSubmit}
           disabled={!selectedFile || isUploading}
-          className="w-full py-3 bg-blue-600 text-white font-bold rounded-xl disabled:opacity-50 hover:bg-blue-700 transition-colors"
+          className="w-full py-3 bg-brand text-white font-bold rounded-xl disabled:opacity-50 hover:bg-blue-700 transition-colors"
         >
           {isUploading ? "Posting..." : "Post"}
         </button>

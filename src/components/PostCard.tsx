@@ -240,7 +240,7 @@ export default function PostCard({
   return (
     <div
       ref={containerRef}
-      className="relative h-full w-full bg-black md:bg-surface  flex items-center justify-center md:justify-center"
+      className="relative h-full w-full bg-black md:bg-bodey-bg  flex items-center justify-center md:justify-center"
     >
       {/*Share feedback toast - clipboard success/failure ተተካሚው እንዲያውክ */}
       {toastVisible && (

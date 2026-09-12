@@ -10,7 +10,7 @@ import {
   Bell,
   UserCircle,
   Camera,
-  Image,
+  Upload,
   X,
   VideoCamera,
 } from "@phosphor-icons/react";
@@ -55,7 +55,7 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-surface shadow-input border-t border-input-border flex items-center h-16 px-2">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-bodey-bg shadow-input border-t border-input-border flex items-center h-16 px-2">
       {/* Left: Home + Community */}
       <div className="flex flex-1 items-center justify-around">
         {leftItems.map(({ label, to, icon: Icon }) => (
@@ -82,7 +82,7 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
 
       {/* Center: + Upload */}
       <div className="flex items-center justify-center px-2">
-               <button
+        <button
           onClick={handlePlusClick}
           className="w-14 h-14 bg-brand  rounded-full flex items-center justify-center
            shadow-xl -translate-y-4 border-4 border-input active:scale-95 transition-transform"
@@ -91,7 +91,7 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
           <Plus className="w-7 h-7 text-white" strokeWidth={2.5} />
         </button>
 
-               <input
+        <input
           ref={cameraPhotoInputRef}
           type="file"
           accept="image/*"
@@ -145,17 +145,17 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
           </NavLink>
         ))}
       </div>
-        {isCreateOpen && (
+      {isCreateOpen && (
         <div
           className="fixed inset-0 z-[100] bg-black/60 flex items-end justify-center md:items-center"
           onClick={() => setIsCreateOpen(false)}
         >
           <div
-            className="bg-white w-full max-w-sm rounded-t-2xl md:rounded-2xl p-4 pb-6 shadow-2xl"
+            className="bg-surface w-full max-w-sm rounded-t-2xl md:rounded-2xl p-4 pb-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-bold text-slate-900">Create</h3>
+              <h3 className="text-base font-bold text-text">Create</h3>
               <button
                 onClick={() => setIsCreateOpen(false)}
                 className="p-1 rounded-full hover:bg-slate-100"
@@ -171,8 +171,10 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
                 <Camera className="w-5 h-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-900">Take Photo</p>
-                <p className="text-xs text-slate-400">Use your camera to take a photo</p>
+                <p className="text-sm font-bold text-text-h2">Take Photo</p>
+                <p className="text-xs text-small-text">
+                  Use your camera to take a photo
+                </p>
               </div>
             </button>
 
@@ -184,8 +186,10 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
                 <VideoCamera className="w-5 h-5 text-rose-600" />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-900">Record Video</p>
-                <p className="text-xs text-slate-400">Use your camera to record a video</p>
+                <p className="text-sm font-bold text-text-h2">Record Video</p>
+                <p className="text-xs text-small-text">
+                  Use your camera to record a video
+                </p>
               </div>
             </button>
 
@@ -194,17 +198,18 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
               className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
             >
               <div className="w-10 h-10 rounded-full bg-violet-50 flex items-center justify-center">
-                <Image className="w-5 h-5 text-violet-600" />
+                <Upload className="w-5 h-5 text-violet-600" />
               </div>
               <div>
-                <p className="text-sm font-bold text-slate-900">Upload</p>
-                <p className="text-xs text-slate-400">Choose from your gallery</p>
+                <p className="text-sm font-bold text-text-h2">Upload media</p>
+                <p className="text-xs text-small-text">
+                  Choose photos or videos from your device
+                </p>
               </div>
             </button>
           </div>
         </div>
       )}
     </nav>
-        
   );
 }

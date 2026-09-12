@@ -129,7 +129,7 @@ export default function Home() {
   }
   if (error) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center bg-surface text-slate-400 gap-3">
+      <div className="h-full w-full flex flex-col items-center justify-center bg-bodey-bg text-slate-400 gap-3">
         <WifiOff className="w-10 h-10 opacity-60" />
         <p className="text-lg font-semibold">{error}</p>
         <button

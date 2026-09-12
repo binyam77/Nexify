@@ -113,7 +113,7 @@ export default function NewGroupModal({
   };
 
   return (
-    <div className="fixed inset-0 h-[100svh] bg-white z-50 flex flex-col animate-in fade-in duration-150">
+    <div className="fixed inset-0 h-[100svh] bg-bodey-bg z-50 flex flex-col animate-in fade-in duration-150">
       <header className="px-4 py-4 border-b border-gray-100 flex items-center gap-3 shrink-0">
         <button
           onClick={onClose}
@@ -218,18 +218,13 @@ export default function NewGroupModal({
             </span>
             <span className="text-blue-600 text-xs font-bold">Choose</span>
           </button>
-          <p className="text-[10px] text-gray-400 mt-1">
+          <p className="text-[10px] text-small-text mt-1">
             You can skip this and let people join the group later instead.
           </p>
         </div>
 
         <div>
-          <label
-            htmlFor="groupName"
-            className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5"
-          >
-            Group Name *
-          </label>
+         
           <input
             id="groupName"
             type="text"
@@ -237,18 +232,14 @@ export default function NewGroupModal({
             maxLength={MAX_NAME_LENGTH}
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="group name"
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-800 placeholder-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200"
+            placeholder="GROUP NAME *"
+            className="w-full bg-inpu border border-2px rounded-xl px-4 py-3 text-sm font-medium text-input-text placeholder-gray-400 focus:bg-input focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all duration-200"
           />
+          <p className="text-sm text-small-text text-right">0/60</p>
         </div>
 
         <div>
-          <label
-            htmlFor="groupDesc"
-            className="block text-xs font-black text-gray-600 uppercase tracking-widest mb-1.5"
-          >
-            Description
-          </label>
+          
           <textarea
             id="groupDesc"
             rows={2}
@@ -256,8 +247,9 @@ export default function NewGroupModal({
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             placeholder="Describe what this group is about..."
-            className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium text-gray-800 placeholder-gray-400 focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all duration-200 resize-none"
+            className="w-full bg-input border border-2px rounded-xl px-4 py-3 text-sm font-medium text-input-text placeholder-gray-400 focus:bg-input focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all duration-200 resize-none"
           />
+          <p className="text-sm text-small-text text-right">0/300</p>
         </div>
 
         {!avatarUrl && (

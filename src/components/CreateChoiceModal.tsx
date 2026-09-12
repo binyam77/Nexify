@@ -27,11 +27,11 @@ export default function CreateChoiceModal({
       onClick={onClose}
     >
       <div
-        className="bg-white w-full sm:max-w-xs rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200"
+        className="bg-surface w-full sm:max-w-xs rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <span className="text-sm font-bold text-gray-800">Create New</span>
+          <span className="text-sm font-bold text-text-h1">Create New</span>
           <button
             onClick={onClose}
             className="p-1 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100"
@@ -48,7 +48,7 @@ export default function CreateChoiceModal({
             <Radio className="w-5 h-5 text-blue-500 shrink-0" />
             <div>
               <div>Create Channel</div>
-              <div className="text-[11px] font-medium text-gray-400">
+              <div className="text-[11px] font-medium text-small-text">
                 Broadcast to subscribers, only you can post
               </div>
             </div>
@@ -61,7 +61,7 @@ export default function CreateChoiceModal({
             <Users className="w-5 h-5 text-emerald-500 shrink-0" />
             <div>
               <div>Create Group</div>
-              <div className="text-[11px] font-medium text-gray-400">
+              <div className="text-[11px] font-medium text-small-text">
                 Everyone can chat together
               </div>
             </div>
