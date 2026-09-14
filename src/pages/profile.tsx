@@ -48,6 +48,9 @@ export default function Profile({
     isLoadingComments,
     commentsError,
     loadComments,
+    loadMoreComments,
+    hasMoreComments,
+    isLoadingMoreComments,
     incrementView,
     toggleLike,
     toggleSave,
@@ -141,7 +144,7 @@ export default function Profile({
     type: "post" | "comment" | "reply";
     postId: string;
     commentId?: string;
-    replyId?:string;
+    replyId?: string;
   } | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
@@ -180,18 +183,21 @@ export default function Profile({
   }, [triggerGlobalUpload, onClearGlobalUpload]);
 
   // --- የቪዲዮ ማጫወቻ ገፅ ክፈት (Open media viewport modal) ---
+  const handleTrackView = (postId: string) => {
+    const viewedKey = "viewedPostIds";
+    const viewed = JSON.parse(localStorage.getItem(viewedKey) || "[]");
+    if (!viewed.includes(postId)) {
+      viewed.push(postId);
+      localStorage.setItem(viewedKey, JSON.stringify(viewed));
+      incrementView(postId);
+    }
+  };
+
   const handleOpenPlayer = (post: FeedPost) => {
     setSelectedPostId(post.id);
     setSelectedMediaSrc(post.mediaUrls[0] || "");
     void loadComments(post.id);
-    // view increments handler - duplicate-view guard አሁንም እንፈልጋለን
-    const viewedKey = "viewedPostIds";
-    const viewed = JSON.parse(localStorage.getItem(viewedKey) || "[]");
-    if (!viewed.includes(post.id)) {
-      viewed.push(post.id);
-      localStorage.setItem(viewedKey, JSON.stringify(viewed));
-      incrementView(post.id);
-    }
+    handleTrackView(post.id);
   };
 
   const handleClosePlayer = () => {
@@ -213,6 +219,7 @@ export default function Profile({
       setSelectedPostId(nextPost.id);
       setSelectedMediaSrc(nextPost.mediaUrls[0] || "");
       void loadComments(nextPost.id);
+      handleTrackView(nextPost.id);
     }
   };
 
@@ -825,6 +832,9 @@ export default function Profile({
           commentsMap={commentsMap}
           isLoadingComments={isLoadingComments}
           commentsError={commentsError}
+          loadMoreComments={loadMoreComments}
+          hasMoreComments={hasMoreComments[selectedPost.id] ?? false}
+          isLoadingMoreComments={isLoadingMoreComments}
           profile={profile}
           followersCount={followersCount}
           selectedMediaSrc={selectedMediaSrc}

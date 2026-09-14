@@ -29,7 +29,6 @@ import SinglePostView from "./pages/singlePostView";
 import FirstEntry from "./auth/firstEntry";
 export default function App() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { isLoggedIn, isLoading } = useAuth();
 
   // የድሮውን handleNavigate በ react-router-dom መተካት
@@ -39,13 +38,7 @@ export default function App() {
   };
   // Login.tsx/CreateAccount.tsx ራሳቸው useAuth().login() ን ይጠራሉ (Backend ጋር) —
   // App.tsx's ኃላፊነት navigation ብቻ ነው
-  const handleLoginSuccess = () => {
-    // RequireAuth's `state: { from: location }` ን ካስቀመጠ፣ እዚያው ይመልሳል፣
-    // ካልነበረ (ቀጥታ Login ገፅ ላይ ከሆነ) Home ይልካል
-    const from =
-      (location.state as { from?: Location })?.from?.pathname ?? ROUTES.home;
-    navigate(from, { replace: true });
-  };
+ 
 
   // ማረጋገጫው እስከሚጨርስ ሎዲንግ ማሳየት (ከሁሉም በላይ መሆን አለበት)
   if (isLoading) {
@@ -124,7 +117,7 @@ export default function App() {
                     <Login
                       key="login"
                       onNavigateToSignup={() => navigate("/createAccount")}
-                      onNavigateBack={handleLoginSuccess}
+                      
                     />
                   </AnimatePresence>
                 </main>
@@ -149,12 +142,12 @@ function RequireAuth({ children }: { children: React.ReactNode }) {
 return <>{children}</>;
 
   // eslint-disable-next-line no-unreachable
-  const { isLoggedIn } = useAuth();
-  const location = useLocation();
+const { isLoggedIn } = useAuth();
+const location = useLocation();
 
-  if (!isLoggedIn) {
-  return <Navigate to="/login" state={{ from: location }} replace />;
-  }
+if (!isLoggedIn) {
+return <Navigate to="/login" state={{ from: location }} replace />;
+ }
 
- return <>{children}</>;
+return <>{children}</>;
 }

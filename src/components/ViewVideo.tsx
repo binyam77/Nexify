@@ -27,6 +27,9 @@ interface ViewVideoProps {
   commentsMap: Record<string, CommentItem[]>;
   isLoadingComments:boolean;
   commentsError:string | null;
+  loadMoreComments:(postId:string)=>Promise<void>;
+  hasMoreComments:boolean;
+  isLoadingMoreComments:boolean;
   profile: {
     name: string;
     username: string;
@@ -61,6 +64,9 @@ export default function ViewVideo({
   commentsMap,
   isLoadingComments,
   commentsError,
+  loadMoreComments,
+  hasMoreComments,
+  isLoadingMoreComments,
   profile,
   followersCount,
   selectedMediaSrc,
@@ -266,6 +272,9 @@ export default function ViewVideo({
           comments={comments}
           isLoadingComments={isLoadingComments}
           commentsError={commentsError}
+          loadMoreComments={loadMoreComments}
+          hasMoreComments={hasMoreComments}
+          isLoadingMoreComments={isLoadingMoreComments}
           shares={shares}
           isOwnPost={isOwnPost}
           postAuthor={postAuthor}

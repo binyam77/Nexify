@@ -18,7 +18,6 @@ export interface MessageResponse {
   message: string;
 }
 
-
 // ================= LOGIN =================
 export function loginRequest(params: {
   email: string;
@@ -91,13 +90,6 @@ export function resetPasswordRequest(params: {
   });
 }
 
-// ================= OAUTH EXCHANGE =================
-export function exchangeOAuthCodeRequest(code: string): Promise<LoginResponse> {
-  return apiClient<LoginResponse>("/auth/oauth/exchange", {
-    method: "POST",
-    body: { code },
-  });
-}
 export function changeUsernameRequest(
   username: string,
   accessToken: string,
@@ -119,23 +111,13 @@ export function changePasswordRequest(
     headers: { Authorization: `Bearer ${accessToken}` },
   });
 }
-// ================= REGISTER START (Username + Email) =================
-export function registerStartRequest(params: {
-  username: string;
-  email: string;
-}): Promise<MessageResponse> {
-  return apiClient<MessageResponse>("/auth/register-start", {
-    method: "POST",
-    body: params,
-  });
-}
 
-// ================= COMPLETE REGISTRATION (Password → Tokens) =================
-export function completeRegistrationRequest(params: {
+export function registerRequest(params: {
+  username: string;
   email: string;
   password: string;
 }): Promise<LoginResponse> {
-  return apiClient<LoginResponse>("/auth/complete-registration", {
+  return apiClient<LoginResponse>("/auth/register", {
     method: "POST",
     body: params,
   });

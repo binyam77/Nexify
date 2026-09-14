@@ -7,7 +7,7 @@ import {
   useRef,
 } from "react";
 import type { ReactNode } from "react";
-import type {CommentReply, CommentItem, FeedPost } from "../types";
+import type { CommentReply, CommentItem, FeedPost } from "../types";
 import {
   fetchFeed,
   fetchPostById,
@@ -35,8 +35,11 @@ interface FeedContextType {
   retryFeed: () => Promise<boolean>;
   commentsMap: Record<string, CommentItem[]>;
   isLoadingComments: boolean;
-  commentsError:string | null;
+  commentsError: string | null;
   loadComments: (postId: string) => Promise<void>;
+  loadMoreComments:(postId:string) => Promise<void>;
+ hasMoreComments :Record<string, boolean>;
+  isLoadingMoreComments:boolean;
 
   incrementView: (postId: string) => void;
   toggleLike: (postId: string) => void;
@@ -46,7 +49,11 @@ interface FeedContextType {
   ensureSinglePost: (postId: string) => Promise<boolean>;
   toggleFollow: (authorUserId: string) => void;
   addComment: (postId: string, text: string) => Promise<boolean>;
-  addReply: (postId: string, commentId: string, text: string) => Promise<boolean>;
+  addReply: (
+    postId: string,
+    commentId: string,
+    text: string,
+  ) => Promise<boolean>;
   deleteComment: (postId: string, commentId: string) => void;
   deleteReply: (postId: string, commentId: string, replyId: string) => void;
   // TODO: backend ላይ PATCH /comments/:id endpoint ገና የለም — ስለዚህ ለጊዜው no-op ነው
@@ -71,11 +78,15 @@ export function FeedProvider({ children }: { children: ReactNode }) {
   );
   const [isLoadingComments, setIsLoadingComments] = useState(false);
   const [commentsError, setCommentsError] = useState<string | null>(null);
-
+  const [hasMoreComments, setHasMoreComments] = useState<
+    Record<string, boolean>
+  >({});
+  const commentsCursorRef = useRef<Record<string, string | null>>({});
+  const [isLoadingMoreComments, setIsLoadingMoreComments] = useState(false);
   // --- Initial feed load — extracted so the same logic backs both the
   // automatic mount-time fetch AND the user-facing Retry button (no
   // duplicated fetch/setState logic between the two call sites).
-  const retryFeed = useCallback(async (): Promise<boolean> => {
+   const retryFeed = useCallback(async (): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
     try {
@@ -85,7 +96,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       nextCursorRef.current = page.nextCursor;
       return true;
     } catch (e) {
-      setError("Couldn't load the feed. Please try again.");
+      setError("Feed መጫን አልተቻለም። እንደገና ይሞክሩ።");
       console.error("Feed load error:", e);
       return false;
     } finally {
@@ -93,45 +104,35 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-   useEffect(() => {
-    let cancelled = false;
-    async function run() {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const page = await fetchFeed();
-        if (cancelled) return;
-        setPosts(page.items);
-        setHasMore(page.hasMore);
-        nextCursorRef.current = page.nextCursor;
-      } catch (e) {
-        if (!cancelled) {
-          setError("Couldn't load the feed. Please try again.");
-          console.error("Feed load error:", e);
-        }
-      } finally {
-        if (!cancelled) setIsLoading(false);
-      }
-    }
-    void run();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Mount-time load — deferred by one macrotask (SinglePostView.tsx ላይ
+  // የተረጋገጠ ተመሳሳይ technique) ስለሆነ ተመሳሳይ `retryFeed()`ን Retry button ም
+  // ይህ effect ም ይጠቀማሉ — logic 2 ቦታ አልተደጋገመም፣ "setState before await
+  // in an effect" warning ም አይመጣም።
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      void retryFeed();
+    }, 0);
+    return () => clearTimeout(timeoutId);
+  }, [retryFeed]);
   // Used by SinglePostView (opened from a search result) so PostCard's
   // like/save/etc. keep working normally — they all operate on the same
   // `posts` array, so a post fetched this way needs to live there too for
   // the same reactivity Home.tsx already relies on.
-   const ensureSinglePost = useCallback(async (postId: string): Promise<boolean> => {
-    try {
-      const post = await fetchPostById(postId);
-      setPosts((prev) => (prev.some((p) => p.id === postId) ? prev : [...prev, post]));
-      return true;
-    } catch (e) {
-      console.error("Failed to load post:", e);
-      return false;
-    }
-  }, []);
+  const ensureSinglePost = useCallback(
+    async (postId: string): Promise<boolean> => {
+      try {
+        const post = await fetchPostById(postId);
+        setPosts((prev) =>
+          prev.some((p) => p.id === postId) ? prev : [...prev, post],
+        );
+        return true;
+      } catch (e) {
+        console.error("Failed to load post:", e);
+        return false;
+      }
+    },
+    [],
+  );
   const loadMore = useCallback(async () => {
     if (isLoadingMore || !hasMore || !nextCursorRef.current) return;
     setIsLoadingMore(true);
@@ -257,13 +258,14 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       .catch((e) => console.error("Share tracking failed:", e));
   }, []);
 
-  // --- Comments — fetched on demand when the modal opens, not preloaded ---
    const loadComments = useCallback(async (postId: string) => {
     setIsLoadingComments(true);
     setCommentsError(null);
     try {
       const page = await fetchComments(postId);
       setCommentsMap((prev) => ({ ...prev, [postId]: page.items }));
+      setHasMoreComments((prev) => ({ ...prev, [postId]: page.hasMore }));
+      commentsCursorRef.current[postId] = page.nextCursor;
     } catch (e) {
       console.error("Comments load error:", e);
       setCommentsError("አስተያየቶች መጫን አልተቻለም።");
@@ -272,30 +274,58 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-   const addComment = useCallback(async (postId: string, text: string): Promise<boolean> => {
-    const trimmed = text.trim();
-    if (!trimmed) return false;
+  const loadMoreComments = useCallback(async (postId: string) => {
+    const cursor = commentsCursorRef.current[postId];
+    if (!cursor || isLoadingMoreComments) return;
+    setIsLoadingMoreComments(true);
     try {
-      const comment = await apiAddComment(postId, trimmed);
+      const page = await fetchComments(postId, cursor);
       setCommentsMap((prev) => ({
         ...prev,
-        [postId]: [comment, ...(prev[postId] || [])],
+        [postId]: [...(prev[postId] || []), ...page.items],
       }));
-      setPosts((prev) =>
-        prev.map((p) => (p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p)),
-      );
-      return true;
+      setHasMoreComments((prev) => ({ ...prev, [postId]: page.hasMore }));
+      commentsCursorRef.current[postId] = page.nextCursor;
     } catch (e) {
-      console.error("Add comment failed:", e);
-      return false;
+      console.error("Load more comments error:", e);
+    } finally {
+      setIsLoadingMoreComments(false);
     }
-  }, []);
+  }, [isLoadingMoreComments]);
+
+  const addComment = useCallback(
+    async (postId: string, text: string): Promise<boolean> => {
+      const trimmed = text.trim();
+      if (!trimmed) return false;
+      try {
+        const comment = await apiAddComment(postId, trimmed);
+        setCommentsMap((prev) => ({
+          ...prev,
+          [postId]: [comment, ...(prev[postId] || [])],
+        }));
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p,
+          ),
+        );
+        return true;
+      } catch (e) {
+        console.error("Add comment failed:", e);
+        return false;
+      }
+    },
+    [],
+  );
 
   // Note: backend counts replies toward Post.commentsCount too (same
   // createAndIncrementCount path as top-level comments) — so a reply
   // increments commentsCount here as well.
   const addReply = useCallback(
-    async (postId: string, commentId: string, text: string): Promise<boolean> => {
+    async (
+      postId: string,
+      commentId: string,
+      text: string,
+    ): Promise<boolean> => {
       const trimmed = text.trim();
       if (!trimmed) return false;
       try {
@@ -310,7 +340,9 @@ export function FeedProvider({ children }: { children: ReactNode }) {
           };
         });
         setPosts((prev) =>
-          prev.map((p) => (p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p)),
+          prev.map((p) =>
+            p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p,
+          ),
         );
         return true;
       } catch (e) {
@@ -319,7 +351,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       }
     },
     [],
-  ); 
+  );
 
   // Deleting a top-level comment cascades its replies on the backend, so
   // the local commentsCount decrement accounts for (1 + its loaded replies).
@@ -335,7 +367,10 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       setPosts((prevPosts) =>
         prevPosts.map((p) =>
           p.id === postId
-            ? { ...p, commentsCount: Math.max(0, p.commentsCount - removedCount) }
+            ? {
+                ...p,
+                commentsCount: Math.max(0, p.commentsCount - removedCount),
+              }
             : p,
         ),
       );
@@ -348,59 +383,76 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       const restoredCount = 1 + removed.replies.length;
       setCommentsMap((prev) => {
         const list = [...(prev[postId] || [])];
-        list.splice(Math.min(removedIndex, list.length), 0, removed as CommentItem);
+        list.splice(
+          Math.min(removedIndex, list.length),
+          0,
+          removed as CommentItem,
+        );
         return { ...prev, [postId]: list };
       });
       setPosts((prev) =>
         prev.map((p) =>
-          p.id === postId ? { ...p, commentsCount: p.commentsCount + restoredCount } : p,
+          p.id === postId
+            ? { ...p, commentsCount: p.commentsCount + restoredCount }
+            : p,
         ),
       );
     });
   }, []);
 
-  const deleteReply = useCallback((postId: string, commentId: string, replyId: string) => {
-    let removed: CommentReply | undefined;
-    let removedIndex = -1;
+  const deleteReply = useCallback(
+    (postId: string, commentId: string, replyId: string) => {
+      let removed: CommentReply | undefined;
+      let removedIndex = -1;
 
-    setCommentsMap((prev) => {
-      const list = prev[postId] || [];
-      return {
-        ...prev,
-        [postId]: list.map((c) => {
-          if (c.id !== commentId) return c;
-          removedIndex = c.replies.findIndex((r) => r.id === replyId);
-          removed = c.replies[removedIndex];
-          return { ...c, replies: c.replies.filter((r) => r.id !== replyId) };
-        }),
-      };
-    });
-    setPosts((prev) =>
-      prev.map((p) =>
-        p.id === postId ? { ...p, commentsCount: Math.max(0, p.commentsCount - 1) } : p,
-      ),
-    );
-
-    deleteCommentOrReply(replyId).catch((e) => {
-      console.error("Delete reply failed, reverting:", e);
-      if (!removed) return;
       setCommentsMap((prev) => {
         const list = prev[postId] || [];
         return {
           ...prev,
           [postId]: list.map((c) => {
             if (c.id !== commentId) return c;
-            const replies = [...c.replies];
-            replies.splice(Math.min(removedIndex, replies.length), 0, removed as CommentReply);
-            return { ...c, replies };
+            removedIndex = c.replies.findIndex((r) => r.id === replyId);
+            removed = c.replies[removedIndex];
+            return { ...c, replies: c.replies.filter((r) => r.id !== replyId) };
           }),
         };
       });
       setPosts((prev) =>
-        prev.map((p) => (p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p)),
+        prev.map((p) =>
+          p.id === postId
+            ? { ...p, commentsCount: Math.max(0, p.commentsCount - 1) }
+            : p,
+        ),
       );
-    });
-  }, []);
+
+      deleteCommentOrReply(replyId).catch((e) => {
+        console.error("Delete reply failed, reverting:", e);
+        if (!removed) return;
+        setCommentsMap((prev) => {
+          const list = prev[postId] || [];
+          return {
+            ...prev,
+            [postId]: list.map((c) => {
+              if (c.id !== commentId) return c;
+              const replies = [...c.replies];
+              replies.splice(
+                Math.min(removedIndex, replies.length),
+                0,
+                removed as CommentReply,
+              );
+              return { ...c, replies };
+            }),
+          };
+        });
+        setPosts((prev) =>
+          prev.map((p) =>
+            p.id === postId ? { ...p, commentsCount: p.commentsCount + 1 } : p,
+          ),
+        );
+      });
+    },
+    [],
+  );
 
   // Works whether `commentId` refers to a top-level comment or a reply —
   // we check both locations in the local map since the caller (CommentCard)
@@ -450,6 +502,9 @@ export function FeedProvider({ children }: { children: ReactNode }) {
         isLoadingComments,
         commentsError,
         loadComments,
+        loadMoreComments,
+        hasMoreComments,
+        isLoadingMoreComments,
         incrementView,
         toggleLike,
         toggleSave,

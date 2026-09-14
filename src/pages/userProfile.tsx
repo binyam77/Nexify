@@ -36,6 +36,9 @@ export default function UserProfile() {
     isLoadingComments,
     commentsError,
     loadComments,
+    loadMoreComments,
+    hasMoreComments,
+    isLoadingMoreComments,
     incrementView,
     toggleLike,
     toggleSave,
@@ -178,19 +181,22 @@ export default function UserProfile() {
       },
     });
   };
-  const handleOpenPlayer = (post: FeedPost) => {
-    setSelectedPostId(post.id);
-    setSelectedMediaSrc(post.mediaUrls[0] || "");
-    void loadComments(post.id);
-    const viewed = JSON.parse(
-      localStorage.getItem(viewedKeyRef.current) || "[]",
-    );
-    if (!viewed.includes(post.id)) {
-      viewed.push(post.id);
-      localStorage.setItem(viewedKeyRef.current, JSON.stringify(viewed));
-      incrementView(post.id);
-    }
-  };
+  const handleTrackView = (postId: string) => {
+     const viewedKey = "viewedPostIds";
+     const viewed = JSON.parse(localStorage.getItem(viewedKey) || "[]");
+     if (!viewed.includes(postId)) {
+       viewed.push(postId);
+       localStorage.setItem(viewedKey, JSON.stringify(viewed));
+       incrementView(postId);
+     }
+   };
+ 
+   const handleOpenPlayer = (post: FeedPost) => {
+     setSelectedPostId(post.id);
+     setSelectedMediaSrc(post.mediaUrls[0] || "");
+     void loadComments(post.id);
+     handleTrackView(post.id);
+   };
   const handleDeleteComment = (postId: string, commentId: string) => {
     setDeleteConfirmState({ isOpen: true, type: "comment", postId, commentId });
   };
@@ -239,6 +245,7 @@ export default function UserProfile() {
       setSelectedPostId(nextPost.id);
       setSelectedMediaSrc(nextPost.mediaUrls[0] || "");
       void loadComments(nextPost.id);
+      handleTrackView(nextPost.id);
     }
   };
 
@@ -419,6 +426,9 @@ export default function UserProfile() {
           commentsMap={commentsMap}
           isLoadingComments={isLoadingComments}
           commentsError={commentsError}
+          loadMoreComments={loadMoreComments}
+          hasMoreComments={hasMoreComments[selectedPost.id]?? false}
+          isLoadingMoreComments={isLoadingMoreComments}
           profile={{
             name: user.name || user.username,
             username: user.username,

@@ -5,10 +5,11 @@ import {
   logoutRequest,
   refreshRequest,
   meRequest,
-  exchangeOAuthCodeRequest,
 } from "../api/auth.api";
 import { fetchMyProfile, updateMyProfile } from "../api/profile.api";
 import type { UpdateProfileInput } from "../api/profile.api";
+import { setStoredToken } from "../lib/token-store";
+import { subscribeToSessionExpired } from "../lib/session-events";
 export interface User {
   id: string;
   username: string;
@@ -30,7 +31,6 @@ interface AuthContextType {
   isLoggedIn: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  completeOAuthLogin: (handoffCode: string) => Promise<void>;
   logout: () => Promise<void>;
   loginWithTokens: (accessToken: string) => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
@@ -49,9 +49,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   // ⚠️ accessToken በፍጹም localStorage/sessionStorage አይገባም — React state (in-memory) ብቻ
   // (XSS ቢኖር እንኳ ስርቆት እንዳይቻል)
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+
+    const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [profileLoadError,setProfileLoadError] =useState<string | null>(null);
+
+  // React state (for re-renders) + module-level store (for api-client.ts
+  // to auto-attach Authorization on every request) are always updated
+  // together, from this one place, so they can never drift apart.
+  const setAccessToken = (token: string | null) => {
+    setAccessTokenState(token);
+    setStoredToken(token);
+  };
+
+  // If api-client.ts's auto-refresh-retry ever fails (refresh_token itself
+  // expired/revoked), it clears the store and fires this event — clearing
+  // React state here too so isLoggedIn flips false and route guards send
+  // the person back to login, instead of the app quietly staying "logged
+  // in" while every subsequent request keeps 401ing.
+  useEffect(() => {
+    return subscribeToSessionExpired(() => {
+      setAccessTokenState(null);
+      setUser(null);
+    });
+  }, []);
+
+
   // --- Silent Refresh on App Load ---
   // Page reload ሲደረግ accessToken (in-memory) ይጠፋል፣ ግን refresh_token
   // httpOnly cookie አሁንም አለ — ይህን ተጠቅመን በራሱ አዲስ accessToken እናገኛለን
@@ -98,14 +121,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const me = await meRequest(newAccessToken);
     setUser(me);
   };
-  const completeOAuthLogin = async (handoffCode: string) => {
-    const { accessToken: newToken } =
-      await exchangeOAuthCodeRequest(handoffCode);
-    setAccessToken(newToken);
-    const me = await meRequest(newToken);
-    setUser(me);
-       await loadProfileData();
-  };
+
   const logout = async () => {
     try {
       await logoutRequest();
@@ -157,7 +173,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoggedIn: !!user,
         isLoading,
         login,
-        completeOAuthLogin,
+  
         logout,
         loginWithTokens,
         updateUser,

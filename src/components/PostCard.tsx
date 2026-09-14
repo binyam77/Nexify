@@ -49,6 +49,8 @@ export default function PostCard({
     incrementShare,
     commentsMap,
     isLoadingComments,
+    isLoadingMoreComments,
+    hasMoreComments,
     commentsError,
     addComment,
     deleteComment,
@@ -56,6 +58,7 @@ export default function PostCard({
     addReply,
     deleteReply,
     loadComments,
+    loadMoreComments,
   } = useFeed();
   //"post"prop በከትታ FeedContext array element  ስለሆነ(Home.tsx ካስተላለፈው):
   // toggle ሰደረግ context ራሱ ይከየራል: re-render ይህን በራሱ ያንተባርካል
@@ -295,7 +298,9 @@ export default function PostCard({
               only, this only controls muted vs unmuted. z-30 so it stays
               above the media-error overlay (z-10) regardless of nesting. */}
           <div
-            className="absolute top-3 right-3 z-30"
+            className="absolute top-14 md:top-3 z-30"
+            onPointerDown={(e) => e.stopPropagation()}
+            onPointerUp={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
           >
             <button
@@ -567,6 +572,9 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
           isLoading={isLoadingComments}
           error={commentsError}
           onRetry={() => void loadComments(post.id)}
+          hasMore={hasMoreComments[post.id] ?? false}
+          isLoadingMore={isLoadingMoreComments}
+          onLoadMore={()=> void loadMoreComments(post.id)}
           onClose={() => setIsCommentsOpen(false)}
           onPostComment={(text) => addComment(post.id, text)}
           onDeleteComment={(commentId) => deleteComment(post.id, commentId)}

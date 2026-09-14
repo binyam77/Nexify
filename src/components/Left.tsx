@@ -24,6 +24,9 @@ interface LeftProps {
   comments: CommentItem[];
   isLoadingComments: boolean;
   commentsError: string | null;
+  loadMoreComments: (postId: string) => Promise<void>;
+  hasMoreComments: boolean;
+  isLoadingMoreComments: boolean;
   shares: number;
   isOwnPost: boolean;
   postAuthor: {
@@ -78,6 +81,9 @@ export default function Left({
   comments,
   isLoadingComments,
   commentsError,
+  loadMoreComments,
+  hasMoreComments,
+  isLoadingMoreComments,
   shares,
   isOwnPost,
   postAuthor,
@@ -257,248 +263,269 @@ export default function Left({
               </p>
             </div>
           ) : (
-            comments.map((comment) => (
-              <div key={comment.id} className="space-y-2">
-                {/* Parent comment */}
-                <div className="flex gap-2.5 items-start">
-                  <div
-                    onClick={() =>
-                      handleNavigateToUserProfile(comment.username)
-                    }
-                    className="w-8 h-8 rounded-full overflow-hidden bg-blue-50 flex items-center justify-center text-blue-600 text-xs font-bold shrink-0 border border-slate-100 cursor-pointer hover:opacity-85 transition-opacity"
-                    title={`View ${comment.username}'s profile`}
-                  >
-                    {comment.avatar ? (
-                      <img
-                        src={comment.avatar}
-                        alt={comment.username}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      comment.username.charAt(0).toUpperCase()
-                    )}
-                  </div>
-                  <div className="flex-1 bg-slate-50/90 hover:bg-slate-100 rounded-2xl p-4 border-l-2 border-blue-500 shadow-sm transition-all">
-                    <h4
+            <>
+              {comments.map((comment) => (
+                <div key={comment.id} className="space-y-2">
+                  {/* Parent comment */}
+                  <div className="flex gap-2.5 items-start">
+                    <div
                       onClick={() =>
                         handleNavigateToUserProfile(comment.username)
                       }
-                      className="text-xs font-bold text-blue-600 mb-1 cursor-pointer hover:underline"
+                      className="w-8 h-8 rounded-full overflow-hidden bg-blue-50 flex items-center justify-center text-blue-600 text-xs font-bold shrink-0 border border-slate-100 cursor-pointer hover:opacity-85 transition-opacity"
+                      title={`View ${comment.username}'s profile`}
                     >
-                      @{comment.username}
-                    </h4>
-                    {editingCommentId === comment.id ? (
-                      <div className="flex items-center gap-2 mt-1">
-                        <input
-                          type="text"
-                          value={editInputText}
-                          onChange={(e) => setEditInputText(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") confirmEdit(comment.id);
-                            if (e.key === "Escape") setEditingCommentId(null);
-                          }}
-                          autoFocus
-                          maxLength={500}
-                          className="flex-1 bg-white border border-blue-300 rounded-lg px-3 py-1.5 text-[13px] outline-none focus:border-blue-500"
+                      {comment.avatar ? (
+                        <img
+                          src={comment.avatar}
+                          alt={comment.username}
+                          className="w-full h-full object-cover"
                         />
-                        <button
-                          onClick={() => confirmEdit(comment.id)}
-                          className="w-7 h-7 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full flex items-center justify-center shrink-0"
-                        >
-                          <Check className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setEditingCommentId(null)}
-                          className="w-7 h-7 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full flex items-center justify-center shrink-0"
-                        >
-                          <CloseIcon className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    ) : (
-                      <p className="text-[13.5px] text-slate-800 leading-relaxed break-words font-medium">
-                        {comment.text}
-                      </p>
-                    )}
-
-                    <div className="flex items-center gap-4 mt-2 text-[10px] font-bold text-slate-400">
-                      <span>
-                        {new Date(comment.timestamp).toLocaleTimeString(
-                          undefined,
-                          {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          },
-                        )}
-                      </span>
-
-                      <button
-                        onClick={() => {
-                          if (activeReplyTo === comment.id) {
-                            setActiveReplyTo(null);
-                          } else {
-                            setActiveReplyTo(comment.id);
-                          }
-                        }}
-                        className="text-blue-500 hover:underline"
+                      ) : (
+                        comment.username.charAt(0).toUpperCase()
+                      )}
+                    </div>
+                    <div className="flex-1 bg-slate-50/90 hover:bg-slate-100 rounded-2xl p-4 border-l-2 border-blue-500 shadow-sm transition-all">
+                      <h4
+                        onClick={() =>
+                          handleNavigateToUserProfile(comment.username)
+                        }
+                        className="text-xs font-bold text-blue-600 mb-1 cursor-pointer hover:underline"
                       >
-                        Reply
-                      </button>
+                        @{comment.username}
+                      </h4>
+                      {editingCommentId === comment.id ? (
+                        <div className="flex items-center gap-2 mt-1">
+                          <input
+                            type="text"
+                            value={editInputText}
+                            onChange={(e) => setEditInputText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") confirmEdit(comment.id);
+                              if (e.key === "Escape") setEditingCommentId(null);
+                            }}
+                            autoFocus
+                            maxLength={500}
+                            className="flex-1 bg-white border border-blue-300 rounded-lg px-3 py-1.5 text-[13px] outline-none focus:border-blue-500"
+                          />
+                          <button
+                            onClick={() => confirmEdit(comment.id)}
+                            className="w-7 h-7 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full flex items-center justify-center shrink-0"
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setEditingCommentId(null)}
+                            className="w-7 h-7 bg-slate-200 hover:bg-slate-300 text-slate-600 rounded-full flex items-center justify-center shrink-0"
+                          >
+                            <CloseIcon className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-[13.5px] text-slate-800 leading-relaxed break-words font-medium">
+                          {comment.text}
+                        </p>
+                      )}
 
-                      {comment.username === profile.username &&
-                        editingCommentId !== comment.id && (
-                          <>
-                            <button
-                              onClick={() => startEditing(comment)}
-                              className="text-slate-400 hover:text-blue-600 flex items-center gap-1"
-                            >
-                              <Pencil className="w-3 h-3" />
-                              Edit
-                            </button>
-                            <button
-                              onClick={() =>
-                                handleDeleteComment(selectedPost.id, comment.id)
-                              }
-                              className="text-slate-400 hover:text-rose-600 ml-auto"
-                            >
-                              Delete
-                            </button>
-                          </>
-                        )}
+                      <div className="flex items-center gap-4 mt-2 text-[10px] font-bold text-slate-400">
+                        <span>
+                          {new Date(comment.timestamp).toLocaleTimeString(
+                            undefined,
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            },
+                          )}
+                        </span>
+
+                        <button
+                          onClick={() => {
+                            if (activeReplyTo === comment.id) {
+                              setActiveReplyTo(null);
+                            } else {
+                              setActiveReplyTo(comment.id);
+                            }
+                          }}
+                          className="text-blue-500 hover:underline"
+                        >
+                          Reply
+                        </button>
+
+                        {comment.username === profile.username &&
+                          editingCommentId !== comment.id && (
+                            <>
+                              <button
+                                onClick={() => startEditing(comment)}
+                                className="text-slate-400 hover:text-blue-600 flex items-center gap-1"
+                              >
+                                <Pencil className="w-3 h-3" />
+                                Edit
+                              </button>
+                              <button
+                                onClick={() =>
+                                  handleDeleteComment(
+                                    selectedPost.id,
+                                    comment.id,
+                                  )
+                                }
+                                className="text-slate-400 hover:text-rose-600 ml-auto"
+                              >
+                                Delete
+                              </button>
+                            </>
+                          )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                {/* Sub-Replies list */}
-                {comment.replies &&
-                  comment.replies.map((reply) => (
-                    <div
-                      key={reply.id}
-                      className="flex gap-2.5 items-start pl-8"
-                    >
+                  {/* Sub-Replies list */}
+                  {comment.replies &&
+                    comment.replies.map((reply) => (
                       <div
-                        onClick={() =>
-                          handleNavigateToUserProfile(reply.username)
-                        }
-                        className="w-6.5 h-6.5 rounded-full overflow-hidden bg-teal-50 flex items-center justify-center text-teal-600 text-[10px] font-bold shrink-0 border border-slate-100 cursor-pointer hover:opacity-85 transition-opacity"
-                        title={`View ${reply.username}'s profile`}
+                        key={reply.id}
+                        className="flex gap-2.5 items-start pl-8"
                       >
-                        {reply.avatar ? (
-                          <img
-                            src={reply.avatar}
-                            alt={reply.username}
-                            className="w-full h-full object-cover"
-                          />
-                        ) : (
-                          reply.username.charAt(0).toUpperCase()
-                        )}
-                      </div>
-                      <div className="flex-1 bg-slate-100/50 rounded-xl p-2.5">
-                        <h5
+                        <div
                           onClick={() =>
                             handleNavigateToUserProfile(reply.username)
                           }
-                          className="text-[11px] font-bold text-teal-600 mb-0.5 cursor-pointer hover:underline"
+                          className="w-6.5 h-6.5 rounded-full overflow-hidden bg-teal-50 flex items-center justify-center text-teal-600 text-[10px] font-bold shrink-0 border border-slate-100 cursor-pointer hover:opacity-85 transition-opacity"
+                          title={`View ${reply.username}'s profile`}
                         >
-                          @{reply.username}
-                        </h5>
-
-                        {editingCommentId === reply.id ? (
-                          <div className="flex items-center gap-2 mt-1">
-                            <input
-                              type="text"
-                              value={editInputText}
-                              onChange={(e) => setEditInputText(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter") confirmEdit(reply.id);
-                                if (e.key === "Escape")
-                                  setEditingCommentId(null);
-                              }}
-                              autoFocus
-                              maxLength={500}
-                              className="flex-1 bg-white border border-teal-300 rounded-lg px-2.5 py-1 text-xs outline-none focus:border-teal-500"
+                          {reply.avatar ? (
+                            <img
+                              src={reply.avatar}
+                              alt={reply.username}
+                              className="w-full h-full object-cover"
                             />
-                            <button
-                              onClick={() => confirmEdit(reply.id)}
-                              className="w-6 h-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full flex items-center justify-center shrink-0"
-                            >
-                              <Check className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ) : (
-                          <p className="text-xs text-slate-600 leading-normal break-words">
-                            {reply.text}
-                          </p>
-                        )}
+                          ) : (
+                            reply.username.charAt(0).toUpperCase()
+                          )}
+                        </div>
+                        <div className="flex-1 bg-slate-100/50 rounded-xl p-2.5">
+                          <h5
+                            onClick={() =>
+                              handleNavigateToUserProfile(reply.username)
+                            }
+                            className="text-[11px] font-bold text-teal-600 mb-0.5 cursor-pointer hover:underline"
+                          >
+                            @{reply.username}
+                          </h5>
 
-                        <div className="flex items-center gap-3 mt-1">
-                          <span className="text-[9px] text-slate-400 font-medium">
-                            {new Date(reply.timestamp).toLocaleTimeString(
-                              undefined,
-                              {
-                                hour: "2-digit",
-                                minute: "2-digit",
-                              },
-                            )}
-                          </span>
-                          {reply.username === profile.username &&
-                            editingCommentId !== reply.id && (
-                              <>
-                                <button
-                                  onClick={() => startEditing(reply)}
-                                  className="text-[9px] text-slate-400 hover:text-blue-600 font-bold"
-                                >
-                                  Edit
-                                </button>
-                                <button
-                                  onClick={() =>
-                                    handleDeleteReply(
-                                      selectedPost.id,
-                                      comment.id,
-                                      reply.id,
-                                    )
-                                  }
-                                  className="text-[9px] text-slate-400 hover:text-rose-600 font-bold"
-                                >
-                                  Delete
-                                </button>
-                              </>
-                            )}
+                          {editingCommentId === reply.id ? (
+                            <div className="flex items-center gap-2 mt-1">
+                              <input
+                                type="text"
+                                value={editInputText}
+                                onChange={(e) =>
+                                  setEditInputText(e.target.value)
+                                }
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter") confirmEdit(reply.id);
+                                  if (e.key === "Escape")
+                                    setEditingCommentId(null);
+                                }}
+                                autoFocus
+                                maxLength={500}
+                                className="flex-1 bg-white border border-teal-300 rounded-lg px-2.5 py-1 text-xs outline-none focus:border-teal-500"
+                              />
+                              <button
+                                onClick={() => confirmEdit(reply.id)}
+                                className="w-6 h-6 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full flex items-center justify-center shrink-0"
+                              >
+                                <Check className="w-3 h-3" />
+                              </button>
+                            </div>
+                          ) : (
+                            <p className="text-xs text-slate-600 leading-normal break-words">
+                              {reply.text}
+                            </p>
+                          )}
+
+                          <div className="flex items-center gap-3 mt-1">
+                            <span className="text-[9px] text-slate-400 font-medium">
+                              {new Date(reply.timestamp).toLocaleTimeString(
+                                undefined,
+                                {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                },
+                              )}
+                            </span>
+                            {reply.username === profile.username &&
+                              editingCommentId !== reply.id && (
+                                <>
+                                  <button
+                                    onClick={() => startEditing(reply)}
+                                    className="text-[9px] text-slate-400 hover:text-blue-600 font-bold"
+                                  >
+                                    Edit
+                                  </button>
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteReply(
+                                        selectedPost.id,
+                                        comment.id,
+                                        reply.id,
+                                      )
+                                    }
+                                    className="text-[9px] text-slate-400 hover:text-rose-600 font-bold"
+                                  >
+                                    Delete
+                                  </button>
+                                </>
+                              )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
 
-                {/* Inline reply comment box */}
-                {activeReplyTo === comment.id && (
-                  <form
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleAddReply(
-                        selectedPost.id,
-                        comment.id,
-                        replyInputText,
-                      );
-                    }}
-                    className="flex gap-2 pl-8 mt-2"
-                  >
-                    <input
-                      type="text"
-                      value={replyInputText}
-                      onChange={(e) => setReplyInputText(e.target.value)}
-                      placeholder="Reply text..."
-                      maxLength={200}
-                      className="flex-1 bg-white border border-slate-200 rounded-full px-3.5 py-1.5 text-xs text-slate-700 outline-none focus:border-blue-500 transition-all"
-                    />
-                    <button
-                      type="submit"
-                      className="w-7 h-7 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center shadow-sm transition-all"
+                  {/* Inline reply comment box */}
+                  {activeReplyTo === comment.id && (
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleAddReply(
+                          selectedPost.id,
+                          comment.id,
+                          replyInputText,
+                        );
+                      }}
+                      className="flex gap-2 pl-8 mt-2"
                     >
-                      <Send className="w-3.5 h-3.5" />
-                    </button>
-                  </form>
-                )}
-              </div>
-            ))
+                      <input
+                        type="text"
+                        value={replyInputText}
+                        onChange={(e) => setReplyInputText(e.target.value)}
+                        placeholder="Reply text..."
+                        maxLength={200}
+                        className="flex-1 bg-white border border-slate-200 rounded-full px-3.5 py-1.5 text-xs text-slate-700 outline-none focus:border-blue-500 transition-all"
+                      />
+                      <button
+                        type="submit"
+                        className="w-7 h-7 bg-teal-500 hover:bg-teal-600 text-white rounded-full flex items-center justify-center shadow-sm transition-all"
+                      >
+                        <Send className="w-3.5 h-3.5" />
+                      </button>
+                    </form>
+                  )}
+                </div>
+              ))}
+
+              {hasMoreComments && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    onClick={() => loadMoreComments(selectedPost.id)}
+                    disabled={isLoadingMoreComments}
+                    className="text-xs font-bold text-blue-600 hover:underline disabled:opacity-50"
+                  >
+                    {isLoadingMoreComments
+                      ? "Loading..."
+                      : "Load more comments"}
+                  </button>
+                </div>
+              )}
+            </>
           )}
         </div>
       </section>

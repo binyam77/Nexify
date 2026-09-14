@@ -10,6 +10,9 @@ interface CommentModalProps {
   isLoading?: boolean;
   error?: string | null;
   onRetry?: () => void;
+  hasMore?: boolean;
+  isLoadingMore?: boolean;
+  onLoadMore?: () => void;
   onClose: () => void;
   onPostComment: (text: string) => Promise<boolean>;
   onDeleteComment: (id: string) => void;
@@ -24,6 +27,9 @@ export default function CommentModal({
   isLoading = false,
   error = null,
   onRetry,
+  hasMore = false,
+  isLoadingMore = false,
+  onLoadMore,
   onClose,
   onPostComment,
   onDeleteComment,
@@ -40,7 +46,7 @@ export default function CommentModal({
       new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
     return sort === "newest" ? -diff : diff;
   });
- async function handlePost() {
+  async function handlePost() {
     const trimmed = newCommentText.trim();
     if (!trimmed) return;
     setPostFailed(false);
@@ -52,7 +58,7 @@ export default function CommentModal({
       setPostFailed(true);
     }
   }
- 
+
   return (
     <>
       {/* Mobile dim backdrop — Instagram bottom sheets ስር ያለውን feed ያደበዝዛሉ */}
@@ -119,22 +125,34 @@ export default function CommentModal({
                   <span className="mb-2 block text-3xl">💬</span>
                   No comments yet. Be the first!
                 </div>
-              ) : (
-                sortedComments.map((comment) => (
-                  <CommentCard
-                    key={comment.id}
-                    comment={comment}
-                    currentUsername={currentUsername}
-                    onDelete={onDeleteComment}
-                    onEdit={onEditComment}
-                    onAddReply={onAddReply}
-                    onDeleteReply={onDeleteReply}
-                  />
-                ))
+                        ) : (
+                <>
+                  {sortedComments.map((comment) => (
+                    <CommentCard
+                      key={comment.id}
+                      comment={comment}
+                      currentUsername={currentUsername}
+                      onDelete={onDeleteComment}
+                      onEdit={onEditComment}
+                      onAddReply={onAddReply}
+                      onDeleteReply={onDeleteReply}
+                    />
+                  ))}
+                  {hasMore && sort === "newest" && (
+                    <button
+                      type="button"
+                      onClick={onLoadMore}
+                      disabled={isLoadingMore}
+                      className="mx-auto mt-1 rounded-full bg-zinc-800 px-4 py-1.5 text-xs font-semibold text-zinc-300 disabled:opacity-50"
+                    >
+                      {isLoadingMore ? "በመጫን ላይ..." : "ተጨማሪ አስተያየቶች ይመልከቱ"}
+                    </button>
+                  )}
+                </>
               )}
-            </div>
+            </div> 
 
-                        <div className="flex shrink-0 flex-col border-t border-zinc-800 bg-surface">
+            <div className="flex shrink-0 flex-col border-t border-zinc-800 bg-surface">
               {postFailed && (
                 <p className="px-4 pt-2 text-[11px] font-medium text-rose-400">
                   አልተላከም — ግንኙነት ይፈትሹ እና እንደገና ይሞክሩ
