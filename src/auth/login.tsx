@@ -55,7 +55,7 @@ export default function Login({ onNavigateToSignup }: LoginProps) {
         <button
           type="button"
           onClick={() => setShowEmailCard(true)}
-          className="w-full py-4 px-4 border-2 border-[#2563eb] rounded-xl text-base font-semibold text-[#2563eb] flex items-center justify-center gap-3 hover:bg-blue-50 transition-all"
+          className="w-full py-4 px-4 border-1 border-[#2563be] rounded-xl text-base font-semibold text-[#2563eb] flex items-center justify-center gap-3 hover:bg-blue-50 transition-all"
         >
           <Mail className="w-5 h-5" />
           Continue with Email
@@ -76,7 +76,7 @@ export default function Login({ onNavigateToSignup }: LoginProps) {
         <button
           type="button"
           onClick={onNavigateToSignup}
-          className="w-full py-4 border-1 border-[#2563eb] rounded-xl text-base font-semibold text-[#2563eb] hover:bg-blue-50 transition-all mt-1"
+          className="w-full py-4 border-1 border-[#2563eb] rounded-full text-base font-semibold text-[#2563eb] hover:bg-blue-50 transition-all mt-1"
         >
           Create account
         </button>

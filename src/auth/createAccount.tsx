@@ -158,7 +158,7 @@ export default function CreateAccount({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-4 bg-brand text-white font-semibold rounded-xl text-base hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+            className="w-full py-4 bg-brand text-white font-semibold rounded-full text-base hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-1"
           >
             {isSubmitting ? "Creating account..." : "Create Account"}
           </button>

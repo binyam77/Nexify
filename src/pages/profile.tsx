@@ -846,6 +846,7 @@ export default function Profile({
           handleDeletePost={handleDeletePost}
           handleAddComment={handleAddComment}
           handleDeleteComment={handleDeleteComment}
+          handleDeleteReply={handleDeleteReply}
           handleAddReply={handleAddReply}
           handleEditComment={handleEditComment}
           handleNavigateToUserProfile={(username) => {
