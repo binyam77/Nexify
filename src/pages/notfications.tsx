@@ -4,6 +4,8 @@ import {
   MessageCircle,
   UserPlus,
   Bell,
+  Mail,
+  PartyPopper,
 } from "lucide-react";
 import { useNotifications } from "../context/NotificationContext";
 import type {
@@ -30,6 +32,10 @@ function NotifIcon({ type }: { type: NotificationType }) {
       );
     case "follow":
       return <UserPlus className={cn(base, "text-blue-500")} />;
+    case "community_invite":
+      return <Mail className={cn(base, "text-indigo-500")} />;
+    case "community_new_subscriber":
+      return <PartyPopper className={cn(base, "text-amber-500")} />;
     default:
       return (
         <Bell className={cn(base, "text-slate-400")} fill="currentColor" />
@@ -46,6 +52,10 @@ function iconBg(type: NotificationType) {
       return "bg-input";
     case "follow":
       return "b-ginput";
+    case "community_invite":
+      return "bg-indigo-50";
+    case "community_new_subscriber":
+      return "bg-amber-50";
     default:
       return "bg-slate-100";
   }
@@ -149,6 +159,12 @@ export default function Notifications() {
       navigate(userProfilePath(notif.actorUsername));
       return;
     }
+    if (notif.type === "community_invite" || notif.type === "community_new_subscriber") {
+      if (notif.communityId) {
+        navigate("/community", { state: { openCommunityId: notif.communityId } });
+      }
+      return;
+    }
     if (notif.postId) {
       navigate(`/post/${notif.postId}`);
     }
@@ -208,11 +224,12 @@ export default function Notifications() {
           </p>
           <div className="divide-y divide-slate-100 bg-slate-300">
             {unread.map((n) => (
-              <NotifItem 
-              key={n.id} 
-              notif={n} 
-              onRead={() => markAsRead(n.id)}
-              onNavigate={handleNavigate} />
+              <NotifItem
+                key={n.id}
+                notif={n}
+                onRead={() => markAsRead(n.id)}
+                onNavigate={handleNavigate}
+              />
             ))}
           </div>
         </div>
@@ -226,11 +243,12 @@ export default function Notifications() {
           </p>
           <div className="divide-y divide-slate-100">
             {read.map((n) => (
-              <NotifItem 
-               key={n.id}
+              <NotifItem
+                key={n.id}
                 notif={n}
-                 onRead={() => markAsRead(n.id)}
-                 onNavigate={handleNavigate} />
+                onRead={() => markAsRead(n.id)}
+                onNavigate={handleNavigate}
+              />
             ))}
           </div>
         </div>

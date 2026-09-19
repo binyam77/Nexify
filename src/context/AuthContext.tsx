@@ -50,9 +50,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ⚠️ accessToken በፍጹም localStorage/sessionStorage አይገባም — React state (in-memory) ብቻ
   // (XSS ቢኖር እንኳ ስርቆት እንዳይቻል)
 
-    const [accessToken, setAccessTokenState] = useState<string | null>(null);
+  const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [profileLoadError,setProfileLoadError] =useState<string | null>(null);
+  const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
 
   // React state (for re-renders) + module-level store (for api-client.ts
   // to auto-attach Authorization on every request) are always updated
@@ -74,11 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-
   // --- Silent Refresh on App Load ---
   // Page reload ሲደረግ accessToken (in-memory) ይጠፋል፣ ግን refresh_token
   // httpOnly cookie አሁንም አለ — ይህን ተጠቅመን በራሱ አዲስ accessToken እናገኛለን
-   const loadProfileData = async (): Promise<void> => {
+  const loadProfileData = async (): Promise<void> => {
     setProfileLoadError(null);
     try {
       const profileData = await fetchMyProfile();
@@ -107,7 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     void silentRefresh();
   }, []);
 
-    const login = async (email: string, password: string) => {
+  const login = async (email: string, password: string) => {
     const { accessToken: newToken } = await loginRequest({ email, password });
     setAccessToken(newToken);
     const me = await meRequest(newToken);
@@ -118,8 +117,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Backend ራሱ አዘጋጅቶታል) - loginRequest() ደግመን አንጠራም፣ /auth/me ብቻ እንጠራለን
   const loginWithTokens = async (newAccessToken: string) => {
     setAccessToken(newAccessToken);
-    const me = await meRequest(newAccessToken);
-    setUser(me);
+
+    // Register ካደረገ ወዲያውኑ (millisecond ውስጥ) /auth/me ስለሚጠራ፣
+    // Database's eventual-consistency window ን ለማለፍ አጭር retry
+    let lastError: unknown;
+    for (let attempt = 0; attempt < 3; attempt++) {
+      try {
+        const me = await meRequest(newAccessToken);
+        setUser(me);
+        return;
+      } catch (err) {
+        lastError = err;
+        await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+      }
+    }
+    throw lastError;
   };
 
   const logout = async () => {
@@ -173,7 +185,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoggedIn: !!user,
         isLoading,
         login,
-  
+
         logout,
         loginWithTokens,
         updateUser,

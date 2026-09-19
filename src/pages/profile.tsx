@@ -16,7 +16,7 @@ import { fetchUserPosts, deletePost } from "../api/posts.api";
 import UserProfile from "../components/UserProfile";
 import ProfileVideo from "../components/ProfileVideo";
 import ViewVideo from "../components/ViewVideo";
-
+import FollowListModal from "../components/FollowListModal";
 // የProfile component የProp መግለጫ (Props Interface for Profile.tsx)
 interface ProfileProps {
   onBackToCommunity?: () => void;
@@ -57,6 +57,7 @@ export default function Profile({
     incrementShare,
     addComment,
     deleteComment,
+    deleteReply,
     addReply,
     editComment,
   } = useFeed();
@@ -107,7 +108,7 @@ export default function Profile({
     name: user?.name || user?.username || "User",
     username: user?.username || "username",
     bio: user?.bio || "",
-    photo: user?.photo || "/default_avatar.jpg",
+    photo: user?.photo || "",
     cover: user?.cover || "",
   };
 
@@ -120,7 +121,7 @@ export default function Profile({
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedMediaSrc, setSelectedMediaSrc] = useState<string | null>(null);
   const [shareModalPost, setShareModalPost] = useState<FeedPost | null>(null);
-
+  const [followListModal, setFollowListModal]= useState<"followers" | "following" | null> (null);
   const selectedPost: FeedPost | null = selectedPostId
     ? myPosts.find((p) => p.id === selectedPostId) || null
     : null;
@@ -273,6 +274,20 @@ export default function Profile({
       commentId,
     });
   };
+
+  const handleDeleteReply = (
+    postId: string,
+    commentId: string,
+    replyId: string,
+  ) => {
+    setDeleteConfirmState({
+      isOpen: true,
+      type: "reply",
+      postId,
+      commentId,
+      replyId,
+    });
+  };
   const handleEditComment = (
     postId: string,
     commentId: string,
@@ -358,6 +373,13 @@ export default function Profile({
       }
     } else if (type === "comment" && commentId !== undefined) {
       deleteComment(postId, commentId);
+      setDeleteConfirmState(null);
+    } else if (
+      type === "reply" &&
+      commentId !== undefined &&
+      deleteConfirmState.replyId
+    ) {
+      deleteReply(postId, commentId, deleteConfirmState.replyId);
       setDeleteConfirmState(null);
     }
   };
@@ -555,6 +577,8 @@ export default function Profile({
         directPhotoInputRef={directPhotoInputRef}
         directCoverInputRef={directCoverInputRef}
         formatCount={formatCount}
+        onOpenFollowers={() => setFollowListModal("followers")}
+        onOpenFollowing={() => setFollowListModal("following")}
       />
 
       {/* 3. Bento-Grid of Videos and Photos (የልጥፎች መደርደሪያ) */}
@@ -865,7 +889,14 @@ export default function Profile({
         onClose={() => setShareModalPost(null)}
         onShareIncrement={handleIncrementShare}
       />
-
+      {followListModal && user?.id && (
+        <FollowListModal
+          isOpen={true}
+          onClose={() => setFollowListModal(null)}
+          userId={user.id}
+          type={followListModal}
+        />
+      )}
       {/* Custom styled Delete Confirmation Modal */}
       {deleteConfirmState?.isOpen && (
         <div className="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
@@ -877,7 +908,9 @@ export default function Profile({
             <h3 className="text-lg font-black text-slate-800 mb-2">
               {deleteConfirmState.type === "post"
                 ? "Delete Post?"
-                : "Delete Comment?"}
+                : deleteConfirmState.type === "reply"
+                  ? "Delete Reply?"
+                  : "Delete Comment?"}
             </h3>
             <p className="text-xs text-slate-500 font-semibold mb-4">
               Are you sure you want to delete this permanently? This action

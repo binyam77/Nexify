@@ -310,7 +310,7 @@ export default function Community() {
       socket.off("typing:stop", handleTypingStop);
     };
   }, [socket, user, activeChatId, markRead]);
-// ================= OFFLINE QUEUE: flush on (re)connect =================
+  // ================= OFFLINE QUEUE: flush on (re)connect =================
   useEffect(() => {
     if (!socket) return;
 
@@ -324,7 +324,10 @@ export default function Community() {
           mediaType: m.mediaType,
           clientMessageId: m.clientMessageId,
         }).catch((err) => {
-          console.error("Retry from offline queue failed, will retry again later:", err);
+          console.error(
+            "Retry from offline queue failed, will retry again later:",
+            err,
+          );
         });
         // Not dequeued here — Patch F5's handleMessageNew dequeues once the
         // server actually confirms the message (persisted or already-was).
@@ -526,9 +529,11 @@ export default function Community() {
     if (!activeChatId) return;
     const targetChat = chats.find((c) => c.id === activeChatId);
 
-       if (isCommunityChat(targetChat)) {
+    if (isCommunityChat(targetChat)) {
       const clientMessageId = generateClientMessageId();
-      const backendMediaType = mediaType ? (mediaType.toUpperCase() as BackendMessageMediaType) : undefined;
+      const backendMediaType = mediaType
+        ? (mediaType.toUpperCase() as BackendMessageMediaType)
+        : undefined;
 
       // Optimistic local entry — visible immediately; reconciled (replaced)
       // once the real message arrives via 'message:new' (Patch F5 above).
@@ -565,7 +570,9 @@ export default function Community() {
           mediaType: backendMediaType,
           createdAt: new Date().toISOString(),
         });
-        triggerToast("📡 No connection — message queued, will send automatically.");
+        triggerToast(
+          "📡 No connection — message queued, will send automatically.",
+        );
       });
       return;
     }
@@ -1014,7 +1021,7 @@ export default function Community() {
       triggerToast(`💬 Secure conversation started with ${user.name}`);
     }
   };
-  //Profile >> Community chat redirect
+  // Profile >> Community chat redirect  +  Notifications >> Community redirect
   useEffect(() => {
     const state = location.state as {
       openChatWith?: {
@@ -1023,13 +1030,18 @@ export default function Community() {
         photo: string;
         bio?: string;
       };
+      openCommunityId?: string;
     };
     /*eslint-disable react-hooks/set-state-in-effect -- location.state ን redirect trigger አድርገን መጠከም ትክክለኛ  pattern ነው*/
     if (state?.openChatWith) {
       handleStartChat(state.openChatWith);
       window.history.replaceState({}, "");
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleStartChat በየ render ስለሚፈጠር dependency ማድረግ loop ይፈጥራል
+    if (state?.openCommunityId) {
+      void handleSelectChat(state.openCommunityId);
+      window.history.replaceState({}, "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleStartChat/handleSelectChat በየ render ስለሚፈጠሩ dependency ማድረግ loop ይፈጥራል
   }, [location.state]);
   // Active selected room details
   const activeChat = chats.find((c) => c.id === activeChatId) || null;

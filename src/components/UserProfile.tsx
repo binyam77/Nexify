@@ -58,22 +58,13 @@ export default function UserProfile({
     <div className="w-full flex flex-col shrink-0">
       {/* 1. Banner/Cover Photo (የላይኛው ባነር ገጽ) */}
       <div className="w-full relative shrink-0">
-        <div
+                <div
           onClick={() => directCoverInputRef.current?.click()}
-          className={`w-full h-48 md:h-64 relative overflow-hidden cursor-pointer group ${
-            profile.cover
-              ? "bg-cover bg-center"
-              : "bg-gradient-to-br from-slate-300 via-slate-200 to-slate-300"
+          className={`w-full h-36 md:h-48 relative overflow-hidden cursor-pointer group ${
+            profile.cover ? "bg-cover bg-center" : "bg-gradient-to-br from-slate-300 via-slate-200 to-slate-300"
           }`}
-          style={
-            profile.cover
-              ? { backgroundImage: `url(${profile.cover})` }
-              : undefined
-          }
+          style={profile.cover ? { backgroundImage: `url(${profile.cover})` } : undefined}
         >
-          {!profile.cover && (
-            <div className="absolute inset-0 opacity-40 bg-[linear-gradient(to_right,#94a3b8_1px,transparent_1px),linear-gradient(to_bottom,#94a3b8_1px,transparent_1px)] bg-[size:20px_20px]" />
-          )}
           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
           <button
             onClick={(e) => {
@@ -88,36 +79,31 @@ export default function UserProfile({
         </div>
       </div>
 
-      <div className="max-w-4xl w-full mx-auto px-4 md:px-8 relative -mt-14 sm:-mt-16 mb-5">
+           <div className="max-w-4xl w-full mx-auto px-4 md:px-8 relative -mt-10 sm:-mt-12 mb-5">
         <div className="flex items-end justify-between mb-4">
-          <div
-            onClick={() => directPhotoInputRef.current?.click()}
-            className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-white shadow-xl overflow-hidden shrink-0 bg-blue-100 flex items-center justify-center relative group cursor-pointer"
-          >
-            {profile.photo ? (
-              <img
-                src={profile.photo}
-                alt={profile.name}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold tracking-wider">
-                {profile.name
-                  ? profile.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()
-                      .slice(0, 2)
-                  : "NX"}
+                     <div
+              onClick={() => directPhotoInputRef.current?.click()}
+              className="relative w-24 h-24 md:w-28 md:h-28 shrink-0 cursor-pointer group"
+            >
+              <div className="w-full h-full rounded-full border-4 border-white shadow-xl overflow-hidden bg-blue-100 flex items-center justify-center">
+                {profile.photo ? (
+                  <img
+                    src={profile.photo}
+                    alt={profile.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-slate-100 flex items-center justify-center">
+                    <Camera className="w-8 h-8 text-slate-400" />
+                  </div>
+                )}
               </div>
-            )}
-            <div className="absolute bottom-0 right-0 w-7 h-7 rounded-full bg-black/70 flex items-center justify-center border-2 border-white group-hover:scale-110 transition-transform">
-              <Camera className="w-3.5 h-3.5 text-white" />
+              <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-black/70 flex items-center justify-center border-2 border-white group-hover:scale-110 transition-transform z-10">
+                <Camera className="w-4 h-4 text-white" />
+              </div>
             </div>
-          </div>
 
-          <div className="flex gap-5 sm:gap-7 pb-1">
+          <div className="flex gap-5 sm:gap-7 pb-2">
             <button
               onClick={onOpenFollowing}
               className="flex flex-col items-center"

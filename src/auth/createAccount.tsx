@@ -58,6 +58,7 @@ export default function CreateAccount({
       await loginWithTokens(accessToken);
       navigate("/");
     } catch (err) {
+      console.log("🔍 FRONTEND CATCH:", err)
       setError(err instanceof ApiError ? err.message : "Something went wrong.");
     } finally {
       setIsSubmitting(false);

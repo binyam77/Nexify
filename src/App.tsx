@@ -24,7 +24,6 @@ import Terms from "./footer/terms";
 import Contact from "./footer/contact";
 import Helps from "./footer/helps";
 import Notifications from "./pages/notfications";
-import OAuthCallbackPage from "./auth/OAuthCallbackPage";
 import SinglePostView from "./pages/singlePostView";
 import FirstEntry from "./auth/firstEntry";
 export default function App() {
@@ -38,7 +37,6 @@ export default function App() {
   };
   // Login.tsx/CreateAccount.tsx ራሳቸው useAuth().login() ን ይጠራሉ (Backend ጋር) —
   // App.tsx's ኃላፊነት navigation ብቻ ነው
- 
 
   // ማረጋገጫው እስከሚጨርስ ሎዲንግ ማሳየት (ከሁሉም በላይ መሆን አለበት)
   if (isLoading) {
@@ -105,7 +103,7 @@ export default function App() {
             )
           }
         />
-        <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
+
         <Route path="/post/:id" element={<SinglePostView />} />
         <Route
           path="/login"
@@ -117,7 +115,6 @@ export default function App() {
                     <Login
                       key="login"
                       onNavigateToSignup={() => navigate("/createAccount")}
-                      
                     />
                   </AnimatePresence>
                 </main>
@@ -134,20 +131,13 @@ export default function App() {
   );
 }
 
-
 function RequireAuth({ children }: { children: React.ReactNode }) {
-  // ⚠️ TEMPORARY DEV BYPASS — Login ሳያደርጉ Home/Profile/Settings ማየት
-  // እንዲችሉ። ወደ ነበረበት ለመመለስ: ይህን 1 መስመር (return <>{children}</>;) ብቻ
-  // ያጥፉ — ከታች ያለው እውነተኛው check በራሱ ይሰራል።
-return <>{children}</>;
+  const { isLoggedIn } = useAuth();
+  const location = useLocation();
 
-  // eslint-disable-next-line no-unreachable
-const { isLoggedIn } = useAuth();
-const location = useLocation();
+  if (!isLoggedIn) {
+    return <Navigate to="/login" state={{ from: location }} replace />;
+  }
 
-if (!isLoggedIn) {
-return <Navigate to="/login" state={{ from: location }} replace />;
- }
-
-return <>{children}</>;
+  return <>{children}</>;
 }

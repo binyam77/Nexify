@@ -14,6 +14,7 @@ import ProfileVideo from "../components/ProfileVideo";
 import ViewVideo from "../components/ViewVideo";
 import ShareModal from "../components/ShareModal";
 import { Trash2 } from "lucide-react";
+import FollowListModal from "../components/FollowListModal";
 interface OtherProfileData {
   userId: string;
   username: string;
@@ -61,6 +62,9 @@ export default function UserProfile() {
   const [isFollowPending, setIsFollowPending] = useState(false);
   const [followError, setFollowError] = useState<string | null>(null);
   const [shareModalPost, setShareModalPost] = useState<FeedPost | null>(null);
+  const [followListModal, setFollowListModal] = useState<
+    "followers" | "following" | null
+  >(null);
   const [deleteConfirmState, setDeleteConfirmState] = useState<{
     isOpen: boolean;
     type: "comment" | "reply";
@@ -182,21 +186,21 @@ export default function UserProfile() {
     });
   };
   const handleTrackView = (postId: string) => {
-     const viewedKey = "viewedPostIds";
-     const viewed = JSON.parse(localStorage.getItem(viewedKey) || "[]");
-     if (!viewed.includes(postId)) {
-       viewed.push(postId);
-       localStorage.setItem(viewedKey, JSON.stringify(viewed));
-       incrementView(postId);
-     }
-   };
- 
-   const handleOpenPlayer = (post: FeedPost) => {
-     setSelectedPostId(post.id);
-     setSelectedMediaSrc(post.mediaUrls[0] || "");
-     void loadComments(post.id);
-     handleTrackView(post.id);
-   };
+    const viewedKey = "viewedPostIds";
+    const viewed = JSON.parse(localStorage.getItem(viewedKey) || "[]");
+    if (!viewed.includes(postId)) {
+      viewed.push(postId);
+      localStorage.setItem(viewedKey, JSON.stringify(viewed));
+      incrementView(postId);
+    }
+  };
+
+  const handleOpenPlayer = (post: FeedPost) => {
+    setSelectedPostId(post.id);
+    setSelectedMediaSrc(post.mediaUrls[0] || "");
+    void loadComments(post.id);
+    handleTrackView(post.id);
+  };
   const handleDeleteComment = (postId: string, commentId: string) => {
     setDeleteConfirmState({ isOpen: true, type: "comment", postId, commentId });
   };
@@ -321,14 +325,17 @@ export default function UserProfile() {
           </div>
 
           <div className="flex gap-6 md:gap-8 self-start sm:self-end bg-surface-raised border border-gray-100 shadow-md px-5 py-3 rounded-2xl">
-            <div className="flex flex-col items-center">
+            <button
+              onClick={() => setFollowListModal("followers")}
+              className="flex flex-col items-center"
+            >
               <span className="text-lg font-black text-text">
                 {formatCount(otherProfile.followersCount)}
               </span>
               <span className="text-xs text-small-text font-bold uppercase">
                 Followers
               </span>
-            </div>
+            </button>
             <div className="flex flex-col items-center border-x border-gray-100 px-6 md:px-8">
               <span className="text-lg font-black text-text">
                 {formatCount(otherProfile.postsCount)}
@@ -337,14 +344,17 @@ export default function UserProfile() {
                 Posts
               </span>
             </div>
-            <div className="flex flex-col items-center">
+            <button
+              onClick={() => setFollowListModal("following")}
+              className="flex flex-col items-center"
+            >
               <span className="text-lg font-black text-text">
                 {formatCount(otherProfile.followingCount)}
               </span>
               <span className="text-xs text-small-text font-bold uppercase">
                 Following
               </span>
-            </div>
+            </button>
           </div>
         </div>
 
@@ -427,7 +437,7 @@ export default function UserProfile() {
           isLoadingComments={isLoadingComments}
           commentsError={commentsError}
           loadMoreComments={loadMoreComments}
-          hasMoreComments={hasMoreComments[selectedPost.id]?? false}
+          hasMoreComments={hasMoreComments[selectedPost.id] ?? false}
           isLoadingMoreComments={isLoadingMoreComments}
           profile={{
             name: user.name || user.username,
@@ -458,6 +468,14 @@ export default function UserProfile() {
         onClose={() => setShareModalPost(null)}
         onShareIncrement={handleIncrementShare}
       />
+            {followListModal && otherProfile && (
+        <FollowListModal
+          isOpen={true}
+          onClose={() => setFollowListModal(null)}
+          userId={otherProfile.userId}
+          type={followListModal}
+        />
+      )}
       {deleteConfirmState?.isOpen && (
         <div className="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
           <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-gray-100 flex flex-col text-center">

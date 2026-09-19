@@ -27,7 +27,12 @@ import type {
 // place that mapping happens, so the UI component never has to know the
 // backend's vocabulary.
 // ============================================================================
-export type NotificationType = "like" | "comment" | "follow";
+export type NotificationType =
+  | "like"
+  | "comment"
+  | "follow"
+  | "community_invite"
+  | "community_new_subscriber";
 
 export interface AppNotification {
   id: string;
@@ -37,10 +42,10 @@ export interface AppNotification {
   message: string;
   postId?: string;
   commentId?: string;
+  communityId?: string;
   isRead: boolean;
   createdAt: string;
 }
-
 interface NotificationContextType {
   notifications: AppNotification[];
   unreadCount: number;
@@ -51,14 +56,13 @@ interface NotificationContextType {
 }
 
 const NotificationContext = createContext<NotificationContextType | null>(null);
-
-// Notifications page scope is Post/Profile-domain only (Like/Comment/
-// Follow). Backend's flat Notification table can also carry Community/
-// Chat-domain types (MENTION, COMMUNITY_INVITE, COMMUNITY_NEW_SUBSCRIBER,
-// DIRECT_MESSAGE) — those are deliberately filtered out here, at the
-// frontend boundary, rather than in the backend query, so a future
-// Community/Chat notifications view can reuse the same endpoint by
-// filtering differently, without any backend change.
+// Notifications page scope covers Post/Profile-domain (Like/Comment/
+// Follow) PLUS Community-domain invite/new-subscriber events. Backend's
+// flat Notification table can also carry DIRECT_MESSAGE (Chat domain) —
+// deliberately filtered out here (redundant with the Chat list's own
+// unread badge, see the Community/Chat integration discussion), at the
+// frontend boundary rather than in the backend query, so a future view
+// can reuse the same endpoint by filtering differently.
 function mapBackendType(
   type: BackendNotificationType,
 ): NotificationType | null {
@@ -69,6 +73,10 @@ function mapBackendType(
       return "comment";
     case "NEW_FOLLOWER":
       return "follow";
+    case "COMMUNITY_INVITE":
+      return "community_invite";
+    case "COMMUNITY_NEW_SUBSCRIBER":
+      return "community_new_subscriber";
     default:
       return null;
   }
@@ -86,6 +94,7 @@ function toAppNotification(n: NotificationResponse): AppNotification | null {
     message: n.message,
     postId: n.postId ?? undefined,
     commentId: n.commentId ?? undefined,
+    communityId: n.communityId ?? undefined,
     isRead: n.isRead,
     createdAt: n.createdAt,
   };
@@ -211,7 +220,6 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     [accessToken, notifications],
   );
 
-  
   return (
     <NotificationContext.Provider
       value={{
