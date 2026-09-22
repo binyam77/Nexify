@@ -165,7 +165,7 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
             </div>
             <button
               onClick={() => cameraPhotoInputRef.current?.click()}
-              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
+              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-hover-input transition-colors text-left"
             >
               <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center">
                 <Camera className="w-5 h-5 text-blue-600" />
@@ -180,7 +180,7 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
 
             <button
               onClick={() => cameraVideoInputRef.current?.click()}
-              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
+              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-hover-input transition-colors text-left"
             >
               <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center">
                 <VideoCamera className="w-5 h-5 text-rose-600" />
@@ -195,7 +195,7 @@ export default function BottomNav({ onUploadClick }: BottomNavProps) {
 
             <button
               onClick={() => galleryInputRef.current?.click()}
-              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-slate-50 transition-colors text-left"
+              className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-hover-input transition-colors text-left"
             >
               <div className="w-10 h-10 rounded-full bg-violet-50 flex items-center justify-center">
                 <Upload className="w-5 h-5 text-violet-600" />

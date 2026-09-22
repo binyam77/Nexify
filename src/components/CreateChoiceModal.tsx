@@ -43,7 +43,7 @@ export default function CreateChoiceModal({
         <div className="p-2">
           <button
             onClick={onSelectChannel}
-            className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors text-left"
+            className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-bold text-gray-700 hover:bg-hover-input hover:text-blue-600 rounded-xl transition-colors text-left"
           >
             <Radio className="w-5 h-5 text-blue-500 shrink-0" />
             <div>
@@ -56,7 +56,7 @@ export default function CreateChoiceModal({
 
           <button
             onClick={onSelectGroup}
-            className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-bold text-gray-700 hover:bg-blue-50 hover:text-blue-600 rounded-xl transition-colors text-left"
+            className="w-full flex items-center gap-3 px-4 py-3.5 text-sm font-bold text-gray-700 hover:bg-hover-input hover:text-blue-600 rounded-xl transition-colors text-left"
           >
             <Users className="w-5 h-5 text-emerald-500 shrink-0" />
             <div>

@@ -127,7 +127,7 @@ export default function ChatsSidebar({
         <button
           type="button"
           onClick={onCreatePlusClick}
-          className="p-2 text-brand hover:bg-blue-50 rounded-xl transition-all shrink-0"
+          className="p-2 text-brand hover:bg-hover-input rounded-xl transition-all shrink-0"
           aria-label="Create new channel or group"
           title="Create"
         >

@@ -177,6 +177,7 @@ export default function UserProfile() {
     navigate("/community", {
       state: {
         openChatWith: {
+          userId:otherProfile.userId,
           name: otherProfile.name,
           username: otherProfile.username,
           photo: otherProfile.photo,

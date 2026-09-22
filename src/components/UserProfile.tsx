@@ -150,7 +150,7 @@ export default function UserProfile({
           <div className="flex items-center gap-2.5 mb-5">
           <button
             onClick={handleOpenEditModal}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-text font-bold text-sm transition-all"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-100 hover:bg-hover-input text-text font-bold text-sm transition-all"
           >
             <Edit className="w-4 h-4" />
             <span>Edit Profile</span>
@@ -158,7 +158,7 @@ export default function UserProfile({
 
           <Link
             to="/settings"
-            className="w-11 h-11 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-slate-200 text-text transition-all shrink-0"
+            className="w-11 h-11 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-hover-input text-text transition-all shrink-0"
           >
             <Settings size={18} strokeWidth={2.5} />
           </Link>
