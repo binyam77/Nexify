@@ -1,11 +1,11 @@
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect,useRef } from "react";
 import type { ReactNode } from "react";
 import {
   loginRequest,
   logoutRequest,
-  refreshRequest,
   meRequest,
 } from "../api/auth.api";
+import { refreshAccessToken } from "../lib/refresh-coordinator";
 import { fetchMyProfile, updateMyProfile } from "../api/profile.api";
 import type { UpdateProfileInput } from "../api/profile.api";
 import { setStoredToken } from "../lib/token-store";
@@ -88,10 +88,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+    const hasSilentRefreshRun = useRef(false);
+
   useEffect(() => {
-    async function silentRefresh() {
+    if (hasSilentRefreshRun.current) return;
+    hasSilentRefreshRun.current = true;
+
+     async function silentRefresh() {
       try {
-        const { accessToken: newToken } = await refreshRequest();
+        const newToken = await refreshAccessToken();
         setAccessToken(newToken);
         const me = await meRequest(newToken);
         setUser(me);

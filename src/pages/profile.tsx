@@ -121,7 +121,9 @@ export default function Profile({
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedMediaSrc, setSelectedMediaSrc] = useState<string | null>(null);
   const [shareModalPost, setShareModalPost] = useState<FeedPost | null>(null);
-  const [followListModal, setFollowListModal]= useState<"followers" | "following" | null> (null);
+  const [followListModal, setFollowListModal] = useState<
+    "followers" | "following" | null
+  >(null);
   const selectedPost: FeedPost | null = selectedPostId
     ? myPosts.find((p) => p.id === selectedPostId) || null
     : null;
@@ -622,151 +624,138 @@ export default function Profile({
           MODAL: EDIT PROFILE FORM
           ======================================================== */}
       {isEditModalOpen && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-surface rounded-3xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto border border-border flex flex-col">
-            <div className="px-6 py-4 border border-border flex items-center justify-between sticky top-0 bg-surface z-10">
-              <h3 className="text-lg font-black tracking-tight text-text-h2">
-                Edit Profile
-              </h3>
-              <button
-                onClick={() => setIsEditModalOpen(false)}
-                className="p-1.5 hover:bg-danger-hover text-one-text rounded-xl"
+        <div className="fixed inset-0 z-50 bg-surface flex flex-col">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+            <button
+              onClick={() => setIsEditModalOpen(false)}
+              className="p-1.5 hover:bg-danger-hover text-one-text rounded-xl"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            <h3 className="text-base font-black tracking-tight text-text-h2">
+              Edit Profile
+            </h3>
+            <button
+              onClick={handleSaveProfile}
+              disabled={isSavingProfile}
+              className="text-sm font-bold text-blue-600 disabled:opacity-50 px-2"
+            >
+              {isSavingProfile ? "Saving..." : "Save"}
+            </button>
+          </div>
+
+          <div className="flex-1 overflow-y-auto p-6 space-y-5">
+            <div>
+              <span className="block text-xs font-extrabold tracking-wider text-text uppercase mb-2">
+                Cover Photo Banner
+              </span>
+              <div
+                onClick={() => coverInputRef.current?.click()}
+                className="w-full h-28 rounded-xl bg-surface-raised border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group"
               >
-                <X className="w-5 h-5" />
-              </button>
+                {editCoverPreview ? (
+                  <>
+                    <img
+                      src={editCoverPreview}
+                      alt="Cover preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="w-6 h-6 text-white" />
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex flex-col items-center text-gray-400">
+                    <Camera className="w-6 h-6 mb-1 text-gray-300" />
+                    <span className="text-xs font-semibold">
+                      Change Banner Cover
+                    </span>
+                  </div>
+                )}
+              </div>
+              <input
+                type="file"
+                ref={coverInputRef}
+                onChange={handleCoverUploadChange}
+                accept="image/*"
+                className="hidden"
+              />
             </div>
 
-            <div className="p-6 space-y-5">
-              <div>
-                <span className="block text-xs font-extrabold tracking-wider text-text uppercase mb-2">
-                  Cover Photo Banner
-                </span>
-                <div
-                  onClick={() => coverInputRef.current?.click()}
-                  className="w-full h-28 rounded-xl bg-surface-raised border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group"
-                >
-                  {editCoverPreview ? (
-                    <>
-                      <img
-                        src={editCoverPreview}
-                        alt="Cover preview"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Camera className="w-6 h-6 text-white" />
-                      </div>
-                    </>
-                  ) : (
-                    <div className="flex flex-col items-center text-gray-400">
-                      <Camera className="w-6 h-6 mb-1 text-gray-300" />
-                      <span className="text-xs font-semibold">
-                        Change Banner Cover
-                      </span>
+            <div className="flex items-center gap-4">
+              <div
+                onClick={() => photoInputRef.current?.click()}
+                className="w-16 h-16 rounded-full bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer overflow-hidden relative group shrink-0"
+              >
+                {editPhotoPreview ? (
+                  <>
+                    <img
+                      src={editPhotoPreview}
+                      alt="Avatar preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <Camera className="w-4 h-4 text-white" />
                     </div>
-                  )}
-                </div>
+                  </>
+                ) : (
+                  <Camera className="w-5 h-5 text-gray-300" />
+                )}
+              </div>
+              <div className="flex-1">
+                <span className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1">
+                  Avatar
+                </span>
+                <button
+                  onClick={() => photoInputRef.current?.click()}
+                  className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-xs font-bold rounded-lg text-gray-700"
+                >
+                  Select New Picture
+                </button>
                 <input
                   type="file"
-                  ref={coverInputRef}
-                  onChange={handleCoverUploadChange}
+                  ref={photoInputRef}
+                  onChange={handlePhotoUploadChange}
                   accept="image/*"
                   className="hidden"
                 />
               </div>
-
-              <div className="flex items-center gap-4">
-                <div
-                  onClick={() => photoInputRef.current?.click()}
-                  className="w-16 h-16 rounded-full bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer overflow-hidden relative group shrink-0"
-                >
-                  {editPhotoPreview ? (
-                    <>
-                      <img
-                        src={editPhotoPreview}
-                        alt="Avatar preview"
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Camera className="w-4 h-4 text-white" />
-                      </div>
-                    </>
-                  ) : (
-                    <Camera className="w-5 h-5 text-gray-300" />
-                  )}
-                </div>
-                <div className="flex-1">
-                  <span className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1">
-                    Avatar
-                  </span>
-                  <button
-                    onClick={() => photoInputRef.current?.click()}
-                    className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-xs font-bold rounded-lg text-gray-700"
-                  >
-                    Select New Picture
-                  </button>
-                  <input
-                    type="file"
-                    ref={photoInputRef}
-                    onChange={handlePhotoUploadChange}
-                    accept="image/*"
-                    className="hidden"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1.5">
-                    Display Name
-                  </label>
-                  <input
-                    type="text"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value.slice(0, 20))}
-                    className="w-full px-4 py-2.5 bg-input border border-input-border focus:border-input-focus focus:bg-surface-raised rounded-xl text-sm font-semibold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1.5">
-                    Username
-                  </label>
-                  <input
-                    type="text"
-                    value={editUsername}
-                    onChange={(e) =>
-                      setEditUsername(e.target.value.slice(0, 30))
-                    }
-                    className="w-full px-4 py-2.5 bg-input border border-input-border focus:border-input-focus focus:bg-surface-raised rounded-xl text-sm font-semibold"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1.5">
-                    Professional Bio
-                  </label>
-                  <textarea
-                    value={editBio}
-                    onChange={(e) => setEditBio(e.target.value.slice(0, 150))}
-                    rows={3}
-                    className="w-full px-4 py-2.5 bg-surface-raised border border-input-border focus:border-blue-500 focus:bg-surface-raised rounded-xl text-sm font-semibold resize-none"
-                  />
-                </div>
-              </div>
             </div>
 
-            <div className="px-6 py-4 border-t border-gray-100 flex gap-3 justify-end sticky bottom-0  bg-surface">
-              <button
-                onClick={() => setIsEditModalOpen(false)}
-                className="px-4 py-2 bg-gray-100 text-xs font-bold text-gray-700 rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSaveProfile}
-                disabled={isSavingProfile}
-                className="px-5 py-2 bg-blue-600 text-xs font-bold text-white rounded-xl shadow-md disabled:opacity-50"
-              >
-                {isSavingProfile ? "Saving..." : "Save Profile"}
-              </button>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1.5">
+                  Display Name
+                </label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value.slice(0, 20))}
+                  className="w-full px-4 py-2.5 bg-input border border-input-border focus:border-input-focus focus:bg-surface-raised rounded-xl text-sm font-semibold"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1.5">
+                  Username
+                </label>
+                <input
+                  type="text"
+                  value={editUsername}
+                  onChange={(e) => setEditUsername(e.target.value.slice(0, 30))}
+                  className="w-full px-4 py-2.5 bg-input border border-input-border focus:border-input-focus focus:bg-surface-raised rounded-xl text-sm font-semibold"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1.5">
+                  Professional Bio
+                </label>
+                <textarea
+                  value={editBio}
+                  onChange={(e) => setEditBio(e.target.value.slice(0, 150))}
+                  rows={3}
+                  className="w-full px-4 py-2.5 bg-surface-raised border border-input-border focus:border-blue-500 focus:bg-surface-raised rounded-xl text-sm font-semibold resize-none"
+                />
+              </div>
             </div>
           </div>
         </div>

@@ -122,3 +122,15 @@ export function registerRequest(params: {
     body: params,
   });
 }
+// ================= GOOGLE OAUTH EXCHANGE =================
+// Google callback ላይ የተፈጠረውን 1-ጊዜ-ብቻ handoff code በ real tokens
+// ይለውጣል (accessToken body ላይ፣ refreshToken httpOnly cookie ራሱ
+// Backend ራሱ ያዘጋጃል - apiClient's credentials:"include" ስላለው)
+export function exchangeGoogleCodeRequest(
+  code: string,
+): Promise<LoginResponse> {
+  return apiClient<LoginResponse>("/auth/google/exchange", {
+    method: "POST",
+    body: { code },
+  });
+}

@@ -14,7 +14,7 @@ export default function Login({ onNavigateToSignup }: LoginProps) {
   const [showEmailCard, setShowEmailCard] = useState(false);
 
   const handleGoogleClick = () => {
-    // TODO: Google OAuth backend ገና አልተገነባም - UI placeholder ብቻ
+    window.location.href = "http://localhost:3000/auth/google";
   };
 
   return (

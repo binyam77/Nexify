@@ -26,7 +26,7 @@ const footerLinks = [
 
   { label: "Privacy Policy", to: ROUTES.privacy },
 
-  { label: "Terms", to: ROUTES.terms },
+  { label: "Terms & Service", to: ROUTES.terms },
 
   { label: "Contact", to: ROUTES.contact },
 ];

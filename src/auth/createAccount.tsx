@@ -66,7 +66,7 @@ export default function CreateAccount({
   };
 
   const handleGoogleClick = () => {
-    // TODO: Google OAuth backend ገና አልተገነባም - UI placeholder ብቻ
+    window.location.href = "http://localhost:3000/auth/google";
   };
 
   return (
@@ -89,7 +89,7 @@ export default function CreateAccount({
         <button
           type="button"
           onClick={handleGoogleClick}
-          className="w-full py-4 px-4 bg-white border border-input-border rounded-xl text-base font-medium text-gray-700 flex items-center justify-center gap-3 hover:bg-surface-raised transition-all mb-5"
+          className="w-full py-4 px-4 bg-surface-raised border border-input-border rounded-xl text-base font-medium text-gray-700 flex items-center justify-center gap-3 hover:bg-hover-input transition-all mb-5"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path

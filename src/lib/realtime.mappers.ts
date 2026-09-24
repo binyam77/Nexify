@@ -134,10 +134,7 @@ export function mapCommunityMessageToMessage(
   };
 }
 
-export function mapChatMessageToMessage(
-  msg: ChatMessageResponse,
-  currentUserId: string,
-): Message {
+export function mapChatMessageToMessage(msg: ChatMessageResponse, currentUserId: string): Message {
   return {
     id: msg.id,
     senderName: senderLabel(msg, currentUserId),
@@ -147,6 +144,7 @@ export function mapChatMessageToMessage(
     mediaUrl: msg.mediaUrl ?? undefined,
     mediaType: mediaTypeToLower(msg.mediaType),
     isEdited: msg.isEdited,
+    clientMessageId: msg.clientMessageId ?? undefined,
     // Chat's Message model has no reactions concept — MessageArea.tsx
     // only ever renders reactions for chat.type === "channel", so an
     // absent field here is never actually read for Conversation messages.

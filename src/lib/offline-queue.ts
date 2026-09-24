@@ -18,7 +18,8 @@ const STORAGE_KEY = "nexify_offline_queue";
 
 export interface QueuedMessage {
   clientMessageId: string;
-  communityId: string;
+  scope: "community" | "conversation";
+  targetId: string; // communityId or conversationId, depending on scope
   text?: string;
   mediaUrl?: string;
   mediaType?: MessageMediaType;

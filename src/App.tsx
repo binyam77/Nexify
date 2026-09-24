@@ -26,6 +26,7 @@ import Helps from "./footer/helps";
 import Notifications from "./pages/notfications";
 import SinglePostView from "./pages/singlePostView";
 import FirstEntry from "./auth/firstEntry";
+import AuthCallback from "./components/AuthCallback";
 export default function App() {
   const navigate = useNavigate();
   const { isLoggedIn, isLoading } = useAuth();
@@ -103,7 +104,7 @@ export default function App() {
             )
           }
         />
-
+        <Route path={ROUTES.authCallback} element={<AuthCallback />} />
         <Route path="/post/:id" element={<SinglePostView />} />
         <Route
           path="/login"

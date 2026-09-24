@@ -1,6 +1,7 @@
 export const ROUTES = {
   firstEntry: "/",
   home: "/home",
+  authCallback:"/auth/callback",
   community: "/community",
   profile: "/profile",
   userProfile: "/profile/:username",
