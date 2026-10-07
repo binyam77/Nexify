@@ -129,7 +129,8 @@ export function mapCommunityMessageToMessage(
     mediaType: mediaTypeToLower(msg.mediaType),
     isEdited: msg.isEdited,
     reactions: aggregateReactions(msg.reactions, currentUserId),
-    isPinned: msg.isPinned,
+      isPinned: msg.isPinned,
+    createdAt: msg.createdAt,
     clientMessageId:msg.clientMessageId ?? undefined,
   };
 }
@@ -240,7 +241,8 @@ export function mapConversationListItemToChat(
     return {
       id: item.id,
       name,
-      participantUsername: other?.profile?.username,
+           participantUsername: other?.profile?.username,
+      participantUserId: other?.id,
       lastMsgText: previewText(item.lastMessage),
       lastMsgSender: item.lastMessage
         ? senderLabel(item.lastMessage, currentUserId, name)
@@ -291,7 +293,8 @@ export function mapConversationDetailToChat(
     return {
       id: item.id,
       name,
-      participantUsername: other?.profile?.username,
+           participantUsername: other?.profile?.username,
+      participantUserId: other?.id,
       lastMsgText: "",
       lastMsgSender: "",
       lastMsgTime: "",

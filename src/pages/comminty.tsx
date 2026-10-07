@@ -72,6 +72,8 @@ export default function Community() {
   const [isCreateChoiceOpen, setIsCreateChoiceOpen] = useState(false);
   const [isMemberPickerOpen, setIsMemberPickerOpen] = useState(false);
   const [pickedMembers, setPickedMembers] = useState<SelectableUser[]>([]);
+  // ፍሰቱ ሲሰረዝ New Group ፎርም እንዲጸዳ (key ሲቀየር ዳግም ይፈጠራል)
+  const [groupFlowKey, setGroupFlowKey] = useState(0);
 
   // Group member-picker's data source — ወደፊት real follow/follower data ብቻ ይተካዋል፣ MemberPickerModal ራሱ አይቀየርም
   // ⏳ ለጊዜው Profile's demo otherUsers — backend ሲመጣ: GET /api/users/me/following ን ይተካል
@@ -89,8 +91,16 @@ export default function Community() {
 
   // User profile details (Current member profile loaded dynamically from localStorage)
   const { user, accessToken } = useAuth();
-  const { socket, joinRoom, sendMessage, markRead, startTyping, stopTyping } =
-    useRealtime();
+  const {
+    socket,
+    isConnected,
+    joinRoom,
+    sendMessage,
+    markRead,
+    startTyping,
+    stopTyping,
+    getOnlineUsers,
+  } = useRealtime();
   const userProfile = {
     name: user?.name || user?.username || "User",
     role: user?.bio?.split(".")[0] || "Developer",
@@ -152,7 +162,11 @@ export default function Community() {
         const withoutConversations = prev.filter(
           (c) => c.type !== "chat" && c.type !== "privateGroup",
         );
-        return [...withoutConversations, ...conversationChats];
+        const withPresence = conversationChats.map((c) => ({
+          ...c,
+          isOnline: prev.find((p) => p.id === c.id)?.isOnline,
+        }));
+        return [...withoutConversations, ...withPresence];
       });
     } catch (err) {
       console.error("Failed to load your chats:", err);
@@ -351,6 +365,63 @@ export default function Community() {
       socket.off("typing:stop", handleTypingStop);
     };
   }, [socket, user, activeChatId, markRead]);
+  // ================= PRESENCE (1:1 chats ብቻ) =================
+  // Live updates: አንድ ተጠቃሚ online/offline ሲሆን
+  useEffect(() => {
+    if (!socket) return;
+
+    function handlePresenceUpdate(payload: {
+      userId: string;
+      online: boolean;
+    }) {
+      setChats((prev) =>
+        prev.map((c) =>
+          c.type === "chat" && c.participantUserId === payload.userId
+            ? { ...c, isOnline: payload.online }
+            : c,
+        ),
+      );
+    }
+
+    socket.on("presence:update", handlePresenceUpdate);
+    return () => {
+      socket.off("presence:update", handlePresenceUpdate);
+    };
+  }, [socket]);
+
+  // Snapshot: ሲገናኝ/እንደገና ሲገናኝ እና 1:1 chat ዝርዝር ሲቀየር አሁን ማን online እንደሆነ ጠይቅ
+  const directUserIdsKey = chats
+    .filter((c) => c.type === "chat" && c.participantUserId)
+    .map((c) => c.participantUserId as string)
+    .sort()
+    .join(",");
+
+  useEffect(() => {
+    if (!isConnected || !directUserIdsKey) return;
+    let cancelled = false;
+
+    getOnlineUsers(directUserIdsKey.split(","))
+      .then((onlineIds) => {
+        if (cancelled) return;
+        const online = new Set(onlineIds);
+        setChats((prev) =>
+          prev.map((c) =>
+            c.type === "chat" && c.participantUserId
+              ? { ...c, isOnline: online.has(c.participantUserId) }
+              : c,
+          ),
+        );
+      })
+      .catch(() => {
+        /* best-effort — live presence:update ክስተቶች ይቀጥላሉ */
+      });
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- getOnlineUsers is recreated every render; the key + connection state are the real triggers
+  }, [isConnected, directUserIdsKey]);
+
   // ================= OFFLINE QUEUE: flush on (re)connect =================
   useEffect(() => {
     if (!socket) return;
@@ -599,6 +670,7 @@ export default function Community() {
       mediaUrl,
       mediaType,
       pending: true,
+      createdAt: new Date().toISOString(),
       clientMessageId,
     };
     setMessagesDb((prev) => ({
@@ -1086,11 +1158,14 @@ export default function Community() {
 
   // Channel/ Group/Chat  ውስጥ ሲገባ BottomNav መደበክ
   const { setFullscreenModalOpen } = useUI();
+  // Create Channel / Create Group / Member picker ሙሉ ስክሪን ሲሆኑም BottomNav ይደበቃል
+  const isCreateFlowOpen =
+    isNewChannelOpen || isNewGroupOpen || isMemberPickerOpen;
   useEffect(() => {
-    setFullscreenModalOpen(!!activeChatId);
+    setFullscreenModalOpen(!!activeChatId || isCreateFlowOpen);
     return () => setFullscreenModalOpen(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeChatId]);
+  }, [activeChatId, isCreateFlowOpen]);
   return (
     <div className="flex w-full h-screen overflow-hidden bg-gray-50 text-gray-900 font-sans md:relative">
       {/* Toast Notification */}
@@ -1177,7 +1252,7 @@ export default function Community() {
         }}
         onSelectGroup={() => {
           setIsCreateChoiceOpen(false);
-          setIsNewGroupOpen(true);
+          setIsMemberPickerOpen(true); // ደረጃ 1: Add Members
         }}
       />
 
@@ -1189,21 +1264,38 @@ export default function Community() {
       />
       {/*4. NEW GROUP MODAL (Create new Group dialog window)*/}
       <NewGroupModal
+        key={groupFlowKey}
         isOpen={isNewGroupOpen}
         onClose={() => setIsNewGroupOpen(false)}
+        onBack={() => {
+          // ← ከ New Group ወደ Add Members (የተመረጡት እና የተጻፈው ይቆያል)
+          setIsNewGroupOpen(false);
+          setIsMemberPickerOpen(true);
+        }}
         onCreateGroup={handleCreateGroup}
         onOpenMemberPicker={() => setIsMemberPickerOpen(true)}
         pickedMembers={pickedMembers}
       />
 
-      {/* 5. MEMBER PICKER MODAL (Group creation ውስጥ members መምረጫ) */}
+      {/* 5. ADD MEMBERS (ደረጃ 1 — ወይም ከ New Group "Add Members" ሲነካ) */}
       <MemberPickerModal
+        key={isMemberPickerOpen ? "open" : "closed"}
         isOpen={isMemberPickerOpen}
         availableUsers={availableMembersForPicker}
-        onClose={() => setIsMemberPickerOpen(false)}
+        initialSelected={pickedMembers}
+        confirmLabel="Next"
+        onClose={() => {
+          setIsMemberPickerOpen(false);
+          if (!isNewGroupOpen) {
+            // ደረጃ 1 ላይ ← → ሙሉ ፍሰቱ ተሰርዟል
+            setPickedMembers([]);
+            setGroupFlowKey((k) => k + 1);
+          }
+        }}
         onConfirm={(selected) => {
           setPickedMembers(selected);
           setIsMemberPickerOpen(false);
+          setIsNewGroupOpen(true); // ደረጃ 2: New Group
         }}
       />
     </div>

@@ -565,14 +565,14 @@ export default function ViewVideo({
                         comment.replies.map((reply) => (
                           <div
                             key={reply.id}
-                            className="flex gap-2 items-start pl-6"
+                            className="flex gap-3 items-start pl-11"
                           >
                             <div
                               onClick={() => {
                                 setMobileCommentsOpen(false);
                                 handleNavigateToUserProfile(reply.username);
                               }}
-                              className="w-5.5 h-5.5 rounded-full overflow-hidden bg-blue-50 flex items-center justify-center text-teal-600 text-[8px] font-bold shrink-0 border border-slate-100 cursor-pointer"
+                              className="w-7 h-7 rounded-full overflow-hidden bg-teal-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0 cursor-pointer"
                             >
                               {reply.avatar ? (
                                 <img
@@ -584,28 +584,40 @@ export default function ViewVideo({
                                 reply.username.charAt(0).toUpperCase()
                               )}
                             </div>
-                            <div className="flex-1 bg-surface rounded-xl py-2 px-3 border-l border-brand-dark">
-                              <h5
-                                onClick={() => {
-                                  setMobileCommentsOpen(false);
-                                  handleNavigateToUserProfile(reply.username);
-                                }}
-                                className="text-[11px] font-bold text-brand-light mb-0.5 cursor-pointer hover:underline"
-                              >
-                                @{reply.username}
-                              </h5>
-                              <p className="text-[12px] text-input-text leading-relaxed break-words font-medium">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-baseline gap-2">
+                                <span
+                                  onClick={() => {
+                                    setMobileCommentsOpen(false);
+                                    handleNavigateToUserProfile(reply.username);
+                                  }}
+                                  className="text-sm font-bold text-slate-900 cursor-pointer hover:underline"
+                                >
+                                  {reply.username}
+                                </span>
+                                <span className="text-xs text-slate-400">
+                                  {formatRelativeTime(reply.timestamp)}
+                                </span>
+                              </div>
+                              <p className="text-sm text-slate-800 leading-relaxed break-words mt-0.5">
                                 {reply.text}
                               </p>
-                              <span className="text-[8px] text-small-text block mt-0.5">
-                                {new Date(reply.timestamp).toLocaleTimeString(
-                                  undefined,
-                                  {
-                                    hour: "2-digit",
-                                    minute: "2-digit",
-                                  },
-                                )}
-                              </span>
+                              {reply.username === profile.username && (
+                                <div className="flex items-center gap-3.5 mt-1.5">
+                                  <button
+                                    onClick={() =>
+                                      handleDeleteReply(
+                                        selectedPost.id,
+                                        comment.id,
+                                        reply.id,
+                                      )
+                                    }
+                                    className="text-slate-400 hover:text-rose-600"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))}

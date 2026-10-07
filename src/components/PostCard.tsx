@@ -76,6 +76,22 @@ export default function PostCard({
 
   const [mediaError, setMediaError] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
+  const [videoDuration, setVideoDuration] = useState<number | null>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+
+  // "0:07", "1:23" style formatting — matches TikTok/Instagram's duration badge
+  function formatDuration(seconds: number): string {
+    const mins = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60)
+      .toString()
+      .padStart(2, "0");
+    return `${mins}:${secs}`;
+  }
+
+  const progressPercent =
+    videoDuration && videoDuration > 0
+      ? Math.min(100, (currentTime / videoDuration) * 100)
+      : 0;
 
   const [lastIndexForError, setLastIndexForError] = useState(currentIndex);
   if (currentIndex !== lastIndexForError) {
@@ -240,14 +256,24 @@ export default function PostCard({
             autoPlay
             muted
             playsInline
-            onError={() => setMediaError(true)}
+            onError={(e) => {
+              const mediaErr = e.currentTarget.error;
+              console.error("Video load failed:", {
+                code: mediaErr?.code,
+                message: mediaErr?.message,
+                src: post.mediaUrls[0],
+              });
+              setMediaError(true);
+            }}
             onLoadedMetadata={(e) => {
               const v = e.currentTarget;
               setIsVertical(v.videoHeight / v.videoWidth >= 1.3);
+              setVideoDuration(v.duration);
               v.muted = true;
               v.volume = 1;
               v.play().catch(() => {});
             }}
+            onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
           />
 
           {isFastForwarding && (
@@ -257,11 +283,16 @@ export default function PostCard({
           )}
 
           <div
-            className="absolute top-14 right-3 md:top-3 z-30"
+            className="absolute top-14 right-3 md:top-3 z-30 flex items-center gap-2"
             onPointerDown={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
           >
+            {videoDuration !== null && (
+              <span className="bg-black/50 backdrop-blur-sm rounded-full px-2.5 py-1 text-xs font-semibold text-white tabular-nums">
+                {formatDuration(currentTime)} / {formatDuration(videoDuration)}
+              </span>
+            )}
             <button
               onClick={async (e) => {
                 e.stopPropagation();
@@ -298,6 +329,15 @@ export default function PostCard({
               </div>
             </div>
           )}
+
+          {/* Progress bar — fills in step with playback (onTimeUpdate-driven),
+              resets to 0 on loop since currentTime itself resets. */}
+          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/20 pointer-events-none">
+            <div
+              className="h-full bg-white"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
         </div>
       ) : (
         <div
@@ -414,7 +454,7 @@ export default function PostCard({
               onClick={goToProfile}
               className="text-input font-bold text-sm drop-shadow md:text-ink hover:underline"
             >
-              {post.username}
+              @{post.username}
             </button>
             {!isOwnPost && (
               <button
@@ -436,9 +476,7 @@ export default function PostCard({
             <p
               className={`text-white text-xs leading-relaxed drop-shadow md:text-input-text 
             transition-all ${captionExpanded ? "" : "line-clamp-2"}`}
-            >
-              {post.caption}
-            </p>
+            ></p>
             {post.caption.length > 80 && (
               <button
                 onClick={(e) => {
@@ -450,6 +488,16 @@ export default function PostCard({
                 {captionExpanded ? "less" : "more"}
               </button>
             )}
+          </div>
+        )}
+        {post.type === "video" && (
+          <div className="mt-1.5 flex items-center gap-1.5 text-white/90 md:text-input-text">
+            <div
+              className={`w-3.5 h-3.5 rounded-full bg-gradient-to-br from-zinc-200 to-zinc-500 shrink-0 ${isPlaying ? "animate-spin" : ""}`}
+            />
+            <span className="text-[11px] font-medium truncate">
+              Original sound - @{post.username}
+            </span>
           </div>
         )}
       </div>

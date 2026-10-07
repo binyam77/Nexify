@@ -118,7 +118,7 @@ export default function CommentCard({
                 onClick={goToProfile}
                 className="text-[13px] font-semibold text-white hover:underline"
               >
-                {comment.username}
+                @{comment.username}
               </button>
               <span className="text-[11px] text-zinc-500">· {timeAgo}</span>
             </div>
@@ -288,7 +288,7 @@ function ReplyCard({
             onClick={goToProfile}
             className="text-[12px] font-semibold text-white hover:underline"
           >
-            {reply.username}
+            @{reply.username}
           </button>
           <span className="text-[10px] text-zinc-500">· {timeAgo}</span>
         </div>

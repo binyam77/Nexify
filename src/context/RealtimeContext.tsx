@@ -41,6 +41,7 @@ interface RealtimeContextType {
   ) => Promise<{ acknowledged: true }>;
   startTyping: (scope: RealtimeScope, targetId: string) => void;
   stopTyping: (scope: RealtimeScope, targetId: string) => void;
+  getOnlineUsers: (userIds: string[]) => Promise<string[]>;
 }
 
 const RealtimeContext = createContext<RealtimeContextType | null>(null);
@@ -169,6 +170,23 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
     socket?.emit("typing:stop", { scope, targetId });
   };
 
+  // Backend በአንድ ጥያቄ ከ 100 ID አይበልጥም — ስለዚህ በ 100 እየከፈልን እንልካለን
+  const getOnlineUsers: RealtimeContextType["getOnlineUsers"] = async (
+    userIds,
+  ) => {
+    const unique = [...new Set(userIds)];
+    const result: string[] = [];
+    for (let i = 0; i < unique.length; i += 100) {
+      const res = await emitWithAck<{ onlineUserIds: string[] }>(
+        requireSocket(),
+        "presence:query",
+        { userIds: unique.slice(i, i + 100) },
+      );
+      result.push(...res.onlineUserIds);
+    }
+    return result;
+  };
+
   return (
     <RealtimeContext.Provider
       value={{
@@ -180,6 +198,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
         markRead,
         startTyping,
         stopTyping,
+        getOnlineUsers,
       }}
     >
       {children}
