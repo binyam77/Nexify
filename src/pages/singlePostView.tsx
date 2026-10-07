@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { ArrowLeft, Loader2, WifiOff, RotateCw } from "lucide-react";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import PostCard from "../components/PostCard";
 import avatarImg from "../assets/user.png";
 import { useAuth } from "../context/AuthContext";
@@ -14,6 +15,7 @@ export default function SinglePostView() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { posts, ensureSinglePost, incrementView } = useFeed();
+  const isOnline = useOnlineStatus();
 
   // `result` is the single source of truth for this fetch's status:
   //   undefined = still loading, true = succeeded, false = failed.
@@ -25,7 +27,7 @@ export default function SinglePostView() {
     { id: string; success: boolean } | undefined
   >(undefined);
 
-   const load = useCallback(async () => {
+  const load = useCallback(async () => {
     if (!id) return;
     const success = await ensureSinglePost(id);
     // setTimeout(…, 0) — a real macrotask, unlike a resolved microtask
@@ -41,7 +43,7 @@ export default function SinglePostView() {
     void load();
   }, [load]);
 
-  const isLoading =result === undefined ||  result.id !== id;
+  const isLoading = result === undefined || result.id !== id;
   const failed = result !== undefined && result.id === id && !result.success;
 
   const post = posts.find((p) => p.id === id);
@@ -52,7 +54,15 @@ export default function SinglePostView() {
     email: user?.email || "",
     avatarUrl: user?.photo || avatarImg,
   };
-
+  if (!isOnline) {
+    return (
+      <div className="h-full w-full flex flex-col items-center justify-center bg-surface text-slate-400 gap-3 px-6 text-center">
+        <WifiOff className="w-10 h-10 opacity-60" />
+        <p className="text-lg font-semibold">ምንም የኢንተርኔት ግንኙነት የለም</p>
+        <p className="text-sm opacity-60">ግንኙነት ሲመለስ Feed ራሱ በራሱ ይመለሳል</p>
+      </div>
+    );
+  }
   if (isLoading) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-surface text-slate-400">

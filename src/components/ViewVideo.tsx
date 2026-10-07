@@ -7,12 +7,9 @@ import React, { useRef, useState, useEffect } from "react";
 import {
   X,
   Trash2,
-  ChevronUp,
-  ChevronDown,
   Play,
   Heart,
   MessageCircle,
-  Bookmark,
   Share2,
   Send,
   Pencil,
@@ -20,16 +17,31 @@ import {
 } from "lucide-react";
 import type { FeedPost, CommentItem } from "../types";
 import Left from "./Left";
-
+function formatRelativeTime(timestamp: string): string {
+  const diffMs = Date.now() - new Date(timestamp).getTime();
+  const diffMin = Math.floor(diffMs / 60000);
+  if (diffMin < 1) return "now";
+  if (diffMin < 60) return `${diffMin}m`;
+  const diffHour = Math.floor(diffMin / 60);
+  if (diffHour < 24) return `${diffHour}h`;
+  const diffDay = Math.floor(diffHour / 24);
+  if (diffDay < 7) return `${diffDay}d`;
+  const diffWeek = Math.floor(diffDay / 7);
+  if (diffWeek < 4) return `${diffWeek}w`;
+  return new Date(timestamp).toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+  });
+}
 // ViewVideo.tsx የProp ዓይነቶች መግለጫ (Props Interface for ViewVideo.tsx)
 interface ViewVideoProps {
   selectedPost: FeedPost;
   commentsMap: Record<string, CommentItem[]>;
-  isLoadingComments:boolean;
-  commentsError:string | null;
-  loadMoreComments:(postId:string)=>Promise<void>;
-  hasMoreComments:boolean;
-  isLoadingMoreComments:boolean;
+  isLoadingComments: boolean;
+  commentsError: string | null;
+  loadMoreComments: (postId: string) => Promise<void>;
+  hasMoreComments: boolean;
+  isLoadingMoreComments: boolean;
   profile: {
     name: string;
     username: string;
@@ -48,7 +60,11 @@ interface ViewVideoProps {
   handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
   handleAddComment: (postId: string, text: string) => void;
   handleDeleteComment: (postId: string, commentId: string) => void;
-  handleDeleteReply:(postId:string,commentId:string, replyId:string) => void;
+  handleDeleteReply: (
+    postId: string,
+    commentId: string,
+    replyId: string,
+  ) => void;
   handleAddReply: (postId: string, commentId: string, text: string) => void;
   handleNavigateToUserProfile: (username: string) => void;
   handleEditComment: (
@@ -71,7 +87,6 @@ export default function ViewVideo({
   followersCount,
   selectedMediaSrc,
   handleClosePlayer,
-  handleNavigatePost,
   handleToggleLikePost,
   handleToggleSavePost,
   handleSharePost,
@@ -121,6 +136,9 @@ export default function ViewVideo({
   const [replyInputText, setReplyInputText] = useState("");
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editInputText, setEditInputText] = useState("");
+  const [sortOrder, setSortOrder] = useState<"newest" | "oldest">("newest");
+  const sortedComments =
+    sortOrder === "newest" ? [...comments].reverse() : comments;
 
   const startEditing = (item: { id: string; text: string }) => {
     setEditingCommentId(item.id);
@@ -155,7 +173,7 @@ export default function ViewVideo({
   }, [selectedPost]);
 
   return (
-    <div className="fixed inset-0 bg-[#0f172a]/95 backdrop-blur-md flex items-center justify-center z-50 p-0 sm:p-4 animate-fade-in">
+    <div className="fixed inset-0 bg-surface backdrop-blur-md flex items-center justify-center z-50 p-0 sm:p-4 animate-fade-in">
       <div className="bg-black md:bg-white rounded-none sm:rounded-3xl w-full max-w-[1200px] h-full sm:h-[90vh] md:h-[88vh] overflow-hidden shadow-2xl border border-transparent sm:border-gray-200/50 flex flex-col md:flex-row relative">
         {/* ===== Left Side: Video/Image Container ===== */}
         <div className="w-full h-full md:flex-1 bg-black flex items-center justify-center relative">
@@ -183,30 +201,6 @@ export default function ViewVideo({
               <span>Delete</span>
             </button>
           )}
-
-          {/* Up and Down Navigation Arrows (ወደ ቀጣይ/ቀድሞ ልጥፍ ማሸጋገሪያ ቀስቶች) */}
-          <div className="absolute left-[18px] top-1/2 -translate-y-1/2 flex flex-col gap-3 z-30 pointer-events-auto">
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNavigatePost("prev");
-              }}
-              className="w-9 h-9 rounded-full bg-black/55 hover:bg-black/80 border border-white/15 flex items-center justify-center text-white/90 hover:text-white hover:scale-110 active:scale-95 transition-all shadow-md group backdrop-blur-sm"
-              title="Previous Post"
-            >
-              <ChevronUp className="w-5 h-5 group-hover:-translate-y-0.5 transition-transform" />
-            </button>
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleNavigatePost("next");
-              }}
-              className="w-9 h-9 rounded-full bg-black/55 hover:bg-black/80 border border-white/15 flex items-center justify-center text-white/90 hover:text-white hover:scale-110 active:scale-95 transition-all shadow-md group backdrop-blur-sm"
-              title="Next Post"
-            >
-              <ChevronDown className="w-5 h-5 group-hover:translate-y-0.5 transition-transform" />
-            </button>
-          </div>
 
           {/* Media Player element */}
           {selectedMediaSrc ? (
@@ -302,22 +296,20 @@ export default function ViewVideo({
 
         {/* ===== Mobile Overlay HUD HUD (በሞባይል ብቻ የሚታይ የላይ ፈጣን መቆጣጠሪያ) ===== */}
         <div className="absolute inset-0 z-20 pointer-events-none md:hidden flex flex-col justify-between">
-          <div className="absolute right-4 bottom-28 flex flex-col gap-4 items-center pointer-events-auto z-30">
+          <div className="absolute right-3 bottom-32 flex flex-col gap-5 items-center pointer-events-auto z-30">
             {/* Likes */}
             <button
               onClick={() => handleToggleLikePost(selectedPost.id)}
-              className="flex flex-col items-center justify-center active:scale-90 transition-all focus:outline-none"
+              className="flex flex-col items-center justify-center gap-1 active:scale-90 transition-all focus:outline-none"
             >
-              <div
-                className={`w-14 h-14 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 ${
-                  selectedPost.liked ? "text-rose-500" : "text-white"
+              <Heart
+                className={`w-[26px] h-[26px] drop-shadow-md ${
+                  selectedPost.liked
+                    ? "fill-rose-500 text-rose-500"
+                    : "text-white"
                 }`}
-              >
-                <Heart
-                  className={`w-7 h-7 ${selectedPost.liked ? "fill-rose-500 text-rose-500" : ""}`}
-                />
-              </div>
-              <span className="text-[10px] font-bold text-white mt-1 drop-shadow-md bg-black/25 px-1.5 py-0.5 rounded-full select-none">
+              />
+              <span className="text-[11px] font-bold text-white drop-shadow-md select-none">
                 {formatCount(selectedPost.likesCount)}
               </span>
             </button>
@@ -325,44 +317,21 @@ export default function ViewVideo({
             {/* Comments toggle drawer */}
             <button
               onClick={() => setMobileCommentsOpen(true)}
-              className="flex flex-col items-center justify-center active:scale-90 transition-all focus:outline-none"
+              className="flex flex-col items-center justify-center gap-1 active:scale-90 transition-all focus:outline-none"
             >
-              <div className="w-14 h-14 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 text-white">
-                <MessageCircle className="w-7 h-7" />
-              </div>
-              <span className="text-[10px] font-bold text-white mt-1 drop-shadow-md bg-black/25 px-1.5 py-0.5 rounded-full select-none">
+              <MessageCircle className="w-[26px] h-[26px] text-white drop-shadow-md" />
+              <span className="text-[11px] font-bold text-white drop-shadow-md select-none">
                 {formatCount(comments.length)}
-              </span>
-            </button>
-
-            {/* Saves */}
-            <button
-              onClick={() => handleToggleSavePost(selectedPost.id)}
-              className="flex flex-col items-center justify-center active:scale-90 transition-all focus:outline-none"
-            >
-              <div
-                className={`w-14 h-14 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 ${
-                  selectedPost.saved ? "text-amber-400" : "text-white"
-                }`}
-              >
-                <Bookmark
-                  className={`w-7 h-7 ${selectedPost.saved ? "fill-amber-400 text-amber-400" : ""}`}
-                />
-              </div>
-              <span className="text-[10px] font-bold text-white mt-1 drop-shadow-md bg-black/25 px-1.5 py-0.5 rounded-full select-none">
-                {formatCount(selectedPost.savesCount)}
               </span>
             </button>
 
             {/* Shares */}
             <button
               onClick={() => handleSharePost(selectedPost.id)}
-              className="flex flex-col items-center justify-center active:scale-90 transition-all focus:outline-none"
+              className="flex flex-col items-center justify-center gap-1 active:scale-90 transition-all focus:outline-none"
             >
-              <div className="w-14 h-14 rounded-full bg-black/20 shadow-input backdrop-blur-md flex items-center justify-center border border-white/10 text-white">
-                <Share2 className="w-7 h-7" />
-              </div>
-              <span className="text-[10px] font-bold text-white mt-1 drop-shadow-md bg-black/25 px-1.5 py-0.5 rounded-full select-none">
+              <Share2 className="w-[26px] h-[26px] text-white drop-shadow-md" />
+              <span className="text-[11px] font-bold text-white drop-shadow-md select-none">
                 {shares > 0 ? formatCount(shares) : "Share"}
               </span>
             </button>
@@ -389,9 +358,6 @@ export default function ViewVideo({
                 <div className="flex flex-col min-w-0">
                   <div className="flex items-center gap-1.5 flex-wrap">
                     <span className="text-[13px] font-bold text-white drop-shadow-md truncate">
-                      {postAuthor.name}
-                    </span>
-                    <span className="text-[10px] text-white/70 font-medium truncate">
                       @{postAuthor.username}
                     </span>
                   </div>
@@ -421,25 +387,26 @@ export default function ViewVideo({
                 e.preventDefault();
                 handleAddComment(selectedPost.id, commentInputText);
               }}
-              className="flex items-center gap-3 mb-10 md:mb-0 relative"
+              className="flex items-center gap-2 relative"
             >
-              <button
-                type="button"
-                onClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
-                className="text-2xl active:scale-90 transition-all p-1"
-                title="Add emoji"
-              >
-                😊
-              </button>
-
-              <textarea
-                value={commentInputText}
-                onChange={(e) => setCommentInputText(e.target.value)}
-                placeholder="Add comment..."
-                maxLength={300}
-                rows={1}
-                className="flex-1 bg-black/40 border border-white/20 focus:border-blue-500 rounded-2xl px-4 py-2.5 text-xs sm:text-sm text-white outline-none transition-all placeholder:text-gray-400 resize-none min-h-[38px] max-h-[90px] overflow-y-auto scrollbar-none"
-              />
+              <div className="flex-1 relative">
+                <button
+                  type="button"
+                  onClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
+                  className="absolute left-3 top-1/2 -translate-y-1/2 text-lg active:scale-90 transition-all z-10"
+                  title="Add emoji"
+                >
+                  😊
+                </button>
+                <input
+                  type="text"
+                  value={commentInputText}
+                  onChange={(e) => setCommentInputText(e.target.value)}
+                  placeholder="Add comment..."
+                  maxLength={300}
+                  className="w-full bg-black/40 border border-white/20 focus:border-blue-500 rounded-full pl-10 pr-4 py-2.5 text-sm text-white outline-none transition-all placeholder:text-gray-400"
+                />
+              </div>
 
               <button
                 type="submit"
@@ -459,20 +426,27 @@ export default function ViewVideo({
               className="fixed inset-0 bg-black/60 z-40 md:hidden"
               onClick={() => setMobileCommentsOpen(false)}
             />
-            <div className="fixed inset-x-0 bottom-0 h-[82vh] max-h-[82vh] bg-white rounded-t-[32px] shadow-2xl z-50 flex flex-col transition-all duration-300 md:hidden overflow-hidden pointer-events-auto">
-              <div className="p-4 border-b border-gray-100 flex items-center justify-between shrink-0 bg-slate-50/50">
-                <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-bold text-slate-800">Comments</h3>
-                  <span className="bg-slate-200 text-slate-600 text-[10px] font-bold px-2 py-0.5 rounded-full">
-                    {comments.length}
-                  </span>
+            <div className="fixed inset-x-0 bottom-0 h-[82vh] max-h-[82vh] bg-bodey-bg rounded-t-[32px] shadow-2xl z-50 flex flex-col transition-all duration-300 md:hidden overflow-hidden pointer-events-auto">
+              <div className="p-4 border-b border-input-border flex items-center justify-between shrink-0 bg-bodey-bg">
+                <h3 className="text-sm font-bold text-text-h2">
+                  {comments.length} comments
+                </h3>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() =>
+                      setSortOrder(sortOrder === "newest" ? "oldest" : "newest")
+                    }
+                    className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+                  >
+                    {sortOrder === "newest" ? "Newest" : "Oldest"}
+                  </button>
+                  <button
+                    onClick={() => setMobileCommentsOpen(false)}
+                    className="text-small-text hover:text-slate-800 text-xs font-bold"
+                  >
+                    Close
+                  </button>
                 </div>
-                <button
-                  onClick={() => setMobileCommentsOpen(false)}
-                  className="text-slate-400 hover:text-slate-600 text-xs font-bold px-2 py-1"
-                >
-                  Close
-                </button>
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
@@ -480,20 +454,20 @@ export default function ViewVideo({
                   <div className="text-center text-slate-400 text-sm py-12 flex flex-col items-center justify-center">
                     <span className="text-2xl mb-1">💬</span>
                     <p className="font-bold text-slate-500">No comments yet</p>
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-small-text">
                       Be the first to share your thoughts!
                     </p>
                   </div>
                 ) : (
-                  comments.map((comment) => (
+                  sortedComments.map((comment) => (
                     <div key={comment.id} className="space-y-2.5">
-                      <div className="flex gap-2.5 items-start">
+                      <div className="flex gap-3 items-start">
                         <div
                           onClick={() => {
                             setMobileCommentsOpen(false);
                             handleNavigateToUserProfile(comment.username);
                           }}
-                          className="w-9 h-9 rounded-full overflow-hidden bg-blue-50 flex items-center justify-center text-blue-600 text-xs font-bold shrink-0 border border-slate-100 cursor-pointer active:scale-95 transition-transform"
+                          className="w-9 h-9 rounded-full overflow-hidden bg-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0 cursor-pointer active:scale-95 transition-transform"
                         >
                           {comment.avatar ? (
                             <img
@@ -505,16 +479,22 @@ export default function ViewVideo({
                             comment.username.charAt(0).toUpperCase()
                           )}
                         </div>
-                        <div className="flex-1 bg-slate-50 rounded-2xl py-3.5 px-4.5 border-l-3 border-blue-400 shadow-sm">
-                          <h4
-                            onClick={() => {
-                              setMobileCommentsOpen(false);
-                              handleNavigateToUserProfile(comment.username);
-                            }}
-                            className="text-[12px] font-bold text-blue-600 mb-1 cursor-pointer hover:underline"
-                          >
-                            @{comment.username}
-                          </h4>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-baseline gap-2">
+                            <span
+                              onClick={() => {
+                                setMobileCommentsOpen(false);
+                                handleNavigateToUserProfile(comment.username);
+                              }}
+                              className="text-sm font-bold text-slate-900 cursor-pointer hover:underline"
+                            >
+                              {comment.username}
+                            </span>
+                            <span className="text-xs text-slate-400">
+                              {formatRelativeTime(comment.timestamp)}
+                            </span>
+                          </div>
+
                           {editingCommentId === comment.id ? (
                             <div className="flex items-center gap-2 mt-1">
                               <input
@@ -525,32 +505,22 @@ export default function ViewVideo({
                                 }
                                 autoFocus
                                 maxLength={500}
-                                className="flex-1 bg-white border border-blue-300 rounded-lg px-3 py-1.5 text-[13px] outline-none focus:border-blue-500"
+                                className="flex-1 bg-input border border-input-border rounded-lg px-3 py-1.5 text-[13px] outline-none focus:border-brand-light"
                               />
                               <button
                                 onClick={() => confirmEdit(comment.id)}
-                                className="w-7 h-7 bg-emerald-500 text-white rounded-full flex items-center justify-center shrink-0"
+                                className="w-7 h-7 bg-brand text-white rounded-full flex items-center justify-center shrink-0"
                               >
                                 <Check className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           ) : (
-                            <p className="text-[13.5px] text-slate-800 leading-relaxed break-words font-medium">
+                            <p className="text-sm text-slate-800 leading-relaxed break-words mt-0.5">
                               {comment.text}
                             </p>
                           )}
 
-                          <div className="flex items-center gap-4 mt-2 text-[10px] font-bold text-slate-400">
-                            <span>
-                              {new Date(comment.timestamp).toLocaleTimeString(
-                                undefined,
-                                {
-                                  hour: "2-digit",
-                                  minute: "2-digit",
-                                },
-                              )}
-                            </span>
-
+                          <div className="flex items-center gap-3.5 mt-1.5">
                             <button
                               onClick={() => {
                                 if (activeReplyTo === comment.id) {
@@ -559,7 +529,7 @@ export default function ViewVideo({
                                   setActiveReplyTo(comment.id);
                                 }
                               }}
-                              className="text-blue-500 hover:underline"
+                              className="text-xs font-semibold text-slate-500 hover:text-slate-700"
                             >
                               Reply
                             </button>
@@ -569,9 +539,9 @@ export default function ViewVideo({
                                 <>
                                   <button
                                     onClick={() => startEditing(comment)}
-                                    className="text-slate-400 hover:text-blue-600 flex items-center gap-1"
+                                    className="text-slate-400 hover:text-brand"
                                   >
-                                    <Pencil className="w-3 h-3" />
+                                    <Pencil className="w-3.5 h-3.5" />
                                   </button>
                                   <button
                                     onClick={() =>
@@ -580,9 +550,9 @@ export default function ViewVideo({
                                         comment.id,
                                       )
                                     }
-                                    className="text-slate-400 hover:text-rose-600 ml-auto"
+                                    className="text-slate-400 hover:text-rose-600"
                                   >
-                                    Delete
+                                    <Trash2 className="w-3.5 h-3.5" />
                                   </button>
                                 </>
                               )}
@@ -602,7 +572,7 @@ export default function ViewVideo({
                                 setMobileCommentsOpen(false);
                                 handleNavigateToUserProfile(reply.username);
                               }}
-                              className="w-5.5 h-5.5 rounded-full overflow-hidden bg-teal-50 flex items-center justify-center text-teal-600 text-[8px] font-bold shrink-0 border border-slate-100 cursor-pointer"
+                              className="w-5.5 h-5.5 rounded-full overflow-hidden bg-blue-50 flex items-center justify-center text-teal-600 text-[8px] font-bold shrink-0 border border-slate-100 cursor-pointer"
                             >
                               {reply.avatar ? (
                                 <img
@@ -614,20 +584,20 @@ export default function ViewVideo({
                                 reply.username.charAt(0).toUpperCase()
                               )}
                             </div>
-                            <div className="flex-1 bg-slate-100/70 rounded-xl py-2 px-3 border-l border-teal-500/20">
+                            <div className="flex-1 bg-surface rounded-xl py-2 px-3 border-l border-brand-dark">
                               <h5
                                 onClick={() => {
                                   setMobileCommentsOpen(false);
                                   handleNavigateToUserProfile(reply.username);
                                 }}
-                                className="text-[11px] font-bold text-teal-600 mb-0.5 cursor-pointer hover:underline"
+                                className="text-[11px] font-bold text-brand-light mb-0.5 cursor-pointer hover:underline"
                               >
                                 @{reply.username}
                               </h5>
-                              <p className="text-[12px] text-slate-700 leading-relaxed break-words font-medium">
+                              <p className="text-[12px] text-input-text leading-relaxed break-words font-medium">
                                 {reply.text}
                               </p>
-                              <span className="text-[8px] text-slate-400 block mt-0.5">
+                              <span className="text-[8px] text-small-text block mt-0.5">
                                 {new Date(reply.timestamp).toLocaleTimeString(
                                   undefined,
                                   {
@@ -659,11 +629,11 @@ export default function ViewVideo({
                             onChange={(e) => setReplyInputText(e.target.value)}
                             placeholder="Reply text..."
                             maxLength={200}
-                            className="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2 text-[12.5px] h-9 focus:border-blue-500 outline-none transition-all"
+                            className="flex-1 bg-input border border-input-border rounded-xl px-4 py-2 text-[12.5px] h-9 focus:border-brand-light outline-none transition-all"
                           />
                           <button
                             type="submit"
-                            className="w-8.5 h-8.5 bg-emerald-500 text-white rounded-xl flex items-center justify-center shadow-sm shrink-0 active:scale-90"
+                            className="w-8.5 h-8.5 bg-brand text-white rounded-xl flex items-center justify-center shadow-sm shrink-0 active:scale-90"
                           >
                             <Send className="w-3.5 h-3.5" />
                           </button>
@@ -680,7 +650,7 @@ export default function ViewVideo({
                   e.preventDefault();
                   handleAddComment(selectedPost.id, commentInputText);
                 }}
-                className="border-t border-gray-100 p-4 bg-white flex items-center gap-3 shrink-0 mb-10 pb-6 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]"
+                className="border-t border-input-border p-4 bg-surface flex items-center gap-3 shrink-0 mb-10 pb-6 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]"
               >
                 <textarea
                   value={commentInputText}
@@ -688,12 +658,12 @@ export default function ViewVideo({
                   placeholder="Add comment..."
                   maxLength={300}
                   rows={1}
-                  className="flex-1 bg-slate-50 border border-gray-200 focus:border-blue-500 rounded-2xl px-4.5 py-3 text-[14px] text-slate-700 outline-none resize-none min-h-[46px] max-h-[100px] overflow-y-auto scrollbar-thin transition-all"
+                  className="flex-1 bg-input border border-input-border focus:border-input-focus rounded-2xl px-4.5 py-3 text-[14px] text-input-text outline-none resize-none min-h-[46px] max-h-[100px] overflow-y-auto scrollbar-thin transition-all"
                 />
                 <button
                   type="submit"
                   disabled={!commentInputText.trim()}
-                  className="w-10 h-10 bg-emerald-500 disabled:opacity-40 text-white rounded-full flex items-center justify-center shadow-md shrink-0 active:scale-95 transition-transform"
+                  className="w-10 h-10 bg-brand disabled:opacity-40 text-white rounded-full flex items-center justify-center shadow-md shrink-0 active:scale-95 transition-transform"
                 >
                   <Send className="w-4.5 h-4.5 text-white" />
                 </button>

@@ -889,19 +889,19 @@ export default function Profile({
       {/* Custom styled Delete Confirmation Modal */}
       {deleteConfirmState?.isOpen && (
         <div className="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
-          <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-gray-100 flex flex-col text-center animate-fade-in">
+          <div className="bg-surface rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-gray-100 flex flex-col text-center animate-fade-in">
             <div className="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4 text-rose-500 animate-pulse">
               <Trash2 className="w-7 h-7" />
             </div>
 
-            <h3 className="text-lg font-black text-slate-800 mb-2">
+            <h3 className="text-lg font-black text-text mb-2">
               {deleteConfirmState.type === "post"
                 ? "Delete Post?"
                 : deleteConfirmState.type === "reply"
                   ? "Delete Reply?"
                   : "Delete Comment?"}
             </h3>
-            <p className="text-xs text-slate-500 font-semibold mb-4">
+            <p className="text-xs text-small-text font-semibold mb-4">
               Are you sure you want to delete this permanently? This action
               cannot be undone.
             </p>
@@ -919,7 +919,7 @@ export default function Profile({
                   setDeleteError(null);
                 }}
                 disabled={isDeletingPost}
-                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-black text-slate-500 transition-all disabled:opacity-50"
+                className="flex-1 py-3 bg-surface-raised hover:bg-border rounded-xl text-xs font-black text-white transition-all disabled:opacity-50"
               >
                 Cancel
               </button>

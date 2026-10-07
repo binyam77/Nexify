@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { ArrowLeft, X, Clock, Search as SearchIcon, WifiOff, RotateCw } from "lucide-react";
+import {
+  ArrowLeft,
+  X,
+  Clock,
+  Search as SearchIcon,
+  WifiOff,
+  RotateCw,
+} from "lucide-react";
 import { searchPosts } from "../api/posts.api";
 import { useSearchHistory } from "../hooks/useSearchHistory";
 import type { FeedPost } from "../types";
@@ -31,7 +38,7 @@ export default function SearchOverlay({
     inputRef.current?.focus();
   }, []);
 
-   const runSearch = useCallback(async (term: string) => {
+  const runSearch = useCallback(async (term: string) => {
     const trimmed = term.trim();
     if (!trimmed) {
       setResults([]);
@@ -48,7 +55,7 @@ export default function SearchOverlay({
     } catch (e) {
       console.error("Search failed:", e);
       setResults([]);
-      setSearchError("ፍለጋ አልተሳካም። እንደገና ይሞክሩ።");
+      setSearchError("Search failed Try again.");
     } finally {
       setIsSearching(false);
     }
@@ -84,13 +91,26 @@ export default function SearchOverlay({
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-3 border-b border-input-border shrink-0">
         <button
+          onMouseDown={(e) => e.preventDefault()}
           onClick={onClose}
           aria-label="Back"
           className="p-1 text-input-text"
         >
           <ArrowLeft size={22} />
         </button>
-        <div className="flex-1 relative">
+               <div className="flex-1 relative">
+          <button
+            type="button"
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => {
+              if (debounceRef.current) clearTimeout(debounceRef.current);
+              void runSearch(query);
+            }}
+            aria-label="Search"
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-input-placeholder"
+          >
+            <SearchIcon size={16} />
+          </button>
           <input
             ref={inputRef}
             value={query}
@@ -102,7 +122,7 @@ export default function SearchOverlay({
               }
             }}
             placeholder="Search Video"
-            className="w-full rounded-full bg-input px-4 py-2 text-sm text-input-text placeholder-input-placeholder outline-none"
+            className="w-full rounded-full bg-input pl-9 pr-9 py-2 text-sm text-input-text placeholder-input-placeholder outline-none"
           />
           {query && (
             <button
@@ -121,7 +141,7 @@ export default function SearchOverlay({
         {!query.trim() ? (
           history.length === 0 ? (
             <div className="p-6 text-center text-sm text-input-placeholder">
-              ምንም የፍለጋ ታሪክ የለም
+              No search history
             </div>
           ) : (
             <div className="py-2">
@@ -156,8 +176,10 @@ export default function SearchOverlay({
               ))}
             </div>
           )
-               ) : isSearching ? (
-          <div className="p-6 text-center text-sm text-input-placeholder">በመፈለግ ላይ...</div>
+        ) : isSearching ? (
+          <div className="p-6 text-center text-sm text-input-placeholder">
+            Searching...
+          </div>
         ) : searchError ? (
           <div className="flex flex-col items-center justify-center gap-3 p-10 text-center">
             <WifiOff size={28} className="text-input-placeholder" />

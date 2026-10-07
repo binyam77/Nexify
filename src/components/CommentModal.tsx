@@ -6,6 +6,7 @@ import type { CommentItem, CommentSort } from "../types";
 
 interface CommentModalProps {
   comments: CommentItem[];
+  totalCount?:number;
   currentUsername: string;
   isLoading?: boolean;
   error?: string | null;
@@ -23,6 +24,7 @@ interface CommentModalProps {
 
 export default function CommentModal({
   comments,
+  totalCount,
   currentUsername,
   isLoading = false,
   error = null,
@@ -67,11 +69,11 @@ export default function CommentModal({
         onClick={onClose}
       />
 
-      <div className="animate-slide-up fixed inset-x-0 bottom-0 z-[9999] flex h-[80vh] w-full flex-col overflow-hidden rounded-t-[20px] bg-surface shadow-2xl md:inset-x-auto md:inset-y-4 md:bottom-auto md:right-4 md:h-[calc(100vh-2rem)] md:max-h-none md:w-[420px] md:rounded-[18px]">
-        <div className="flex shrink-0 items-center justify-between border-b border-zinc-800 bg-surface px-4 py-3.5">
+      <div className="animate-slide-up fixed inset-x-0 bottom-0 z-[9999] flex h-[80vh] w-full flex-col overflow-hidden rounded-t-[20px] bg-bodey-bg shadow-2xl md:inset-x-auto md:inset-y-4 md:bottom-auto md:right-4 md:h-[calc(100vh-2rem)] md:max-h-none md:w-[420px] md:rounded-[18px]">
+        <div className="flex shrink-0 items-center justify-between border-b border-zinc-800 bg-bodey-bg px-4 py-3.5">
           <div className="w-8" />
           <h3 className="text-[15px] font-semibold text-white">
-            {error ? "አስተያየቶች" : `${comments.length} comments`}
+            {error ? "Comments" : `${totalCount ?? comments.length} comments`}
           </h3>
           <div className="flex items-center gap-2">
             {!error && (
@@ -114,18 +116,18 @@ export default function CommentModal({
           </div>
         ) : (
           <>
-            <div className="scrollbar-thin flex min-h-[200px] flex-1 flex-col gap-4 overflow-y-auto bg-surface px-4 py-4">
+            <div className="scrollbar-thin flex min-h-[200px] flex-1 flex-col gap-4 overflow-y-auto bg-bodey-bg px-4 py-4">
               {isLoading && comments.length === 0 ? (
                 <div className="m-auto flex flex-col items-center gap-2 text-zinc-500">
                   <Loader2 size={22} className="animate-spin" />
-                  <span className="text-xs">በመጫን ላይ...</span>
+                  <span className="text-xs">Loading...</span>
                 </div>
               ) : sortedComments.length === 0 ? (
                 <div className="m-auto px-4 py-6 text-center text-sm leading-relaxed text-zinc-500">
                   <span className="mb-2 block text-3xl">💬</span>
                   No comments yet. Be the first!
                 </div>
-                        ) : (
+              ) : (
                 <>
                   {sortedComments.map((comment) => (
                     <CommentCard
@@ -145,17 +147,17 @@ export default function CommentModal({
                       disabled={isLoadingMore}
                       className="mx-auto mt-1 rounded-full bg-zinc-800 px-4 py-1.5 text-xs font-semibold text-zinc-300 disabled:opacity-50"
                     >
-                      {isLoadingMore ? "በመጫን ላይ..." : "ተጨማሪ አስተያየቶች ይመልከቱ"}
+                      {isLoadingMore ? "Loading..." : "See more comments"}
                     </button>
                   )}
                 </>
               )}
-            </div> 
+            </div>
 
             <div className="flex shrink-0 flex-col border-t border-zinc-800 bg-surface">
               {postFailed && (
                 <p className="px-4 pt-2 text-[11px] font-medium text-rose-400">
-                  አልተላከም — ግንኙነት ይፈትሹ እና እንደገና ይሞክሩ
+                  Not sent - check connection and try again
                 </p>
               )}
               <div className="flex items-center gap-2 px-3 py-2.5">
@@ -165,13 +167,14 @@ export default function CommentModal({
                 <textarea
                   value={newCommentText}
                   maxLength={300}
+                  rows={1}
                   placeholder="Add a comment..."
                   onChange={(e) => {
                     setNewCommentText(e.target.value);
                     if (postFailed) setPostFailed(false);
                   }}
                   onKeyDown={(e) => e.key === "Enter" && void handlePost()}
-                  className="flex-1 rounded-full border border-input-border resize-none bg-surface-raised px-3.5 py-1.5 text-[13px] text-text placeholder-placeholder outline-none focus:border-zinc-500"
+                  className="flex-1 rounded-full border border-input-border resize-none bg-input px-3.5 py-1.5 text-[13px] leading-tight text-input-text placeholder-placeholder outline-none focus:border-brand-light"
                 />
                 <button
                   type="button"

@@ -84,6 +84,8 @@ export default function Community() {
   const [isLoadingSuggested, setIsLoadingSuggested] = useState(false);
   const [suggestedError, setSuggestedError] = useState<string | null>(null);
   const [suggestedSearchQuery, setSuggestedSearchQuery] = useState("");
+  // የመጨረሻው (trimmed) የ search ጽሑፍ — ያረጀ response ዝርዝሩን እንዳይበክል
+  const latestSearchRef = useRef("");
 
   // User profile details (Current member profile loaded dynamically from localStorage)
   const { user, accessToken } = useAuth();
@@ -166,6 +168,8 @@ export default function Community() {
       const suggested = await listSuggestedCommunitiesRequest(token, {
         search,
       });
+      // ተጠቃሚው ጽሑፉን ከቀየረ/ካጠፋ ይህ response ያረጀ ነው — ችላ በለው
+      if ((search ?? "") !== latestSearchRef.current) return;
       const suggestedChats = suggested.items.map(mapCommunitySuggestedToChat);
       setChats((prev) => {
         const withoutSuggested = prev.filter(
@@ -184,8 +188,9 @@ export default function Community() {
   };
 
   const handleRetrySuggested = () => {
-    if (!accessToken) return;
-    void loadSuggested(accessToken, suggestedSearchQuery);
+    const query = suggestedSearchQuery.trim();
+    if (!accessToken || !query) return;
+    void loadSuggested(accessToken, query);
   };
 
   useEffect(() => {
@@ -202,8 +207,19 @@ export default function Community() {
   useEffect(() => {
     if (!accessToken) return;
     const token = accessToken;
+    const query = suggestedSearchQuery.trim();
+    latestSearchRef.current = query;
+
+    // ባዶ ፍለጋ → backend አይጠራም፤ የ public ውጤቶች ይጸዳሉ (የተቀላቀሉት ይቀራሉ)
+    if (!query) {
+      setSuggestedError(null);
+      setIsLoadingSuggested(false);
+      setChats((prev) => prev.filter((c) => c.isJoined));
+      return;
+    }
+
     const handle = setTimeout(() => {
-      void loadSuggested(token, suggestedSearchQuery);
+      void loadSuggested(token, query);
     }, 400);
     return () => clearTimeout(handle);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- loadSuggested is recreated every render but called synchronously here with this render's values

@@ -5,9 +5,11 @@ import PostCard from "../components/PostCard";
 import avatarImg from "../assets/user.png";
 import { useAuth } from "../context/AuthContext";
 import { useFeed } from "../context/FeedContext";
-import { ChevronUp, ChevronDown, Loader2, Search, WifiOff, } from "lucide-react";
+import { ChevronUp, ChevronDown, Loader2, Search, WifiOff,Video } from "lucide-react";
 import type { User } from "../types";
 import SearchOverlay from "../components/SearchOverlay";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
+
 
 // Feed's end ጋር ይሄን ያህል ሲቀር ነው loadMore() የሚነሳው (scroll ላይ delay እንዳይሰማ)
 const PREFETCH_THRESHOLD = 3;
@@ -27,6 +29,7 @@ export default function Home() {
   } = useFeed();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const isOnline = useOnlineStatus();
   const navigate = useNavigate();
 
   // Post ደራሲ ጋር chat ለመክፈት — Profile's handleMessageUser ጋር ተመሳሳይ pattern
@@ -119,7 +122,17 @@ export default function Home() {
       document.removeEventListener("touchend", onEnd);
     };
   }, [goNext, goPrev]);
-
+ // ምንም ግንኙነት ከሌለ like/comment/share ጨርሶ ማድረግ አይቻልም — PostCard ራሱ
+  // render አይደረግም። Browser's online event ሲመለስ overlay ራሱ በራሱ ይጠፋል።
+  if (!isOnline) {
+    return (
+      <div className="h-full w-full flex flex-col items-center justify-center bg-surface text-slate-400 gap-3 px-6 text-center">
+        <WifiOff className="w-10 h-10 opacity-60" />
+        <p className="text-lg font-semibold">ምንም የኢንተርኔት ግንኙነት የለም</p>
+        <p className="text-sm opacity-60">ግንኙነት ሲመለስ Feed ራሱ በራሱ ይመለሳል</p>
+      </div>
+    );
+  }
   if (isLoading) {
     return (
       <div className="h-full w-full flex items-center justify-center bg-surface text-slate-400">

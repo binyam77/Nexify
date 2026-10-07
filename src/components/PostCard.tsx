@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Heart,
   MessageCircle,
@@ -8,7 +9,6 @@ import {
   Play,
   Volume2,
   VolumeX,
-  MoreHorizontal,
   MessagesSquare,
   WifiOff,
   RotateCw,
@@ -29,11 +29,6 @@ interface PostCardProps {
   }) => void;
 }
 
-// Tap ≠ Hold detection tuning:
-// - Under DOUBLE_TAP_DELAY between two releases → treated as a double-tap (like)
-// - Held down longer than HOLD_ACTIVATION_MS without releasing → 2x speed
-// HOLD_ACTIVATION_MS is deliberately > DOUBLE_TAP_DELAY so a quick
-// double-tap can never be misread as the start of a hold.
 const DOUBLE_TAP_DELAY = 300;
 const HOLD_ACTIVATION_MS = 400;
 
@@ -43,6 +38,7 @@ export default function PostCard({
   onView,
   onMessageUser,
 }: PostCardProps) {
+  const navigate = useNavigate();
   const {
     toggleLike: toggleLikePost,
     toggleFollow,
@@ -60,8 +56,7 @@ export default function PostCard({
     loadComments,
     loadMoreComments,
   } = useFeed();
-  //"post"prop በከትታ FeedContext array element  ስለሆነ(Home.tsx ካስተላለፈው):
-  // toggle ሰደረግ context ራሱ ይከየራል: re-render ይህን በራሱ ያንተባርካል
+
   const liked = post.liked;
   const likeCount = post.likesCount;
   const comments = commentsMap[post.id] || [];
@@ -72,7 +67,6 @@ export default function PostCard({
     url: typeof window !== "undefined" ? window.location.href : "",
   });
 
-  // Carousel state
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
   const [isVertical, setIsVertical] = useState(true);
@@ -80,18 +74,9 @@ export default function PostCard({
   const [isMuted, setIsMuted] = useState<boolean>(true);
   const [captionExpanded, setCaptionExpanded] = useState<boolean>(false);
 
-  // Media load failure (e.g. dropped network mid-scroll/mid-watch) — shows
-  // a Retry overlay instead of a blank/broken video or image. Only the
-  // media itself is blacked out — chrome (mute, like/comment/save/share,
-  // username/follow) stays visible and functional (see z-index notes below).
   const [mediaError, setMediaError] = useState(false);
   const [retryNonce, setRetryNonce] = useState(0);
 
-  // Swiping to a different carousel slide should reset any previous
-  // slide's error — each slide gets a clean attempt. Compared during
-  // render (React's recommended "adjusting state on a value change"
-  // pattern) instead of a useEffect, so no extra render cycle and no
-  // "synchronous setState in an effect" warning.
   const [lastIndexForError, setLastIndexForError] = useState(currentIndex);
   if (currentIndex !== lastIndexForError) {
     setLastIndexForError(currentIndex);
@@ -103,8 +88,6 @@ export default function PostCard({
     setRetryNonce((n) => n + 1);
   }
 
-  // Comments modal ሲከፈት ብቻ ነው ከ backend የምንጭነው (Comments unbounded list ስለሆነ
-  // ሁልጊዜ preload አናደርግም — database-design.md Section 19)
   useEffect(() => {
     if (isCommentsOpen) {
       void loadComments(post.id);
@@ -117,13 +100,10 @@ export default function PostCard({
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.muted = isMuted;
-      // ድምጽ ደረጃ ራሱ ከዚህ በኋላ በተጠቃሚው device (hardware) volume buttons ብቻ
-      // ነው የሚቆጣጠረው — in-app percentage slider ተወግዷል።
       if (!isMuted) videoRef.current.volume = 1;
     }
   }, [isMuted]);
 
-  // Video state
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isFastForwarding, setIsFastForwarding] = useState(false);
@@ -131,9 +111,6 @@ export default function PostCard({
   const lastTapRef = useRef<number>(0);
   const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Press-and-hold → 2x playback (video only). Kept as refs (not state)
-  // since they're pure bookkeeping read inside pointer handlers, not
-  // something the render needs to react to.
   const holdTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isHoldingRef = useRef(false);
 
@@ -144,8 +121,6 @@ export default function PostCard({
     }
   }
 
-  // Ends an active hold (if any) and reports whether one was ending, so
-  // the caller (pointer-up) knows whether to also run tap-detection.
   function endHold(): boolean {
     clearHoldTimer();
     if (isHoldingRef.current) {
@@ -157,7 +132,6 @@ export default function PostCard({
     return false;
   }
 
-  // View tracking
   const viewedRef = useRef(false);
   useEffect(() => {
     if (!onView || viewedRef.current) return;
@@ -174,14 +148,9 @@ export default function PostCard({
     return () => observer.disconnect();
   }, [onView]);
 
-  // Tap-classification (single = play/pause on video, double = like).
-  // Works for both video and photo — the play/pause branch is a no-op
-  // when there's no videoRef (photos).
   function handleMediaTap() {
     const now = Date.now();
-
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-      // Double tap → Like (Instagram-style: only likes, never unlikes)
       if (tapTimeoutRef.current) {
         clearTimeout(tapTimeoutRef.current);
         tapTimeoutRef.current = null;
@@ -191,7 +160,6 @@ export default function PostCard({
     } else {
       lastTapRef.current = now;
       tapTimeoutRef.current = setTimeout(() => {
-        // Single tap → Play/Pause (video only; no-op for photos)
         if (!videoRef.current) return;
         if (videoRef.current.paused) {
           videoRef.current.play();
@@ -204,9 +172,6 @@ export default function PostCard({
     }
   }
 
-  // Video-only: pointerdown starts the hold timer; pointerup either
-  // finishes a hold (revert to 1x, skip tap-detection) or — if released
-  // before HOLD_ACTIVATION_MS — runs normal tap-detection instead.
   function handleVideoPointerDown() {
     isHoldingRef.current = false;
     holdTimeoutRef.current = setTimeout(() => {
@@ -218,14 +183,11 @@ export default function PostCard({
 
   function handleVideoPointerUp() {
     const wasHold = endHold();
-    if (wasHold) return; // hold just ended — not a tap
+    if (wasHold) return;
     handleMediaTap();
   }
 
   function handleVideoPointerLeave() {
-    // Finger dragged off mid-press — cancel the hold without treating it
-    // as a tap (matches TikTok/Instagram: dragging off cancels, doesn't
-    // trigger pause/like).
     endHold();
   }
 
@@ -240,12 +202,16 @@ export default function PostCard({
 
   const isMultiPhoto = post.type === "photo" && post.mediaUrls.length > 1;
 
+  // ⚠️ Assumption: profile route is `/profile/:username`
+  function goToProfile() {
+    navigate(`/profile/${post.username}`);
+  }
+
   return (
     <div
       ref={containerRef}
-      className="relative h-full w-full bg-black md:bg-bodey-bg  flex items-center justify-center md:justify-center"
+      className="relative h-full w-full bg-black md:bg-surface  flex items-center justify-center md:justify-center"
     >
-      {/*Share feedback toast - clipboard success/failure ተተካሚው እንዲያውክ */}
       {toastVisible && (
         <div
           className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 bg-black/80 text-white text-xs
@@ -256,7 +222,6 @@ export default function PostCard({
         </div>
       )}
 
-      {/* ===== Media Area ===== */}
       {post.type === "video" ? (
         <div
           className="absolute inset-0 bg-black md:relative md:relative md:h-[92vh] md:w-auto 
@@ -279,26 +244,20 @@ export default function PostCard({
             onLoadedMetadata={(e) => {
               const v = e.currentTarget;
               setIsVertical(v.videoHeight / v.videoWidth >= 1.3);
-              // Mobile browser policy >>> muted autoplay only
-              // ተጠካሚ  volume button ሲነካ unmute ይደረጋል
               v.muted = true;
               v.volume = 1;
               v.play().catch(() => {});
             }}
           />
 
-          {/* 2x speed indicator — visible only while actively holding */}
           {isFastForwarding && (
             <div className="absolute top-3 left-3 z-20 bg-black/60 text-white text-xs font-bold px-2.5 py-1 rounded-full pointer-events-none">
               2×
             </div>
           )}
 
-          {/* Mute/unmute toggle — volume LEVEL itself is device-hardware
-              only, this only controls muted vs unmuted. z-30 so it stays
-              above the media-error overlay (z-10) regardless of nesting. */}
           <div
-            className="absolute top-14 md:top-3 z-30"
+            className="absolute top-14 right-3 md:top-3 z-30"
             onPointerDown={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
@@ -346,7 +305,6 @@ export default function PostCard({
         md:aspect-[9/16] md:max-w-[420px] md:rounded-2xl"
           onClick={handleMediaTap}
         >
-          {/* Carousel or single photo */}
           <div
             className="flex h-full transition-transform duration-300 ease-out"
             style={{
@@ -390,7 +348,6 @@ export default function PostCard({
             ))}
           </div>
 
-          {/* Carousel arrows */}
           {isMultiPhoto && (
             <>
               {currentIndex > 0 && (
@@ -409,7 +366,6 @@ export default function PostCard({
                   <ChevronRight className="w-5 h-5" />
                 </button>
               )}
-              {/* Dots indicator */}
               <div className="absolute bottom-32 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
                 {post.mediaUrls.map((_, i) => (
                   <div
@@ -423,10 +379,6 @@ export default function PostCard({
         </div>
       )}
 
-      {/* Media load failure overlay — z-10: above the raw media (z-auto/0)
-          so it blacks it out, but BELOW every piece of persistent chrome
-          (mute z-30, user-info/action-bar z-20 below) so those stay
-          visible and fully functional while this shows. */}
       {mediaError && (
         <div className="absolute inset-0 z-10 bg-black flex flex-col items-center justify-center gap-3 text-white">
           <WifiOff className="w-10 h-10 opacity-70" />
@@ -441,7 +393,6 @@ export default function PostCard({
         </div>
       )}
 
-      {/* ===== User Info (bottom left) ===== */}
       <div className="absolute bottom-20 left-3 right-16 z-20 md:bottom-8">
         <div className="flex items-center gap-2.5 mb-2">
           <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white bg-gray-400 shrink-0">
@@ -458,9 +409,13 @@ export default function PostCard({
             )}
           </div>
           <div className="flex item-center gap-2 ">
-            <span className="text-input font-bold text-sm drop-shadow md:text-ink">
+            <button
+              type="button"
+              onClick={goToProfile}
+              className="text-input font-bold text-sm drop-shadow md:text-ink hover:underline"
+            >
               {post.username}
-            </span>
+            </button>
             {!isOwnPost && (
               <button
                 onClick={() => toggleFollow(post.userId)}
@@ -490,22 +445,19 @@ export default function PostCard({
                   e.stopPropagation();
                   setCaptionExpanded((c) => !c);
                 }}
-                className="mt-1 text-white/80 hover:text-white transition-colors md:text-input-placeholder"
-                aria-label={captionExpanded ? "Show less" : "Show more"}
+                className="mt-0.5 text-xs font-semibold text-white/70 hover:text-white transition-colors md:text-input-placeholder"
               >
-                <MoreHorizontal size={16} />
+                {captionExpanded ? "less" : "more"}
               </button>
             )}
           </div>
         )}
       </div>
 
-      {/* ===== Action Buttons (right side) ===== */}
       <div
         className="absolute bottom-20 right-3 z-20 flex flex-col items-center gap-4
 md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
       >
-        {/* Like */}
         <ActionBtn
           icon={<Heart size={26} fill={liked ? "currentColor" : "none"} />}
           label={likeCount}
@@ -513,15 +465,13 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
           activeColor="text-rose-500"
           onClick={() => toggleLikePost(post.id)}
         />
-        {/* Comment */}
         <ActionBtn
           icon={<MessageCircle size={25} />}
-          label={comments.length || post.commentsCount}
+          label={post.commentsCount}
           active={isCommentsOpen}
           activeColor="text-blue-400"
           onClick={() => setIsCommentsOpen(true)}
         />
-        {/* Chat — የራስ ፖስት ላይ አይታይም (ራስን መልእክት መላክ ትርጉም የለውም) */}
         {!isOwnPost && (
           <button
             onClick={() =>
@@ -542,7 +492,6 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
             </span>
           </button>
         )}
-        {/* Share */}
         <button
           onClick={async () => {
             const success = await share();
@@ -564,17 +513,17 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
         </button>
       </div>
 
-      {/* ===== Comments Modal ===== */}
       {isCommentsOpen && (
         <CommentModal
           comments={comments}
+          totalCount={post.commentsCount}
           currentUsername={currentUser.fullName}
           isLoading={isLoadingComments}
           error={commentsError}
           onRetry={() => void loadComments(post.id)}
           hasMore={hasMoreComments[post.id] ?? false}
           isLoadingMore={isLoadingMoreComments}
-          onLoadMore={()=> void loadMoreComments(post.id)}
+          onLoadMore={() => void loadMoreComments(post.id)}
           onClose={() => setIsCommentsOpen(false)}
           onPostComment={(text) => addComment(post.id, text)}
           onDeleteComment={(commentId) => deleteComment(post.id, commentId)}

@@ -36,18 +36,7 @@
   --color-text-h2: #1e293b; /* ንዑስ ርዕስ (h2) */
   --color-small-text: #64748b; /* ሁለተኛ ደረጃ ጽሁፍ (timestamp, caption, meta) */
   --color-placeholder: #94a3b8; /* input placeholder ጽሁፍ */
-  --color-one-text: #ffffff;
-  --color-slate-100: #f1f5f9;
-  --color-slate-800: #1e293b;
-  --color-gray-500: #6b7280;
-   --color-gray-600:#4b5563;
-  --color-gray-700: #374151;
-  --color-gray-400: #9ca3af;
-  --color-gray-100: #f3f4f6;
-  --color-gray-50: #f9fafb;
-  --color-slate-300: #cbd5e1;
-  --color-gray-100:#f3f4f6;
-  --color-gray-900:#111827;
+
  
   /* ---------- 5. Input Fields ---------- */
   --color-input: #ffffff; /* input box background */
@@ -101,17 +90,11 @@
   --color-text-h2: #f1f5f9; /* ንዑስ ርዕስ (h2) */
   --color-small-text: #a1a1aa; /* ሁለተኛ ደረጃ ጽሁፍ */
   --color-placeholder: #71717a; /* input placeholder ጽሁፍ */
-  --color-slate-100: #0f172a;
-  --color-slate-800: #cbd5e1;
-  --color-gray-500: #9ca3af;
-  --color-gray-600:#9ca3af;
-  --color-gray-700: #d1d5db;
-  --color-gray-400: #d1d5db;
-  --color-gray-100: #1f2937;
-  --color-gray-50: #111827;
-  --color-slate-300: #475569;
- --color-gray-100:#1f2937;
- --color-gray-900:#f9fafb;
+ 
+/*------------- Highest input    ---------------------------*/
+--color-input-placeholder-text:;
+--color-input-bg:;
+
   /* ---------- 5. Input Fields ---------- */
   --color-input: #1a1a1a; /* input box background */
   --color-input-text: #ffffff; /* input ውስጥ የተየብ ጽሁፍ */

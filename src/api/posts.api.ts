@@ -93,6 +93,7 @@ function toFeedPost(dto: BackendPostResponse): FeedPost {
 function toCommentReply(dto: BackendCommentResponse): CommentReply {
   return {
     id: dto.id,
+    userId:dto.author.userId,
     text: dto.text,
     username: dto.author.username,
     avatar: dto.author.avatar,
@@ -103,6 +104,7 @@ function toCommentReply(dto: BackendCommentResponse): CommentReply {
 function toCommentItem(dto: BackendCommentResponse): CommentItem {
   return {
     id: dto.id,
+    userId:dto.author.userId,
     text: dto.text,
     username: dto.author.username,
     avatar: dto.author.avatar,

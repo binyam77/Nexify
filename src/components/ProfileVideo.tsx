@@ -13,12 +13,11 @@ interface ProfileVideoProps {
   viewMode?: "me" | "other";
   handleOpenPlayer: (post: FeedPost) => void;
   handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
-  
 }
 
 export default function ProfileVideo({
   filteredPosts,
-  viewMode="me",
+  viewMode = "me",
   handleOpenPlayer,
   handleDeletePost,
 }: ProfileVideoProps) {
@@ -45,7 +44,7 @@ export default function ProfileVideo({
               <div
                 key={post.id}
                 onClick={() => handleOpenPlayer(post)}
-                className="aspect-[9/16] bg-gray-900 rounded-2xl overflow-hidden relative cursor-pointer group shadow-sm hover:shadow-lg transition-all duration-300 border border-gray-100/50"
+                className="aspect-[9/16] bg-gray-900 overflow-hidden relative cursor-pointer group transition-all duration-300"
               >
                 {/* 1. Media Preview Grid Block */}
                 {mediaSrc ? (

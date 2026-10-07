@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useRef } from "react";
-import { Search, Plus, Globe, Trash2, Users, Radio } from "lucide-react";
+import { Search, Plus, Globe, Trash2 } from "lucide-react";
 import type { Chat } from "../types";
 
 interface ChatsSidebarProps {
@@ -15,14 +15,12 @@ interface ChatsSidebarProps {
   onDeleteChat: (chatId: string) => void;
   onJoinChat: (chatId: string) => void;
   onToggleJoin: (chatId: string) => void;
-  isLoadingSuggested?:boolean;
-  suggestedError?:string | null;
+  isLoadingSuggested?: boolean;
+  suggestedError?: string | null;
   onRetrySuggested?: () => void;
-  suggestedSearchQuery?:string;
-  onSuggestedSearchChange?:(query:string) => void;
+  suggestedSearchQuery?: string;
+  onSuggestedSearchChange?: (query: string) => void;
 }
-
-type SidebarTab = "messages" | "communities";
 
 // Title: ChatsSidebar Component (Messages inbox + Communities discovery)
 export default function ChatsSidebar({
@@ -35,11 +33,13 @@ export default function ChatsSidebar({
   isLoadingSuggested = false,
   suggestedError = null,
   onRetrySuggested,
-  suggestedSearchQuery="",
+  suggestedSearchQuery = "",
   onSuggestedSearchChange,
 }: ChatsSidebarProps) {
-  const [activeTab, setActiveTab] = useState<SidebarTab>("messages");
-  const [searchQuery, setSearchQuery] = useState("");
+  // አንድ ነጠላ search — ዋጋው በ parent ይያዛል (debounced public search ያንቀሳቅሳል)
+  const searchQuery = suggestedSearchQuery;
+  const trimmedQuery = searchQuery.trim();
+  const isSearching = trimmedQuery.length > 0;
 
   // Long-press to reveal delete confirmation (Messages tab ብቻ ላይ ተግባራዊ)
   const [confirmDeleteChat, setConfirmDeleteChat] = useState<Chat | null>(null);
@@ -86,26 +86,22 @@ export default function ChatsSidebar({
     onSelectChat(chat.id);
   };
 
-    // መልዕክቶችን በስም ለመፈለግ — Chats tab ብቻ (local, private — ራስህ የገባህባቸው ብቻ ናቸው የሚፈለጉት)
-  const chatSearchFiltered = chats.filter((chat) => {
-    return (
-      chat.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      chat.lastMsgText.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  });
-
-  // Messages tab: ተቀላቅሏቸው ያሉት ብቻ
-  const joinedChats = chatSearchFiltered.filter((c) => c.isJoined);
-
-  // Communities tab: backend ራሱ (GET /communities?scope=suggested&search=...)
-  // name-based search ስለሚያደርግ፣ እዚህ ላይ ተጨማሪ local filter አያስፈልግም — `chats`
-  // ውስጥ ያሉት suggested entries already ከ search query ጋር የሚዛመዱ ብቻ ናቸው
-  // (ራስህ የፈጠርካቸው ግን አይታዩም — "Suggested" ብለህ ራስህን ማየት ትርጉም የለውም)
-  const suggestedGroups = chats.filter(
-    (c) => c.type === "group" && !c.isCreatedByMe && !c.isJoined,
+  // የራስህ chats — local, private filter (ስም ወይም የመጨረሻ መልዕክት)
+  const q = trimmedQuery.toLowerCase();
+  const joinedChats = chats.filter(
+    (chat) =>
+      chat.isJoined &&
+      (!q ||
+        chat.name.toLowerCase().includes(q) ||
+        chat.lastMsgText.toLowerCase().includes(q)),
   );
-  const suggestedChannels = chats.filter(
-    (c) => c.type === "channel" && !c.isCreatedByMe && !c.isJoined,
+
+  // Public search ውጤቶች — backend የመለሳቸው፣ ገና ያልተቀላቀልካቸው community ብቻ
+  const publicResults = chats.filter(
+    (c) =>
+      (c.type === "channel" || c.type === "group") &&
+      !c.isJoined &&
+      !c.isCreatedByMe,
   );
   return (
     <section
@@ -135,284 +131,192 @@ export default function ChatsSidebar({
         </button>
       </header>
 
-      {/* Tab switcher: Messages / Communities */}
-      <div className="flex border-b border-gray-100 bg-surface shrink-0">
-        <button
-          onClick={() => setActiveTab("messages")}
-          className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 ${
-            activeTab === "messages"
-              ? "text-brand border-brand"
-              : "text-gray-400 border-transparent hover:text-gray-600"
-          }`}
-        >
-          Chats
-        </button>
-        <button
-          onClick={() => setActiveTab("communities")}
-          className={`flex-1 py-3 text-sm font-bold transition-colors border-b-2 ${
-            activeTab === "communities"
-              ? "text-brand border-brand"
-              : "text-gray-400 border-transparent hover:text-gray-600"
-          }`}
-        >
-          Communities
-        </button>
-      </div>
-
-           {/* የፍለጋ ሳጥን (Search Bar) — Chats tab: local/private filter, Communities tab: public backend search */}
+      {/* የፍለጋ ሳጥን (Search Bar) — Chats tab: local/private filter, Communities tab: public backend search */}
       <div className="px-4 py-3 bg-input shadow-input shrink-0">
         <div className="relative">
           <input
             type="search"
-            value={activeTab === "messages" ? searchQuery : suggestedSearchQuery}
-            onChange={(e) =>
-              activeTab === "messages"
-                ? setSearchQuery(e.target.value)
-                : onSuggestedSearchChange?.(e.target.value)
-            }
-            placeholder={
-              activeTab === "messages"
-                ? "Search chats..."
-                : "Search public channels & groups..."
-            }
+            value={searchQuery}
+            onChange={(e) => onSuggestedSearchChange?.(e.target.value)}
+            placeholder="Search communities..."
             className="w-full pl-10 pr-4 py-2.5 bg-surface-raised border border-input-border rounded-xl text-sm text-input-text placeholder:placeholder-input-text focus:bg-input
              focus:border-input-focus  outline-none transition-all "
           />
           <Search className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
         </div>
       </div>
+      {/* ===== ነጠላ ዝርዝር: My chats + (ሲፈለግ) Public results ===== */}
+      <div className="flex-1 overflow-y-auto">
+        {!isSearching && joinedChats.length === 0 && (
+          <div className="flex flex-col items-center justify-center p-8 text-center h-full">
+            <Globe className="w-10 h-10 text-gray-300 mb-3" />
+            <p className="text-sm font-semibold text-gray-600">No chats yet</p>
+            <p className="text-xs text-gray-400 mt-1 max-w-[220px]">
+              Search above to find public channels & groups, or tap + to create
+              one.
+            </p>
+          </div>
+        )}
 
-      {/* ===== MESSAGES TAB ===== */}
-      {activeTab === "messages" && (
-        <div className="flex-1 overflow-y-auto divide-y divide-gray-50">
-          {joinedChats.length === 0 ? (
-            <div className="flex flex-col items-center justify-center p-8 text-center h-full">
-              <Globe className="w-10 h-10 text-gray-300 mb-3" />
-              <p className="text-sm font-semibold text-gray-600">
-                No messages yet
-              </p>
-              <p className="text-xs text-gray-400 mt-1 max-w-[200px]">
-                Join a group or channel from the Communities tab to get started.
-              </p>
-            </div>
-          ) : (
-            joinedChats.map((chat) => {
-              const isActive = activeChatId === chat.id;
-              return (
-                <article
-                  key={chat.id}
-                  onMouseDown={() => startPressTimer(chat)}
-                  onTouchStart={(e) => handleTouchStart(chat, e)}
-                  onTouchMove={handleTouchMove}
-                  onMouseUp={cancelPressTimer}
-                  onTouchEnd={cancelPressTimer}
-                  onMouseLeave={cancelPressTimer}
-                  onContextMenu={(e) => {
-                    e.preventDefault();
-                    setConfirmDeleteChat(chat);
-                  }}
-                  onClick={() => handleChatTap(chat)}
-                  title="Hold for options"
-                  className={`flex items-center gap-3.5 px-4.5 py-4 cursor-pointer select-none transition-all duration-200 relative ${
-                    isActive
-                      ? "bg-blue-50/70 border-l-3 border-brand"
-                      : "bg-input hover:bg-gray-50/60 "
-                  }`}
-                >
-                  <div className="relative shrink-0 bg-brand rounded-full ">
-                    {chat.avatarUrl ? (
-                      <img
-                        src={chat.avatarUrl}
-                        alt={chat.name}
-                        className="w-12 h-12 rounded-full object-cover shrink-0 shadow-sm border border-input"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <div
-                        className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base
-                         text-white shrink-0 shadow-sm ${chat.bgGradient}`}
-                      >
-                        {chat.avatarLabel}
-                      </div>
-                    )}
-                  </div>
+        {isSearching && joinedChats.length > 0 && (
+          <h3 className="px-4.5 pt-4 pb-2 text-xs font-black text-gray-400 uppercase tracking-widest">
+            My chats
+          </h3>
+        )}
 
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-bold text-sm text-gray-900 truncate">
-                        {chat.name}
-                      </h3>
-                      <time className="text-[11px] text-gray-400 font-medium">
-                        {chat.lastMsgTime}
-                      </time>
-                    </div>
-
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-xs text-gray-500 truncate font-medium">
-                        <span className="text-gray-700 font-semibold">
-                          {chat.lastMsgSender}:{" "}
-                        </span>
-                        {chat.lastMsgText}
-                      </p>
-
-                      {chat.unreadCount > 0 ? (
-                        <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full select-none shrink-0 min-w-[18px] text-center">
-                          {chat.unreadCount}
-                        </span>
-                      ) : null}
-                    </div>
-                  </div>
-                </article>
-              );
-            })
-          )}
-        </div>
-      )}
-      {/* ===== COMMUNITIES TAB (Discovery) ===== */}
-      {activeTab === "communities" && (
-        <div className="flex-1 overflow-y-auto">
-          {suggestedError ? (
-            <div className="flex flex-col items-center justify-center p-8 text-center h-full gap-3">
-              <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center">
-                <Globe className="w-6 h-6 text-rose-400" />
-              </div>
-              <p className="text-sm font-bold text-gray-700 max-w-[240px]">
-                {suggestedError}
-              </p>
-              <button
-                onClick={onRetrySuggested}
-                className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all"
+        <div className="divide-y divide-gray-50">
+          {joinedChats.map((chat) => {
+            const isActive = activeChatId === chat.id;
+            return (
+              <article
+                key={chat.id}
+                onMouseDown={() => startPressTimer(chat)}
+                onTouchStart={(e) => handleTouchStart(chat, e)}
+                onTouchMove={handleTouchMove}
+                onMouseUp={cancelPressTimer}
+                onTouchEnd={cancelPressTimer}
+                onMouseLeave={cancelPressTimer}
+                onContextMenu={(e) => {
+                  e.preventDefault();
+                  setConfirmDeleteChat(chat);
+                }}
+                onClick={() => handleChatTap(chat)}
+                title="Hold for options"
+                className={`flex items-center gap-3.5 px-4.5 py-4 cursor-pointer select-none transition-all duration-200 relative ${
+                  isActive
+                    ? "bg-blue-50/70 border-l-3 border-brand"
+                    : "bg-input hover:bg-gray-50/60 "
+                }`}
               >
-                Retry
-              </button>
-            </div>
-          ) : isLoadingSuggested ? (
-            <div className="flex flex-col items-center justify-center p-8 text-center h-full gap-2">
-              <div className="w-8 h-8 border-3 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-              <p className="text-xs text-gray-400 font-semibold">Loading communities...</p>
-            </div>
-          ) : (
-            <>
-          {/* Suggested Groups — horizontal scroll (Facebook-style) */}
-          {suggestedGroups.length > 0 && (
-            <div className="py-4 border-b border-gray-100">
-              <h3 className="px-4.5 mb-3 text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-                <Users className="w-3.5 h-3.5" />
-                Suggested Groups
-              </h3>
-              <div className="flex gap-3 overflow-x-auto px-4.5 pb-1 scrollbar-none">
-                {suggestedGroups.map((chat) => (
-                  <div
-                    key={chat.id}
-                    onClick={() => onSelectChat(chat.id)}
-                    className="flex-shrink-0 w-36 bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm cursor-pointer hover:shadow-md transition-shadow"
-                  >
+                <div className="relative shrink-0 bg-brand rounded-full ">
+                  {chat.avatarUrl ? (
+                    <img
+                      src={chat.avatarUrl}
+                      alt={chat.name}
+                      className="w-12 h-12 rounded-full object-cover shrink-0 shadow-sm border border-input"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
                     <div
-                      className={`h-16 ${chat.bgGradient} flex items-center justify-center`}
+                      className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base
+                         text-white shrink-0 shadow-sm ${chat.bgGradient}`}
                     >
-                      {chat.avatarUrl ? (
-                        <img
-                          src={chat.avatarUrl}
-                          alt={chat.name}
-                          className="w-full h-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-white font-black text-lg">
-                          {chat.avatarLabel}
-                        </span>
-                      )}
+                      {chat.avatarLabel}
                     </div>
-                    <div className="p-2.5">
-                      <p className="text-xs font-bold text-gray-900 truncate mb-0.5">
-                        {chat.name}
-                      </p>
-                      <p className="text-[10px] text-gray-400 mb-2">
-                        {chat.membersCount} members
-                      </p>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onToggleJoin(chat.id);
-                        }}
-                        className={`w-full py-1.5 text-[10px] font-bold rounded-lg transition-colors ${
-                          chat.isJoined
-                            ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                            : "bg-blue-600 hover:bg-blue-700 text-white"
-                        }`}
-                      >
-                        {chat.isJoined ? "Cancel" : "Join"}
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+                  )}
+                  {chat.type === "chat" && chat.isOnline && (
+                    <span
+                      className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"
+                      aria-label="Online"
+                    />
+                  )}
+                </div>
 
-          {/* Suggested Channels — vertical list, add-friend style */}
-          <div className="py-4">
-            <h3 className="px-4.5 mb-2 text-xs font-black text-gray-400 uppercase tracking-widest flex items-center gap-1.5">
-              <Radio className="w-3.5 h-3.5" />
-              Suggested Channels
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h3 className="font-bold text-sm text-gray-900 truncate">
+                      {chat.name}
+                    </h3>
+                    <time className="text-[11px] text-gray-400 font-medium">
+                      {chat.lastMsgTime}
+                    </time>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-xs text-gray-500 truncate font-medium">
+                      <span className="text-gray-700 font-semibold">
+                        {chat.lastMsgSender}:{" "}
+                      </span>
+                      {chat.lastMsgText}
+                    </p>
+
+                    {chat.unreadCount > 0 ? (
+                      <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full select-none shrink-0 min-w-[18px] text-center">
+                        {chat.unreadCount}
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+
+        {/* ===== PUBLIC RESULTS (ሲፈለግ ብቻ) ===== */}
+        {isSearching && (
+          <div className="py-2">
+            <h3 className="px-4.5 pt-3 pb-2 text-xs font-black text-gray-400 uppercase tracking-widest">
+              Public results
             </h3>
-            {suggestedChannels.length === 0 ? (
-              <p className="px-4.5 text-xs text-gray-400 font-medium py-4">
-                No suggested channels right now.
+
+            {suggestedError ? (
+              <div className="flex flex-col items-center gap-3 px-4.5 py-6 text-center">
+                <p className="text-xs font-bold text-gray-600">
+                  {suggestedError}
+                </p>
+                <button
+                  onClick={onRetrySuggested}
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all"
+                >
+                  Retry
+                </button>
+              </div>
+            ) : isLoadingSuggested ? (
+              <div className="flex items-center justify-center gap-2 py-6">
+                <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
+                <p className="text-xs text-gray-400 font-semibold">
+                  Searching...
+                </p>
+              </div>
+            ) : publicResults.length === 0 ? (
+              <p className="px-4.5 py-6 text-xs text-gray-400 font-medium text-center">
+                {joinedChats.length === 0
+                  ? "No results found."
+                  : "No public communities found."}
               </p>
             ) : (
-              suggestedChannels.map((chat) => (
+              publicResults.map((chat) => (
                 <div
                   key={chat.id}
-                  onClick={() => onSelectChat(chat.id)}
-                  className="flex items-center gap-3.5 px-4.5 py-3.5 cursor-pointer hover:bg-white transition-colors"
+                  className="flex items-center gap-3.5 px-4.5 py-3.5"
                 >
-                  <div className="relative shrink-0">
-                    {chat.avatarUrl ? (
-                      <img
-                        src={chat.avatarUrl}
-                        alt={chat.name}
-                        className="w-12 h-12 rounded-full object-cover shadow-sm"
-                        referrerPolicy="no-referrer"
-                      />
-                    ) : (
-                      <div
-                        className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base text-white shadow-sm ${chat.bgGradient}`}
-                      >
-                        {chat.avatarLabel}
-                      </div>
-                    )}
-                  </div>
+                  {chat.avatarUrl ? (
+                    <img
+                      src={chat.avatarUrl}
+                      alt={chat.name}
+                      className="w-12 h-12 rounded-full object-cover shadow-sm shrink-0"
+                      referrerPolicy="no-referrer"
+                    />
+                  ) : (
+                    <div
+                      className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base text-white shadow-sm shrink-0 ${chat.bgGradient}`}
+                    >
+                      {chat.avatarLabel}
+                    </div>
+                  )}
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-sm text-gray-900 truncate">
                       {chat.name}
                     </h3>
                     <p className="text-xs text-gray-400 truncate">
-                      {chat.membersCount} subscribers
+                      {chat.membersCount}{" "}
+                      {chat.type === "channel" ? "subscribers" : "members"}
                     </p>
                   </div>
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onToggleJoin(chat.id);
-                    }}
-                    className={`px-3.5 py-1.5 text-xs font-bold rounded-full transition-colors shrink-0 ${
-                      chat.isJoined
-                        ? "bg-gray-100 text-gray-600 hover:bg-gray-200"
-                        : "bg-blue-600 hover:bg-blue-700 text-white"
-                    }`}
+                    onClick={() => onToggleJoin(chat.id)}
+                    className="px-3.5 py-1.5 text-xs font-bold rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors shrink-0"
                   >
-                    {chat.isJoined ? "Cancel" : "Subscribe"}
+                    {chat.type === "channel" ? "Subscribe" : "Join"}
                   </button>
                 </div>
               ))
             )}
           </div>
-          </>
-          )}
-        </div>
-      )}
+        )}
+      </div>
 
-      {/* Delete Confirmation Modal (Messages tab, hold-to-delete) */}
+      {/* Delete Confirmation Modal (hold-to-delete) */}
       {confirmDeleteChat && (
         <div
           className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4 animate-in fade-in duration-200"

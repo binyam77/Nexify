@@ -177,7 +177,7 @@ export default function UserProfile() {
     navigate("/community", {
       state: {
         openChatWith: {
-          userId:otherProfile.userId,
+          userId: otherProfile.userId,
           name: otherProfile.name,
           username: otherProfile.username,
           photo: otherProfile.photo,
@@ -289,74 +289,69 @@ export default function UserProfile() {
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-y-auto bg-bodey-bg pb-20 md:pb-6">
-      <div className="w-full h-40 md:h-52 bg-slate-900 relative overflow-hidden">
-        {otherProfile.cover && (
-          <img
-            src={otherProfile.cover}
-            alt=""
-            className="w-full h-full object-cover"
-          />
-        )}
+      <div className="w-full flex items-center justify-center relative px-4 py-3">
+        <h1 className="text-sm font-black text-text-h2">
+          @{otherProfile.username}
+        </h1>
       </div>
 
-      <div className="max-w-4xl w-full mx-auto px-4 md:px-8 relative -mt-4 sm:-mt-12 mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-5">
-          <div className="flex flex-col sm:flex-row items-start sm:items-end gap-3.5 sm:gap-4.5">
-            <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-white shadow-xl overflow-hidden shrink-0 bg-blue-100 flex items-center justify-center">
-              {otherProfile.photo ? (
-                <img
-                  src={otherProfile.photo}
-                  alt={otherProfile.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white text-3xl font-bold">
-                  {otherProfile.name.charAt(0).toUpperCase()}
-                </div>
-              )}
-            </div>
-            <div className="pt-4 sm:pt-0 sm:pb-1">
-              <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-text-h2">
-                {otherProfile.name}
-              </h2>
-              <p className="text-xs sm:text-sm font-black text-brand-dark mt-1">
-                @{otherProfile.username}
-              </p>
-            </div>
+      <div className="max-w-4xl w-full mx-auto px-4 md:px-8 mb-6">
+        <div className="flex items-center justify-between mb-5">
+          <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-white shadow-xl overflow-hidden shrink-0 bg-blue-100 flex items-center justify-center">
+            {otherProfile.photo ? (
+              <img
+                src={otherProfile.photo}
+                alt={otherProfile.name}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white text-3xl font-bold">
+                {otherProfile.name.charAt(0).toUpperCase()}
+              </div>
+            )}
           </div>
 
-          <div className="flex gap-6 md:gap-8 self-start sm:self-end bg-surface-raised border border-gray-100 shadow-md px-5 py-3 rounded-2xl">
+          <div className="flex gap-5 sm:gap-7">
             <button
               onClick={() => setFollowListModal("followers")}
               className="flex flex-col items-center"
             >
-              <span className="text-lg font-black text-text">
+              <span className="text-base sm:text-lg font-black text-text">
                 {formatCount(otherProfile.followersCount)}
               </span>
-              <span className="text-xs text-small-text font-bold uppercase">
+              <span className="text-[11px] text-small-text font-semibold">
                 Followers
               </span>
             </button>
-            <div className="flex flex-col items-center border-x border-gray-100 px-6 md:px-8">
-              <span className="text-lg font-black text-text">
-                {formatCount(otherProfile.postsCount)}
-              </span>
-              <span className="text-xs text-small-text font-bold uppercase">
-                Posts
-              </span>
-            </div>
             <button
               onClick={() => setFollowListModal("following")}
               className="flex flex-col items-center"
             >
-              <span className="text-lg font-black text-text">
+              <span className="text-base sm:text-lg font-black text-text">
                 {formatCount(otherProfile.followingCount)}
               </span>
-              <span className="text-xs text-small-text font-bold uppercase">
+              <span className="text-[11px] text-small-text font-semibold">
                 Following
               </span>
             </button>
+            <div className="flex flex-col items-center">
+              <span className="text-base sm:text-lg font-black text-text">
+                {formatCount(otherProfile.postsCount)}
+              </span>
+              <span className="text-[11px] text-small-text font-semibold">
+                Videos
+              </span>
+            </div>
           </div>
+        </div>
+
+        <div className="mb-3">
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-text-h2">
+            {otherProfile.name}
+          </h2>
+          <p className="text-xs sm:text-sm font-bold text-brand-dark mt-0.5">
+            @{otherProfile.username}
+          </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5 mb-6">
@@ -469,7 +464,7 @@ export default function UserProfile() {
         onClose={() => setShareModalPost(null)}
         onShareIncrement={handleIncrementShare}
       />
-            {followListModal && otherProfile && (
+      {followListModal && otherProfile && (
         <FollowListModal
           isOpen={true}
           onClose={() => setFollowListModal(null)}

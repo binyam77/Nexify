@@ -19,7 +19,8 @@ export interface VideoData {
 }
 
 export interface CommentReply {
-  id: string;
+  id: string; // backend uuid — was `number` when comments were client-only (Date.now())
+  userId: string;
   text: string;
   username: string;
   avatar: string | null;
@@ -27,7 +28,8 @@ export interface CommentReply {
 }
 
 export interface CommentItem {
-  id: string;
+  id: string; // backend uuid
+  userId: string;
   text: string;
   username: string;
   avatar: string | null;

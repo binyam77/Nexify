@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, Send } from "lucide-react";
-import EmojiPicker from "./EmojiPicker";
+import { useRelativeTime } from "../hooks/useRelativeTime";
 import type { CommentItem, CommentReply } from "../types";
 
 const REPLIES_VISIBLE_LIMIT = 2;
+
 interface CommentCardProps {
   comment: CommentItem;
   currentUsername: string;
@@ -11,6 +13,42 @@ interface CommentCardProps {
   onEdit: (commentId: string, newText: string) => void;
   onAddReply: (commentId: string, text: string) => Promise<boolean>;
   onDeleteReply: (commentId: string, replyId: string) => void;
+}
+
+// Shared by both CommentCard and ReplyCard — real avatar if set, otherwise
+// an initial-letter gradient circle (matches PostCard's own avatar
+// fallback) instead of a broken <img> icon.
+function CommentAvatar({
+  username,
+  avatarUrl,
+  size,
+  onClick,
+}: {
+  username: string;
+  avatarUrl: string | null;
+  size: number;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className="shrink-0 rounded-full overflow-hidden ring-1 ring-zinc-800"
+      style={{ width: size, height: size }}
+    >
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt={username}
+          className="h-full w-full object-cover"
+        />
+      ) : (
+        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-bold">
+          {username[0]?.toUpperCase()}
+        </div>
+      )}
+    </button>
+  );
 }
 
 export default function CommentCard({
@@ -21,11 +59,14 @@ export default function CommentCard({
   onAddReply,
   onDeleteReply,
 }: CommentCardProps) {
+  const navigate = useNavigate();
+  const timeAgo = useRelativeTime(comment.timestamp);
+
   const [isEditing, setIsEditing] = useState(false);
   const [editText, setEditText] = useState(comment.text);
   const [showReplyInput, setShowReplyInput] = useState(false);
-   const [replyText, setReplyText] = useState("");
-    const [replyFailed, setReplyFailed] = useState(false);
+  const [replyText, setReplyText] = useState("");
+  const [replyFailed, setReplyFailed] = useState(false);
   const [showAllReplies, setShowAllReplies] = useState(false);
 
   const isOwner = comment.username === currentUsername;
@@ -34,6 +75,11 @@ export default function CommentCard({
     : comment.replies.slice(0, REPLIES_VISIBLE_LIMIT);
   const hiddenCount = comment.replies.length - REPLIES_VISIBLE_LIMIT;
 
+  // ⚠️ Assumption: profile route is `/profile/:username` — ይህ ካልሆነ ንገረኝ
+  function goToProfile() {
+    navigate(`/profile/${comment.username}`);
+  }
+
   function saveEdit() {
     const trimmed = editText.trim();
     if (!trimmed) return;
@@ -41,7 +87,7 @@ export default function CommentCard({
     setIsEditing(false);
   }
 
-    async function submitReply() {
+  async function submitReply() {
     const trimmed = replyText.trim();
     if (!trimmed) return;
     setReplyFailed(false);
@@ -53,20 +99,29 @@ export default function CommentCard({
       setReplyFailed(true);
     }
   }
-return (
+
+  return (
     <div className="flex items-start gap-2.5">
-      <img
-        src={comment.avatar ?? undefined}
-        alt={comment.username}
-        className="h-9 w-9 shrink-0 rounded-full object-cover ring-1 ring-zinc-800"
+      <CommentAvatar
+        username={comment.username}
+        avatarUrl={comment.avatar}
+        size={36}
+        onClick={goToProfile}
       />
 
       <div className="min-w-0 flex-1">
         {!isEditing ? (
           <div className="flex flex-col gap-0.5">
-            <span className="text-[13px] font-semibold text-white">
-              {comment.username}
-            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                onClick={goToProfile}
+                className="text-[13px] font-semibold text-white hover:underline"
+              >
+                {comment.username}
+              </button>
+              <span className="text-[11px] text-zinc-500">· {timeAgo}</span>
+            </div>
             <p className="break-words text-sm leading-snug text-zinc-100">
               {comment.text}
             </p>
@@ -104,7 +159,6 @@ return (
         )}
 
         <div className="mt-1.5 flex items-center gap-3.5">
-          <span className="text-[11px] text-zinc-500">{comment.timestamp}</span>
           <button
             type="button"
             onClick={() => setShowReplyInput((s) => !s)}
@@ -133,6 +187,7 @@ return (
             </>
           )}
         </div>
+
         {showReplyInput && (
           <div className="mt-2 flex flex-col gap-1">
             {replyFailed && (
@@ -140,8 +195,9 @@ return (
                 አልተላከም — ግንኙነት ይፈትሹ እና እንደገና ይሞክሩ
               </p>
             )}
+            {/* Emoji picker removed per product decision — reply composer
+                stays plain-input-only. */}
             <div className="flex items-center gap-2 rounded-xl bg-zinc-900 p-2">
-              <EmojiPicker onSelect={(emoji) => setReplyText((t) => t + emoji)} />
               <input
                 value={replyText}
                 maxLength={300}
@@ -163,7 +219,7 @@ return (
             </div>
           </div>
         )}
-       
+
         {comment.replies.length > 0 && (
           <div className="mt-2 flex flex-col gap-2 border-l-2 border-zinc-800 pl-3">
             {visibleReplies.map((reply) => (
@@ -184,12 +240,23 @@ return (
                 {hiddenCount === 1 ? "reply" : "replies"}
               </button>
             )}
+            {showAllReplies &&
+              comment.replies.length > REPLIES_VISIBLE_LIMIT && (
+                <button
+                  type="button"
+                  onClick={() => setShowAllReplies(false)}
+                  className="block py-1 text-left text-xs font-semibold text-zinc-400 hover:text-white hover:underline"
+                >
+                  Show less
+                </button>
+              )}
           </div>
         )}
       </div>
     </div>
   );
 }
+
 function ReplyCard({
   reply,
   isOwner,
@@ -199,34 +266,43 @@ function ReplyCard({
   isOwner: boolean;
   onDelete: () => void;
 }) {
+  const navigate = useNavigate();
+  const timeAgo = useRelativeTime(reply.timestamp);
+
+  function goToProfile() {
+    navigate(`/profile/${reply.username}`);
+  }
+
   return (
     <div className="flex items-start gap-2">
-      <img
-        src={reply.avatar ?? undefined}
-        alt={reply.username}
-        className="h-6 w-6 shrink-0 rounded-full object-cover ring-1 ring-zinc-800"
+      <CommentAvatar
+        username={reply.username}
+        avatarUrl={reply.avatar}
+        size={24}
+        onClick={goToProfile}
       />
       <div className="min-w-0 flex-1">
-        <div className="flex flex-col gap-0.5">
-          <span className="text-[12px] font-semibold text-white">
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            onClick={goToProfile}
+            className="text-[12px] font-semibold text-white hover:underline"
+          >
             {reply.username}
-          </span>
-          <p className="text-sm leading-snug text-zinc-200">
-            {reply.text}
-          </p>
+          </button>
+          <span className="text-[10px] text-zinc-500">· {timeAgo}</span>
         </div>
-        <p className="mt-1 text-[11px] text-zinc-500">{reply.timestamp}</p>
+        <p className="text-sm leading-snug text-zinc-200">{reply.text}</p>
+        {isOwner && (
+          <button
+            type="button"
+            onClick={onDelete}
+            className="mt-1 text-[11px] font-semibold text-zinc-500 hover:text-rose-400"
+          >
+            Delete
+          </button>
+        )}
       </div>
-      {isOwner && (
-        <button
-          type="button"
-          onClick={onDelete}
-          className="shrink-0 text-zinc-500 hover:text-rose-400"
-          aria-label="Delete reply"
-        >
-          <Trash2 size={13} />
-        </button>
-      )}
     </div>
   );
 }

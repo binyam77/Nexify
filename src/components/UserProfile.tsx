@@ -11,6 +11,7 @@ import {
   ChevronDown,
   Grid,
   Settings,
+  Search,
 } from "lucide-react";
 import { Link } from "react-router-dom";
 // UserProfile.tsx የProp ዓይነቶች መግለጫ (Props Interface for UserProfile.tsx)
@@ -56,31 +57,18 @@ export default function UserProfile({
 }: UserProfileProps) {
   return (
     <div className="w-full flex flex-col shrink-0">
-      {/* 1. Banner/Cover Photo (የላይኛው ባነር ገጽ) */}
-      <div className="w-full relative shrink-0">
-                <div
-          onClick={() => directCoverInputRef.current?.click()}
-          className={`w-full h-36 md:h-48 relative overflow-hidden cursor-pointer group ${
-            profile.cover ? "bg-cover bg-center" : "bg-gradient-to-br from-slate-300 via-slate-200 to-slate-300"
-          }`}
-          style={profile.cover ? { backgroundImage: `url(${profile.cover})` } : undefined}
-        >
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              directCoverInputRef.current?.click();
-            }}
-            className="absolute bottom-3 right-3 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-black/60 text-white text-xs font-bold backdrop-blur-sm hover:bg-black/75 transition-colors z-10"
-          >
-            <Camera className="w-3.5 h-3.5" />
-            <span>Edit cover</span>
-          </button>
-        </div>
-      </div>
+   {/* 1. Top bar (ፍለጋ + username) */}
+   <div className="w-full flex items-center justify-center relative px-4 py-3 shrink-0">
+    <h1 className="text-sm font-black text-text-h2">@{profile.username}</h1>
+    <Link 
+    to="/search"
+    className="absolute right-4 p-1.5 rounded-full hover:bg-slate-100 text-text transition-colors">
+      <Search className="w-5 h-5"/>
+    </Link>
+   </div>
 
-           <div className="max-w-4xl w-full mx-auto px-4 md:px-8 relative -mt-10 sm:-mt-12 mb-5">
-        <div className="flex items-end justify-between mb-4">
+           <div className="max-w-4xl w-full mx-auto px-4 md:px-8 mb-5">
+        <div className="flex items-center justify-between mb-4">
                      <div
               onClick={() => directPhotoInputRef.current?.click()}
               className="relative w-24 h-24 md:w-28 md:h-28 shrink-0 cursor-pointer group"
@@ -104,6 +92,17 @@ export default function UserProfile({
             </div>
 
           <div className="flex gap-5 sm:gap-7 pb-2">
+                       <button
+              onClick={onOpenFollowers}
+              className="flex flex-col items-center"
+            >
+              <span className="text-base sm:text-lg font-black text-text tracking-tight">
+                {formatCount(followersCount)}
+              </span>
+              <span className="text-[11px] text-small-text font-semibold">
+                Followers
+              </span>
+            </button>
             <button
               onClick={onOpenFollowing}
               className="flex flex-col items-center"
@@ -113,17 +112,6 @@ export default function UserProfile({
               </span>
               <span className="text-[11px] text-small-text font-semibold">
                 Following
-              </span>
-            </button>
-            <button
-              onClick={onOpenFollowers}
-              className="flex flex-col items-center"
-            >
-              <span className="text-base sm:text-lg font-black text-text tracking-tight">
-                {formatCount(followersCount)}
-              </span>
-              <span className="text-[11px] text-small-text font-semibold">
-                Followers
               </span>
             </button>
             <div className="flex flex-col items-center">

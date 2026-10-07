@@ -1,4 +1,4 @@
-import { Target, Eye,  Users, Sparkles  } from "lucide-react";
+import { Target, Eye } from "lucide-react";
 
 interface AboutProps {
   onNavigate?: (page: string) => void;
@@ -59,18 +59,7 @@ export default function About({ onNavigate = () => {} }: AboutProps) {
 
          
 
-          <section className="mb-10">
-            <h2 className="text-xl md:text-2xl text-gray-900 mb-[15px] font-bold flex items-center gap-3">
-              <img src="" alt="" className="hidden" />
-              <Users className="text-blue-600 w-6 h-6 shrink-0" /> Nexify Is For
-            </h2>
-            <div className="flex flex-col gap-[15px] mt-[15px]">
-              <div className="bg-gray-800/[0.04] py-[18px] px-[25px] rounded-lg text-base flex items-center gap-[15px] border-l-4 border-l-blue-600 text-gray-800">
-                <Sparkles className="text-blue-600 w-5 h-5 shrink-0" /> For creators and users
-              </div>
-             
-            </div>
-          </section>
+          
 
          
 
