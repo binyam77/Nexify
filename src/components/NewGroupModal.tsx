@@ -10,7 +10,10 @@ import type { Chat, SelectableUser } from "../types";
 interface NewGroupModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateGroup: (newChat: Chat, initialMembers: SelectableUser[]) => void;
+  onCreateGroup: (
+    newChat: Chat,
+    initialMembers: SelectableUser[],
+  ) => Promise<boolean> | boolean | void;
   onOpenMemberPicker: () => void;
   pickedMembers: SelectableUser[];
   /** ← ቀስት: ወደ Add Members ለመመለስ። ካልተሰጠ onClose ይጠራል */
@@ -34,6 +37,7 @@ export default function NewGroupModal({
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -59,11 +63,10 @@ export default function NewGroupModal({
     setAvatarUrl("");
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedName = name.trim();
-    if (!trimmedName) return;
+    if (!trimmedName || isSubmitting) return;
 
     const words = trimmedName.split(" ");
     const avatarLabel =
@@ -91,7 +94,15 @@ export default function NewGroupModal({
       isCreatedByMe: true,
     };
 
-    onCreateGroup(newChat, pickedMembers);
+    setIsSubmitting(true);
+    let ok: boolean | void = false;
+    try {
+      ok = await onCreateGroup(newChat, pickedMembers);
+    } finally {
+      setIsSubmitting(false);
+    }
+    // አልተሳካም (ለምሳሌ ግንኙነት የለም) → ፎርሙ ክፍት ይቆያል፣ የተጻፈው አይጠፋም
+    if (ok === false) return;
 
     setName("");
     setDescription("");
@@ -267,7 +278,7 @@ export default function NewGroupModal({
         <div className="max-w-lg mx-auto">
           <button
             onClick={handleSubmit}
-            disabled={!name.trim()}
+            disabled={!name.trim() || isSubmitting}
             className="w-full py-3.5 bg-brand hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-brand text-white text-sm font-extrabold rounded-2xl transition-all shadow-md"
           >
             Create Group

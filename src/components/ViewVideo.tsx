@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import type { FeedPost, CommentItem } from "../types";
 import Left from "./Left";
+import EmojiPicker from "./EmojiPicker";
 function formatRelativeTime(timestamp: string): string {
   const diffMs = Date.now() - new Date(timestamp).getTime();
   const diffMin = Math.floor(diffMs / 60000);
@@ -42,6 +43,7 @@ interface ViewVideoProps {
   loadMoreComments: (postId: string) => Promise<void>;
   hasMoreComments: boolean;
   isLoadingMoreComments: boolean;
+  loadComments: (postId: string) => Promise<void>;
   profile: {
     name: string;
     username: string;
@@ -58,14 +60,18 @@ interface ViewVideoProps {
   handleToggleSavePost: (postId: string) => void;
   handleSharePost: (postId: string) => void;
   handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
-  handleAddComment: (postId: string, text: string) => void;
+  handleAddComment: (postId: string, text: string) => Promise<boolean>;
   handleDeleteComment: (postId: string, commentId: string) => void;
   handleDeleteReply: (
     postId: string,
     commentId: string,
     replyId: string,
   ) => void;
-  handleAddReply: (postId: string, commentId: string, text: string) => void;
+  handleAddReply: (
+    postId: string,
+    commentId: string,
+    text: string,
+  ) => Promise<boolean>;
   handleNavigateToUserProfile: (username: string) => void;
   handleEditComment: (
     postId: string,
@@ -83,10 +89,12 @@ export default function ViewVideo({
   loadMoreComments,
   hasMoreComments,
   isLoadingMoreComments,
+  loadComments,
   profile,
   followersCount,
   selectedMediaSrc,
   handleClosePlayer,
+  handleNavigatePost,
   handleToggleLikePost,
   handleToggleSavePost,
   handleSharePost,
@@ -140,6 +148,73 @@ export default function ViewVideo({
   const sortedComments =
     sortOrder === "newest" ? [...comments].reverse() : comments;
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [commentError, setCommentError] = useState<string | null>(null);
+  const touchStartY = useRef<number | null>(null);
+  const wheelLockRef = useRef(false);
+
+  // ስኬታማ ሲሆን ብቻ input ይጸዳል፣ ካልተሳካ ጽሁፉ ይቀራል (እንደገና ለመሞከር)
+  const submitComment = async () => {
+    const text = commentInputText.trim();
+    if (!text || isSubmitting) return;
+    setIsSubmitting(true);
+    setCommentError(null);
+    const ok = await handleAddComment(selectedPost.id, text);
+    setIsSubmitting(false);
+    if (ok) {
+      setCommentInputText("");
+      setEmojiPickerOpen(false);
+    } else {
+      setCommentError("Couldn't send. Check your connection and try again.");
+    }
+  };
+
+  const submitReply = async (commentId: string) => {
+    const text = replyInputText.trim();
+    if (!text || isSubmitting) return;
+    setIsSubmitting(true);
+    setCommentError(null);
+    const ok = await handleAddReply(selectedPost.id, commentId, text);
+    setIsSubmitting(false);
+    if (ok) {
+      setReplyInputText("");
+      setActiveReplyTo(null);
+    } else {
+      setCommentError("Couldn't send. Check your connection and try again.");
+    }
+  };
+
+  // ወደ ቀጣይ/ቀዳሚ ፖስት — swipe (ሞባይል) እና wheel (desktop)
+  const handleTouchStart = (e: React.TouchEvent) => {
+    touchStartY.current = e.touches[0].clientY;
+  };
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartY.current === null) return;
+    const delta = touchStartY.current - e.changedTouches[0].clientY;
+    touchStartY.current = null;
+    if (Math.abs(delta) < 60) return;
+    handleNavigatePost(delta > 0 ? "next" : "prev");
+  };
+  const handleWheel = (e: React.WheelEvent) => {
+    if (wheelLockRef.current || Math.abs(e.deltaY) < 30) return;
+    wheelLockRef.current = true;
+    handleNavigatePost(e.deltaY > 0 ? "next" : "prev");
+    setTimeout(() => {
+      wheelLockRef.current = false;
+    }, 600);
+  };
+
+  // ፖስት ሲቀየር ያልተላከ draft ወደ ሌላ ፖስት እንዳይሄድ
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- post ሲቀየር draft/ስህተት መጽዳት አለበት
+    setCommentInputText("");
+    setReplyInputText("");
+    setActiveReplyTo(null);
+    setCommentError(null);
+    setEmojiPickerOpen(false);
+    setEditingCommentId(null);
+  }, [selectedPost.id]);
+
   const startEditing = (item: { id: string; text: string }) => {
     setEditingCommentId(item.id);
     setEditInputText(item.text);
@@ -176,7 +251,12 @@ export default function ViewVideo({
     <div className="fixed inset-0 bg-surface backdrop-blur-md flex items-center justify-center z-50 p-0 sm:p-4 animate-fade-in">
       <div className="bg-black md:bg-white rounded-none sm:rounded-3xl w-full max-w-[1200px] h-full sm:h-[90vh] md:h-[88vh] overflow-hidden shadow-2xl border border-transparent sm:border-gray-200/50 flex flex-col md:flex-row relative">
         {/* ===== Left Side: Video/Image Container ===== */}
-        <div className="w-full h-full md:flex-1 bg-black flex items-center justify-center relative">
+        <div
+          className="w-full h-full md:flex-1 bg-black flex items-center justify-center relative touch-none"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+          onWheel={handleWheel}
+        >
           {/* Close Button (ላይኛው የግራ ጥግ ዝጋ ቁልፍ) */}
           <button
             onClick={handleClosePlayer}
@@ -285,10 +365,13 @@ export default function ViewVideo({
           handleToggleSavePost={handleToggleSavePost}
           handleSharePost={handleSharePost}
           handleDeletePost={handleDeletePost}
-          handleAddComment={handleAddComment}
+          onSubmitComment={() => void submitComment()}
+          onSubmitReply={(commentId) => void submitReply(commentId)}
+          isSubmitting={isSubmitting}
+          commentError={commentError}
+          onRetryComments={() => void loadComments(selectedPost.id)}
           handleDeleteComment={handleDeleteComment}
           handleDeleteReply={handleDeleteReply}
-          handleAddReply={handleAddReply}
           handleEditComment={handleEditComment}
           handleNavigateToUserProfile={handleNavigateToUserProfile}
           formatCount={formatCount}
@@ -380,42 +463,6 @@ export default function ViewVideo({
                 return <span key={i}>{word}</span>;
               })}
             </p>
-
-            {/* Mobile quick comment writing */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                handleAddComment(selectedPost.id, commentInputText);
-              }}
-              className="flex items-center gap-2 relative"
-            >
-              <div className="flex-1 relative">
-                <button
-                  type="button"
-                  onClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
-                  className="absolute left-3 top-1/2 -translate-y-1/2 text-lg active:scale-90 transition-all z-10"
-                  title="Add emoji"
-                >
-                  😊
-                </button>
-                <input
-                  type="text"
-                  value={commentInputText}
-                  onChange={(e) => setCommentInputText(e.target.value)}
-                  placeholder="Add comment..."
-                  maxLength={300}
-                  className="w-full bg-black/40 border border-white/20 focus:border-blue-500 rounded-full pl-10 pr-4 py-2.5 text-sm text-white outline-none transition-all placeholder:text-gray-400"
-                />
-              </div>
-
-              <button
-                type="submit"
-                disabled={!commentInputText.trim()}
-                className="w-10 h-10 bg-emerald-500 hover:bg-emerald-600 disabled:opacity-40 text-white rounded-full flex items-center justify-center shadow-md shrink-0 active:scale-90 transition-transform"
-              >
-                <Send className="w-4 h-4 text-white" />
-              </button>
-            </form>
           </div>
         </div>
 
@@ -450,7 +497,23 @@ export default function ViewVideo({
               </div>
 
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
-                {comments.length === 0 ? (
+                {isLoadingComments ? (
+                  <div className="text-center text-slate-400 text-sm py-12">
+                    Loading comments...
+                  </div>
+                ) : commentsError ? (
+                  <div className="flex flex-col items-center gap-2 py-12">
+                    <p className="text-sm text-rose-500 font-semibold">
+                      {commentsError}
+                    </p>
+                    <button
+                      onClick={() => void loadComments(selectedPost.id)}
+                      className="text-xs font-bold text-blue-600 underline"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : comments.length === 0 ? (
                   <div className="text-center text-slate-400 text-sm py-12 flex flex-col items-center justify-center">
                     <span className="text-2xl mb-1">💬</span>
                     <p className="font-bold text-slate-500">No comments yet</p>
@@ -627,11 +690,7 @@ export default function ViewVideo({
                         <form
                           onSubmit={(e) => {
                             e.preventDefault();
-                            handleAddReply(
-                              selectedPost.id,
-                              comment.id,
-                              replyInputText,
-                            );
+                            void submitReply(comment.id);
                           }}
                           className="flex gap-2 pl-6 mt-1.5"
                         >
@@ -654,32 +713,71 @@ export default function ViewVideo({
                     </div>
                   ))
                 )}
+                {hasMoreComments && !isLoadingComments && (
+                  <div className="flex justify-center pt-2">
+                    <button
+                      onClick={() => void loadMoreComments(selectedPost.id)}
+                      disabled={isLoadingMoreComments}
+                      className="text-xs font-bold text-blue-600 hover:underline disabled:opacity-50"
+                    >
+                      {isLoadingMoreComments
+                        ? "Loading..."
+                        : "Load more comments"}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Main Comment Box inside drawer */}
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  handleAddComment(selectedPost.id, commentInputText);
-                }}
-                className="border-t border-input-border p-4 bg-surface flex items-center gap-3 shrink-0 mb-10 pb-6 shadow-[0_-4px_20px_rgba(0,0,0,0.03)]"
-              >
-                <textarea
-                  value={commentInputText}
-                  onChange={(e) => setCommentInputText(e.target.value)}
-                  placeholder="Add comment..."
-                  maxLength={300}
-                  rows={1}
-                  className="flex-1 bg-input border border-input-border focus:border-input-focus rounded-2xl px-4.5 py-3 text-[14px] text-input-text outline-none resize-none min-h-[46px] max-h-[100px] overflow-y-auto scrollbar-thin transition-all"
-                />
-                <button
-                  type="submit"
-                  disabled={!commentInputText.trim()}
-                  className="w-10 h-10 bg-brand disabled:opacity-40 text-white rounded-full flex items-center justify-center shadow-md shrink-0 active:scale-95 transition-transform"
+              <div className="relative border-t border-input-border bg-surface shrink-0 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                {commentError && (
+                  <p className="text-xs font-semibold text-rose-600 mb-2">
+                    {commentError}
+                  </p>
+                )}
+                {emojiPickerOpen && (
+                  <EmojiPicker
+                    className="absolute bottom-full left-4 mb-2"
+                    onSelect={(emoji) => {
+                      setCommentInputText(commentInputText + emoji);
+                      setEmojiPickerOpen(false);
+                    }}
+                  />
+                )}
+                <form
+                  onSubmit={(e) => {
+                    e.preventDefault();
+                    void submitComment();
+                  }}
+                  className="flex items-center gap-2"
                 >
-                  <Send className="w-4.5 h-4.5 text-white" />
-                </button>
-              </form>
+                  <div className="flex-1 relative">
+                    <button
+                      type="button"
+                      onClick={() => setEmojiPickerOpen(!emojiPickerOpen)}
+                      className="absolute left-3 top-1/2 -translate-y-1/2 text-lg active:scale-90 transition-all z-10"
+                      title="Add emoji"
+                    >
+                      😊
+                    </button>
+                    <input
+                      type="text"
+                      value={commentInputText}
+                      onChange={(e) => setCommentInputText(e.target.value)}
+                      placeholder="Add comment..."
+                      maxLength={300}
+                      className="w-full bg-input border border-input-border focus:border-input-focus rounded-full pl-10 pr-4 py-2.5 text-sm text-input-text outline-none transition-all"
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={!commentInputText.trim() || isSubmitting}
+                    className="w-10 h-10 bg-brand disabled:opacity-40 text-white rounded-full flex items-center justify-center shadow-md shrink-0 active:scale-95 transition-transform"
+                  >
+                    <Send className="w-4 h-4 text-white" />
+                  </button>
+                </form>
+              </div>
             </div>
           </>
         )}

@@ -42,6 +42,11 @@ interface LeftProps {
   isLoadingComments: boolean;
   commentsError: string | null;
   loadMoreComments: (postId: string) => Promise<void>;
+  onRetryComments: () => void;
+  onSubmitComment: () => void;
+  onSubmitReply: (commentId: string) => void;
+  isSubmitting: boolean;
+  commentError: string | null;
   hasMoreComments: boolean;
   isLoadingMoreComments: boolean;
   shares: number;
@@ -75,14 +80,12 @@ interface LeftProps {
   handleToggleSavePost: (postId: string) => void;
   handleSharePost: (postId: string) => void;
   handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
-  handleAddComment: (postId: string, text: string) => void;
   handleDeleteComment: (postId: string, commentId: string) => void;
   handleDeleteReply: (
     postId: string,
     commentId: string,
     replyId: string,
   ) => void;
-  handleAddReply: (postId: string, commentId: string, text: string) => void;
   handleEditComment: (
     postId: string,
     commentId: string,
@@ -117,10 +120,13 @@ export default function Left({
   handleToggleSavePost,
   handleSharePost,
   handleDeletePost,
-  handleAddComment,
+  onRetryComments,
+  onSubmitComment,
+  onSubmitReply,
+  isSubmitting,
+  commentError,
   handleDeleteComment,
   handleDeleteReply,
-  handleAddReply,
   handleEditComment,
   handleNavigateToUserProfile,
   formatCount,
@@ -279,8 +285,16 @@ export default function Left({
               Loading comments...
             </div>
           ) : commentsError ? (
-            <div className="text-center text-rose-500 text-sm py-12 font-semibold">
-              {commentsError}
+            <div className="flex flex-col items-center gap-2 py-12">
+              <p className="text-sm text-rose-500 font-semibold">
+                {commentsError}
+              </p>
+              <button
+                onClick={onRetryComments}
+                className="text-xs font-bold text-blue-600 underline"
+              >
+                Retry
+              </button>
             </div>
           ) : comments.length === 0 ? (
             <div className="text-center text-slate-400 text-sm py-12 flex flex-col items-center justify-center">
@@ -502,11 +516,7 @@ export default function Left({
                     <form
                       onSubmit={(e) => {
                         e.preventDefault();
-                        handleAddReply(
-                          selectedPost.id,
-                          comment.id,
-                          replyInputText,
-                        );
+                        onSubmitReply(comment.id);
                       }}
                       className="flex gap-2 pl-8 mt-2"
                     >
@@ -569,7 +579,7 @@ export default function Left({
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            handleAddComment(selectedPost.id, commentInputText);
+            onSubmitComment();
           }}
           className="flex items-center gap-2.5"
         >
@@ -591,9 +601,7 @@ export default function Left({
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) {
                 e.preventDefault();
-                if (commentInputText.trim()) {
-                  handleAddComment(selectedPost.id, commentInputText);
-                }
+                onSubmitComment();
               }
             }}
             className="flex-1 bg-input border-2 border-transparent focus:border-blue-500 focus:bg-white rounded-2xl px-4 py-2.5 text-xs sm:text-sm text-slate-700 outline-none transition-all placeholder:text-slate-400 resize-none min-h-[38px] max-h-[90px] overflow-y-auto scrollbar-thin"
@@ -601,13 +609,15 @@ export default function Left({
 
           <button
             type="submit"
-            disabled={!commentInputText.trim()}
+            disabled={!commentInputText.trim() || isSubmitting}
             className="w-10 h-10 bg-brand disabled:opacity-50 disabled:cursor-not-allowed hover:bg-emerald-600 text-white rounded-full flex items-center justify-center shadow-md transition-all shrink-0 animate-fade-in"
           >
             <Send className="w-4 h-4 text-white" />
           </button>
         </form>
-
+        {commentError && (
+          <p className="text-xs font-semibold text-rose-600 mt-2">{commentError}</p>
+        )}
         {/* Emoji picker overlays */}
         {emojiPickerOpen && (
           <div className="absolute bottom-[72px] left-4 bg-white border border-gray-200 rounded-2xl shadow-xl p-2.5 grid grid-cols-8 gap-1.5 w-72 max-h-52 overflow-y-auto z-40 scrollbar-thin">

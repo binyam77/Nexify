@@ -8,13 +8,20 @@ import { useAuth } from "../context/AuthContext";
 import { useFeed } from "../context/FeedContext";
 import { fetchProfile } from "../api/profile.api";
 import { followUser, unfollowUser } from "../api/follow.api";
-import { fetchUserPosts } from "../api/posts.api";
+import {
+  fetchUserPosts,
+  likePost,
+  unlikePost,
+  sharePost,
+} from "../api/posts.api";
 import type { FeedPost } from "../types";
 import ProfileVideo from "../components/ProfileVideo";
 import ViewVideo from "../components/ViewVideo";
 import ShareModal from "../components/ShareModal";
-import { Trash2 } from "lucide-react";
+import { Trash2, Grid } from "lucide-react";
 import FollowListModal from "../components/FollowListModal";
+import LinkifiedText from "../components/LinkifiedText";
+import { useUI } from "../context/UIContext";
 interface OtherProfileData {
   userId: string;
   username: string;
@@ -41,9 +48,7 @@ export default function UserProfile() {
     hasMoreComments,
     isLoadingMoreComments,
     incrementView,
-    toggleLike,
     toggleSave,
-    incrementShare,
     addComment,
     deleteComment,
     deleteReply,
@@ -74,6 +79,12 @@ export default function UserProfile() {
   } | null>(null);
   const [selectedPostId, setSelectedPostId] = useState<string | null>(null);
   const [selectedMediaSrc, setSelectedMediaSrc] = useState<string | null>(null);
+  const { setFullscreenModalOpen } = useUI();
+  useEffect(() => {
+    setFullscreenModalOpen(!!selectedPostId);
+    return () => setFullscreenModalOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPostId]);
   const viewedKeyRef = useRef("viewedPostIds");
   const [isDeletingComment, setIsDeletingComment] = useState(false);
   const [deleteCommentError, setDeleteCommentError] = useState<string | null>(
@@ -258,10 +269,52 @@ export default function UserProfile() {
     const found = posts.find((p) => p.id === postId) || null;
     setShareModalPost(found);
   };
-  const handleIncrementShare = (postId: string) => {
-    incrementShare(postId);
+  const handleToggleLike = (postId: string) => {
+    const target = posts.find((p) => p.id === postId);
+    if (!target) return;
+    const wasLiked = target.liked;
+    setPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              liked: !wasLiked,
+              likesCount: p.likesCount + (wasLiked ? -1 : 1),
+            }
+          : p,
+      ),
+    );
+    const request = wasLiked ? unlikePost(postId) : likePost(postId);
+    request.catch((e) => {
+      console.error("Like toggle failed, reverting:", e);
+      setPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                liked: wasLiked,
+                likesCount: p.likesCount + (wasLiked ? 1 : -1),
+              }
+            : p,
+        ),
+      );
+    });
   };
 
+  const handleIncrementShare = (postId: string) => {
+    sharePost(postId)
+      .then(({ sharesCount }) =>
+        setPosts((prev) =>
+          prev.map((p) => (p.id === postId ? { ...p, sharesCount } : p)),
+        ),
+      )
+      .catch((e) => console.error("Share tracking failed:", e));
+  };
+  const scrollToPosts = () => {
+    document
+      .getElementById("profile-posts-grid")
+      ?.scrollIntoView({ behavior: "smooth" });
+  };
   const formatCount = (num: number) => {
     if (num >= 1000000) return (num / 1000000).toFixed(1) + "M";
     if (num >= 1000) return (num / 1000).toFixed(1) + "K";
@@ -289,13 +342,7 @@ export default function UserProfile() {
 
   return (
     <div className="flex-1 flex flex-col h-full overflow-y-auto bg-bodey-bg pb-20 md:pb-6">
-      <div className="w-full flex items-center justify-center relative px-4 py-3">
-        <h1 className="text-sm font-black text-text-h2">
-          @{otherProfile.username}
-        </h1>
-      </div>
-
-      <div className="max-w-4xl w-full mx-auto px-4 md:px-8 mb-6">
+      <div className="max-w-4xl w-full mx-auto px-4 md:px-8 pt-5">
         <div className="flex items-center justify-between mb-5">
           <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-white shadow-xl overflow-hidden shrink-0 bg-blue-100 flex items-center justify-center">
             {otherProfile.photo ? (
@@ -334,14 +381,17 @@ export default function UserProfile() {
                 Following
               </span>
             </button>
-            <div className="flex flex-col items-center">
+            <button
+              onClick={scrollToPosts}
+              className="flex flex-col items-center"
+            >
               <span className="text-base sm:text-lg font-black text-text">
                 {formatCount(otherProfile.postsCount)}
               </span>
               <span className="text-[11px] text-small-text font-semibold">
                 Videos
               </span>
-            </div>
+            </button>
           </div>
         </div>
 
@@ -354,44 +404,52 @@ export default function UserProfile() {
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5 mb-6">
+        {otherProfile.bio && (
+          <div className="mb-4">
+            <p className="text-sm font-medium text-text leading-relaxed break-words whitespace-pre-line">
+              <LinkifiedText text={otherProfile.bio} />
+            </p>
+          </div>
+        )}
+
+        <div className="flex items-center gap-2.5 mb-3">
           <button
             onClick={handleToggleFollow}
             disabled={isFollowPending}
-            className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-wider shadow-sm transition-all disabled:opacity-50 ${
+            className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 ${
               otherProfile.isFollowedByMe
-                ? "bg-gray-100 hover:bg-gray-200 text-gray-800"
-                : "bg-gradient-to-b from-[#019BE5] via-[#0185E5] to-[#0071E3] text-white hover:opacity-95"
+                ? "bg-slate-100 hover:bg-slate-200 text-text"
+                : "bg-brand text-white hover:opacity-90"
             }`}
           >
             {otherProfile.isFollowedByMe ? "Following" : "Follow"}
           </button>
-
-          {/* TODO(chat-module): Message ቁልፍ Chat module ሲገነባ ይሰራል */}
           <button
             onClick={handleStartChat}
-            className="px-4 py-2.5 rounded-xl bg-[#2481cc] hover:bg-[#2075b8] text-white font-black text-xs uppercase tracking-wider transition-all shadow-md flex items-center gap-2"
+            className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-text text-sm font-bold transition-all"
           >
             Message
           </button>
-
-          {followError && (
-            <p className="text-xs font-semibold text-rose-600 basis-full mt-1">
-              {followError}
-            </p>
-          )}
         </div>
-
-        {otherProfile.bio && (
-          <div className="bg-surface border border-border rounded-2xl p-4.5 shadow-sm mb-6">
-            <p className="text-sm font-medium text-text leading-relaxed break-words whitespace-pre-line">
-              {otherProfile.bio}
-            </p>
-          </div>
+        {followError && (
+          <p className="text-xs font-semibold text-rose-600 mb-3">
+            {followError}
+          </p>
         )}
+
+        <button
+          onClick={scrollToPosts}
+          className="w-full flex items-center justify-center gap-1.5 border-b border-gray-200/60 py-3 text-xs font-black uppercase tracking-wider text-brand-dark"
+        >
+          <Grid className="w-3.5 h-3.5" />
+          <span>Videos</span>
+        </button>
       </div>
 
-      <div className="max-w-4xl w-full mx-auto px-4 md:px-8 mb-6">
+      <div
+        id="profile-posts-grid"
+        className="max-w-4xl w-full mx-auto px-4 md:px-8 mb-6"
+      >
         {isLoadingPosts ? (
           <div className="text-center text-xs text-slate-400 py-10">
             Loading posts...
@@ -432,6 +490,7 @@ export default function UserProfile() {
           commentsMap={commentsMap}
           isLoadingComments={isLoadingComments}
           commentsError={commentsError}
+          loadComments={loadComments}
           loadMoreComments={loadMoreComments}
           hasMoreComments={hasMoreComments[selectedPost.id] ?? false}
           isLoadingMoreComments={isLoadingMoreComments}
@@ -445,7 +504,7 @@ export default function UserProfile() {
           selectedMediaSrc={selectedMediaSrc}
           handleClosePlayer={handleClosePlayer}
           handleNavigatePost={handleNavigatePost}
-          handleToggleLikePost={toggleLike}
+          handleToggleLikePost={handleToggleLike}
           handleToggleSavePost={toggleSave}
           handleSharePost={handleSharePost}
           handleDeletePost={() => {}}

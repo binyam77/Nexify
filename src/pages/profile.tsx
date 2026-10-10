@@ -6,12 +6,18 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { X, Camera, Trash2 } from "lucide-react";
+import { X, Camera, Trash2, ChevronLeft } from "lucide-react";
 import ShareModal from "../components/ShareModal";
 import { useFeed } from "../context/FeedContext";
 import { useUI } from "../context/UIContext";
 import type { FeedPost } from "../types";
-import { fetchUserPosts, deletePost } from "../api/posts.api";
+import {
+  fetchUserPosts,
+  deletePost,
+  likePost,
+  unlikePost,
+  sharePost,
+} from "../api/posts.api";
 // ንዑስ ክፍሎች ማስመጫ (Importing child components)
 import UserProfile from "../components/UserProfile";
 import ProfileVideo from "../components/ProfileVideo";
@@ -52,9 +58,7 @@ export default function Profile({
     hasMoreComments,
     isLoadingMoreComments,
     incrementView,
-    toggleLike,
     toggleSave,
-    incrementShare,
     addComment,
     deleteComment,
     deleteReply,
@@ -163,13 +167,11 @@ export default function Profile({
   const [editUsername, setEditUsername] = useState("");
   const [editBio, setEditBio] = useState("");
   const [editPhotoPreview, setEditPhotoPreview] = useState("");
-  const [editCoverPreview, setEditCoverPreview] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // --- የማጣቀሻ ፋይል መምረጫዎች (File Picker input refs) ---
   const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
-  const coverInputRef = useRef<HTMLInputElement>(null);
 
   // --- በቀጥታ የሚዲያ መጫኛ ማጣቀሻዎች (Direct profile & cover upload refs) ---
   const directPhotoInputRef = useRef<HTMLInputElement>(null);
@@ -249,7 +251,35 @@ export default function Profile({
 
   // --- ላይክ ተግባራት (Toggle like actions) ---
   const handleToggleLikePost = (postId: string) => {
-    toggleLike(postId);
+    const target = myPosts.find((p) => p.id === postId);
+    if (!target) return;
+    const wasLiked = target.liked;
+    setMyPosts((prev) =>
+      prev.map((p) =>
+        p.id === postId
+          ? {
+              ...p,
+              liked: !wasLiked,
+              likesCount: p.likesCount + (wasLiked ? -1 : 1),
+            }
+          : p,
+      ),
+    );
+    const request = wasLiked ? unlikePost(postId) : likePost(postId);
+    request.catch((e) => {
+      console.error("Like toggle failed, reverting:", e);
+      setMyPosts((prev) =>
+        prev.map((p) =>
+          p.id === postId
+            ? {
+                ...p,
+                liked: wasLiked,
+                likesCount: p.likesCount + (wasLiked ? 1 : -1),
+              }
+            : p,
+        ),
+      );
+    });
   };
 
   // --- ሴቭ ተግባራት (Toggle save actions) ---
@@ -258,14 +288,12 @@ export default function Profile({
   };
 
   // --- አስተያየት መጨመርያ (Delegate to FeedContext) ---
-  const handleAddComment = (postId: string, text: string) => {
+  const handleAddComment = (postId: string, text: string) =>
     addComment(postId, text);
-  };
 
   // --- የአስተያየት ምላሽ (Delegate to FeedContext) ---
-  const handleAddReply = (postId: string, commentId: string, text: string) => {
+  const handleAddReply = (postId: string, commentId: string, text: string) =>
     addReply(postId, commentId, text);
-  };
 
   // --- የአስተያየት ማጥፊያ ማረጋገጫ (Comment deletion trigger) ---
   const handleDeleteComment = (postId: string, commentId: string) => {
@@ -388,7 +416,13 @@ export default function Profile({
 
   // --- ፖስት ማጋሪያ መቆጣጠሪያ (Delegate to FeedContext) ---
   const handleIncrementShare = (postId: string) => {
-    incrementShare(postId);
+    sharePost(postId)
+      .then(({ sharesCount }) =>
+        setMyPosts((prev) =>
+          prev.map((p) => (p.id === postId ? { ...p, sharesCount } : p)),
+        ),
+      )
+      .catch((e) => console.error("Share tracking failed:", e));
   };
   const handleSharePost = (postId: string) => {
     const found = myPosts.find((p) => p.id === postId) || null;
@@ -401,7 +435,6 @@ export default function Profile({
     setEditUsername(profile.username);
     setEditBio(profile.bio);
     setEditPhotoPreview(profile.photo);
-    setEditCoverPreview(profile.cover);
     setIsEditModalOpen(true);
   };
 
@@ -436,37 +469,22 @@ export default function Profile({
       "username";
 
     setIsSavingProfile(true);
+
     try {
-      // avatar/cover ገና local-only (storage ሲዘጋጅ real persist ይሆናል)
-      updateUser({ photo: editPhotoPreview, cover: editCoverPreview });
       await updateProfile({
         displayName: editName.trim(),
         username: sanitizedUsername,
         bio: editBio.trim(),
       });
+      // avatar/cover ገና local-only (storage ሲዘጋጅ real persist ይሆናል)
+
+      updateUser({ photo: editPhotoPreview });
       setIsEditModalOpen(false);
     } catch (e) {
       console.error("Failed to save profile:", e);
       alert("Profile ማስቀመጥ አልተቻለም። እንደገና ይሞክሩ።");
     } finally {
       setIsSavingProfile(false);
-    }
-  };
-  const handleCoverUploadChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const r = new FileReader();
-      r.onload = async (ev) => {
-        if (ev.target?.result) {
-          const compressed = await compressImage(
-            ev.target.result as string,
-            0.6,
-            800,
-          );
-          setEditCoverPreview(compressed);
-        }
-      };
-      r.readAsDataURL(file);
     }
   };
 
@@ -584,7 +602,10 @@ export default function Profile({
       />
 
       {/* 3. Bento-Grid of Videos and Photos (የልጥፎች መደርደሪያ) */}
-      <div className="max-w-4xl w-full mx-auto px-4 md:px-8 mb-6">
+      <div
+        id="profile-posts-grid"
+        className="max-w-4xl w-full mx-auto px-4 md:px-8 mb-6"
+      >
         {isLoadingMyPosts ? (
           <div className="text-center text-xs text-slate-400 py-10">
             Loading posts...
@@ -625,92 +646,48 @@ export default function Profile({
           ======================================================== */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 bg-surface flex flex-col">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+          {/* Header */}
+          <div className="flex items-center px-4 py-3 shrink-0 relative">
             <button
               onClick={() => setIsEditModalOpen(false)}
-              className="p-1.5 hover:bg-danger-hover text-one-text rounded-xl"
+              className="p-1.5 text-text rounded-full hover:bg-surface-raised z-10"
+              aria-label="Back"
             >
-              <X className="w-5 h-5" />
+              <ChevronLeft className="w-6 h-6" />
             </button>
-            <h3 className="text-base font-black tracking-tight text-text-h2">
+            <h3 className="absolute inset-x-0 text-center text-base font-black text-text-h2 pointer-events-none">
               Edit Profile
             </h3>
-            <button
-              onClick={handleSaveProfile}
-              disabled={isSavingProfile}
-              className="text-sm font-bold text-blue-600 disabled:opacity-50 px-2"
-            >
-              {isSavingProfile ? "Saving..." : "Save"}
-            </button>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-6 space-y-5">
-            <div>
-              <span className="block text-xs font-extrabold tracking-wider text-text uppercase mb-2">
-                Cover Photo Banner
-              </span>
-              <div
-                onClick={() => coverInputRef.current?.click()}
-                className="w-full h-28 rounded-xl bg-surface-raised border-2 border-dashed border-gray-200 flex flex-col items-center justify-center cursor-pointer overflow-hidden relative group"
-              >
-                {editCoverPreview ? (
-                  <>
-                    <img
-                      src={editCoverPreview}
-                      alt="Cover preview"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Camera className="w-6 h-6 text-white" />
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex flex-col items-center text-gray-400">
-                    <Camera className="w-6 h-6 mb-1 text-gray-300" />
-                    <span className="text-xs font-semibold">
-                      Change Banner Cover
-                    </span>
+          <div className="flex-1 overflow-y-auto px-5 pb-8">
+            <div className="max-w-md w-full mx-auto">
+              {/* Avatar */}
+              <div className="flex flex-col items-center mt-2 mb-6">
+                <div
+                  onClick={() => photoInputRef.current?.click()}
+                  className="relative w-36 h-36 cursor-pointer"
+                >
+                  <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
+                    {editPhotoPreview ? (
+                      <img
+                        src={editPhotoPreview}
+                        alt="Avatar preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Camera className="w-10 h-10 text-slate-400" />
+                    )}
                   </div>
-                )}
-              </div>
-              <input
-                type="file"
-                ref={coverInputRef}
-                onChange={handleCoverUploadChange}
-                accept="image/*"
-                className="hidden"
-              />
-            </div>
-
-            <div className="flex items-center gap-4">
-              <div
-                onClick={() => photoInputRef.current?.click()}
-                className="w-16 h-16 rounded-full bg-gray-50 border-2 border-dashed border-gray-200 flex items-center justify-center cursor-pointer overflow-hidden relative group shrink-0"
-              >
-                {editPhotoPreview ? (
-                  <>
-                    <img
-                      src={editPhotoPreview}
-                      alt="Avatar preview"
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Camera className="w-4 h-4 text-white" />
-                    </div>
-                  </>
-                ) : (
-                  <Camera className="w-5 h-5 text-gray-300" />
-                )}
-              </div>
-              <div className="flex-1">
-                <span className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1">
-                  Avatar
-                </span>
+                  <div className="absolute bottom-1 right-1 w-10 h-10 rounded-full bg-white shadow-md border border-slate-100 flex items-center justify-center">
+                    <Camera className="w-5 h-5 text-slate-700" />
+                  </div>
+                </div>
                 <button
                   onClick={() => photoInputRef.current?.click()}
-                  className="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 text-xs font-bold rounded-lg text-gray-700"
+                  className="mt-3 text-sm font-semibold text-blue-600 hover:underline"
                 >
-                  Select New Picture
+                  Change Photo
                 </button>
                 <input
                   type="file"
@@ -720,42 +697,61 @@ export default function Profile({
                   className="hidden"
                 />
               </div>
-            </div>
 
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1.5">
-                  Display Name
-                </label>
-                <input
-                  type="text"
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value.slice(0, 20))}
-                  className="w-full px-4 py-2.5 bg-input border border-input-border focus:border-input-focus focus:bg-surface-raised rounded-xl text-sm font-semibold"
-                />
+              {/* Fields */}
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-sm text-small-text mb-1.5">
+                    Display Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value.slice(0, 20))}
+                    className="w-full px-4 py-3 bg-input border border-input-border focus:border-input-focus outline-none rounded-xl text-base text-input-text"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-small-text mb-1.5">
+                    Username
+                  </label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base text-small-text select-none">
+                      @
+                    </span>
+                    <input
+                      type="text"
+                      value={editUsername}
+                      onChange={(e) =>
+                        setEditUsername(e.target.value.slice(0, 30))
+                      }
+                      className="w-full pl-9 pr-4 py-3 bg-input border border-input-border focus:border-input-focus outline-none rounded-xl text-base text-input-text"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm text-small-text mb-1.5">
+                    Bio
+                  </label>
+                  <textarea
+                    value={editBio}
+                    onChange={(e) => setEditBio(e.target.value.slice(0, 150))}
+                    rows={3}
+                    className="w-full px-4 py-3 bg-input border border-input-border focus:border-input-focus outline-none rounded-xl text-base text-input-text resize-none"
+                  />
+                </div>
               </div>
-              <div>
-                <label className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1.5">
-                  Username
-                </label>
-                <input
-                  type="text"
-                  value={editUsername}
-                  onChange={(e) => setEditUsername(e.target.value.slice(0, 30))}
-                  className="w-full px-4 py-2.5 bg-input border border-input-border focus:border-input-focus focus:bg-surface-raised rounded-xl text-sm font-semibold"
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-extrabold tracking-wider text-text uppercase mb-1.5">
-                  Professional Bio
-                </label>
-                <textarea
-                  value={editBio}
-                  onChange={(e) => setEditBio(e.target.value.slice(0, 150))}
-                  rows={3}
-                  className="w-full px-4 py-2.5 bg-surface-raised border border-input-border focus:border-blue-500 focus:bg-surface-raised rounded-xl text-sm font-semibold resize-none"
-                />
-              </div>
+
+              {/* Save */}
+              <button
+                onClick={handleSaveProfile}
+                disabled={isSavingProfile}
+                className="mt-8 w-full py-3.5 rounded-xl bg-brand hover:opacity-90 text-white text-base font-bold transition-opacity disabled:opacity-50"
+              >
+                {isSavingProfile ? "Saving..." : "Save"}
+              </button>
             </div>
           </div>
         </div>
@@ -845,6 +841,7 @@ export default function Profile({
           commentsMap={commentsMap}
           isLoadingComments={isLoadingComments}
           commentsError={commentsError}
+          loadComments={loadComments}
           loadMoreComments={loadMoreComments}
           hasMoreComments={hasMoreComments[selectedPost.id] ?? false}
           isLoadingMoreComments={isLoadingMoreComments}

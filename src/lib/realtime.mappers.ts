@@ -83,7 +83,7 @@ function senderLabel(
   fallbackUsername?: string,
 ): string {
   if (msg.userId === currentUserId) return "Me";
-  return msg.user.profile?.username ?? fallbackUsername ?? "Unknown";
+  return msg.user?.profile?.username ?? fallbackUsername ?? "Unknown";
 }
 
 /**
@@ -129,13 +129,17 @@ export function mapCommunityMessageToMessage(
     mediaType: mediaTypeToLower(msg.mediaType),
     isEdited: msg.isEdited,
     reactions: aggregateReactions(msg.reactions, currentUserId),
-      isPinned: msg.isPinned,
+    isPinned: msg.isPinned,
     createdAt: msg.createdAt,
-    clientMessageId:msg.clientMessageId ?? undefined,
+    senderAvatar: msg.user.profile?.avatar ?? undefined,
+    clientMessageId: msg.clientMessageId ?? undefined,
   };
 }
 
-export function mapChatMessageToMessage(msg: ChatMessageResponse, currentUserId: string): Message {
+export function mapChatMessageToMessage(
+  msg: ChatMessageResponse,
+  currentUserId: string,
+): Message {
   return {
     id: msg.id,
     senderName: senderLabel(msg, currentUserId),
@@ -241,7 +245,7 @@ export function mapConversationListItemToChat(
     return {
       id: item.id,
       name,
-           participantUsername: other?.profile?.username,
+      participantUsername: other?.profile?.username,
       participantUserId: other?.id,
       lastMsgText: previewText(item.lastMessage),
       lastMsgSender: item.lastMessage
@@ -293,7 +297,7 @@ export function mapConversationDetailToChat(
     return {
       id: item.id,
       name,
-           participantUsername: other?.profile?.username,
+      participantUsername: other?.profile?.username,
       participantUserId: other?.id,
       lastMsgText: "",
       lastMsgSender: "",

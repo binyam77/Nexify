@@ -97,7 +97,9 @@ function emitWithAck<T>(
 export function RealtimeProvider({ children }: { children: ReactNode }) {
   const { accessToken, isLoggedIn } = useAuth();
   const [isConnected, setIsConnected] = useState(false);
-  const [socket, setSocket] = useState<Socket | null>(null);
+    const [socket, setSocket] = useState<Socket | null>(null);
+  // token ሲደርስ (null → አለ) socket እንዲፈጠር — ከ Refresh በኋላ token ዘግይቶ ሲመጣ
+  const hasAccessToken = !!accessToken;
 
   // Connect once we have a token; fully disconnect on logout. Does NOT
   // reconnect on every accessToken change — see the effect below, which
@@ -132,7 +134,7 @@ export function RealtimeProvider({ children }: { children: ReactNode }) {
       nextSocket.off("disconnect", handleDisconnect);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally NOT re-running on every accessToken change, see comment above
-  }, [isLoggedIn]);
+    }, [isLoggedIn, hasAccessToken]);
   /* eslint-enable react-hooks/set-state-in-effect */
   // Keeps an already-connected socket's auth payload current so the NEXT
   // reconnect attempt (e.g. after a network blip) uses the latest token

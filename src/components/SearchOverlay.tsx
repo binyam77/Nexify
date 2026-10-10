@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { createPortal } from "react-dom";
 import {
   ArrowLeft,
   X,
@@ -86,19 +87,30 @@ export default function SearchOverlay({
     onSelectPost(post.id);
   }
 
-  return (
-    <div className="fixed inset-0 z-[100] bg-surface flex flex-col md:hidden">
+  // Portal → በቀጥታ document.body ላይ ይሳላል። ከ Home container እና ከ app layout
+  // stacking context/overflow/transform ነፃ ነው፣ ስለዚህ ከስር ያለ ምንም element
+  // (Mute icon ወዘተ) ከላይ ሊደርብ ወይም የ Back ንካን ሊውጥ አይችልም።
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[9999] bg-surface flex flex-col md:hidden"
+      // Overlay ውስጥ የሚደረግ ማንኛውም ንካ/click ወደ React ወላጆቹ (ለምሳሌ Home ውስጥ
+      // Search ን የሚከፍተው onClick) እንዳይወጣ። Portal ብንጠቀም React events
+      // በ component tree በኩል ወደ ወላጅ ይሰራጫሉ፣ ስለዚህ ይህ ግድ ነው።
+      onClick={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+    >
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-3 border-b border-input-border shrink-0">
-        <button
-          onMouseDown={(e) => e.preventDefault()}
+             <button
+          type="button"
           onClick={onClose}
           aria-label="Back"
-          className="p-1 text-input-text"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-input-text active:bg-input"
         >
           <ArrowLeft size={22} />
         </button>
-               <div className="flex-1 relative">
+        <div className="flex-1 relative">
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
@@ -223,6 +235,7 @@ export default function SearchOverlay({
           </div>
         )}
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

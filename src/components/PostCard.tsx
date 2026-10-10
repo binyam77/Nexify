@@ -31,6 +31,16 @@ interface PostCardProps {
 
 const DOUBLE_TAP_DELAY = 300;
 const HOLD_ACTIVATION_MS = 400;
+const HEART_SIZE = 96;
+
+// "0:07", "1:23" style formatting
+function formatDuration(seconds: number): string {
+  const mins = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60)
+    .toString()
+    .padStart(2, "0");
+  return `${mins}:${secs}`;
+}
 
 export default function PostCard({
   post,
@@ -79,20 +89,13 @@ export default function PostCard({
   const [videoDuration, setVideoDuration] = useState<number | null>(null);
   const [currentTime, setCurrentTime] = useState(0);
 
-  // "0:07", "1:23" style formatting — matches TikTok/Instagram's duration badge
-  function formatDuration(seconds: number): string {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60)
-      .toString()
-      .padStart(2, "0");
-    return `${mins}:${secs}`;
-  }
-
   const progressPercent =
     videoDuration && videoDuration > 0
       ? Math.min(100, (currentTime / videoDuration) * 100)
       : 0;
 
+  // Swiping to a different carousel slide resets any previous slide's error
+  // (render-time comparison — no useEffect needed).
   const [lastIndexForError, setLastIndexForError] = useState(currentIndex);
   if (currentIndex !== lastIndexForError) {
     setLastIndexForError(currentIndex);
@@ -104,6 +107,30 @@ export default function PostCard({
     setRetryNonce((n) => n + 1);
   }
 
+  // TikTok-style heart burst — each double-tap spawns one floating heart at
+  // the tap position, removed after its animation finishes.
+  const [hearts, setHearts] = useState<{ id: number; x: number; y: number }[]>(
+    [],
+  );
+  const heartIdRef = useRef(0);
+
+  function spawnHeart(x: number, y: number) {
+    const id = heartIdRef.current++;
+    setHearts((prev) => [...prev, { id, x, y }]);
+    setTimeout(() => setHearts((prev) => prev.filter((h) => h.id !== id)), 900);
+  }
+
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const [isPlaying, setIsPlaying] = useState(true);
+  const [isFastForwarding, setIsFastForwarding] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const lastTapRef = useRef<number>(0);
+  const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const holdTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isHoldingRef = useRef(false);
+
+  // Comments modal ሲከፈት ብቻ ነው ከ backend የምንጭነው
   useEffect(() => {
     if (isCommentsOpen) {
       void loadComments(post.id);
@@ -116,19 +143,10 @@ export default function PostCard({
   useEffect(() => {
     if (videoRef.current) {
       videoRef.current.muted = isMuted;
+      // ድምጽ ደረጃ በተጠቃሚው device (hardware) volume buttons ብቻ ነው የሚቆጣጠረው
       if (!isMuted) videoRef.current.volume = 1;
     }
   }, [isMuted]);
-
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const [isPlaying, setIsPlaying] = useState(true);
-  const [isFastForwarding, setIsFastForwarding] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
-  const lastTapRef = useRef<number>(0);
-  const tapTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const holdTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const isHoldingRef = useRef(false);
 
   function clearHoldTimer() {
     if (holdTimeoutRef.current) {
@@ -164,13 +182,17 @@ export default function PostCard({
     return () => observer.disconnect();
   }, [onView]);
 
-  function handleMediaTap() {
+  // Single tap = play/pause (video only), double tap = like + heart burst.
+  function handleMediaTap(clientX: number, clientY: number, rect: DOMRect) {
     const now = Date.now();
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
       if (tapTimeoutRef.current) {
         clearTimeout(tapTimeoutRef.current);
         tapTimeoutRef.current = null;
       }
+      // ልቡ በእያንዳንዱ double-tap ይታያል (አስቀድሞ like ቢሆንም — TikTok እንደሚያደርገው)፣
+      // ግን ይህ gesture ሁልጊዜ like ብቻ ያደርጋል፣ unlike አያደርግም።
+      spawnHeart(clientX - rect.left, clientY - rect.top);
       if (!liked) toggleLikePost(post.id);
       lastTapRef.current = 0;
     } else {
@@ -197,10 +219,14 @@ export default function PostCard({
     }, HOLD_ACTIVATION_MS);
   }
 
-  function handleVideoPointerUp() {
+  function handleVideoPointerUp(e: React.PointerEvent<HTMLDivElement>) {
     const wasHold = endHold();
     if (wasHold) return;
-    handleMediaTap();
+    handleMediaTap(
+      e.clientX,
+      e.clientY,
+      e.currentTarget.getBoundingClientRect(),
+    );
   }
 
   function handleVideoPointerLeave() {
@@ -218,7 +244,6 @@ export default function PostCard({
 
   const isMultiPhoto = post.type === "photo" && post.mediaUrls.length > 1;
 
-  // ⚠️ Assumption: profile route is `/profile/:username`
   function goToProfile() {
     navigate(`/profile/${post.username}`);
   }
@@ -238,6 +263,7 @@ export default function PostCard({
         </div>
       )}
 
+      {/* ===== Media Area ===== */}
       {post.type === "video" ? (
         <div
           className="absolute inset-0 bg-black md:relative md:relative md:h-[92vh] md:w-auto 
@@ -259,7 +285,7 @@ export default function PostCard({
             onError={(e) => {
               const mediaErr = e.currentTarget.error;
               console.error("Video load failed:", {
-                code: mediaErr?.code,
+                code: mediaErr?.code, // 1=ABORTED 2=NETWORK 3=DECODE 4=SRC_NOT_SUPPORTED
                 message: mediaErr?.message,
                 src: post.mediaUrls[0],
               });
@@ -282,17 +308,13 @@ export default function PostCard({
             </div>
           )}
 
+          {/* Mute/unmute toggle — volume LEVEL ራሱ device-hardware ብቻ */}
           <div
-            className="absolute top-14 right-3 md:top-3 z-30 flex items-center gap-2"
+            className="absolute top-14 right-3 md:top-3 z-30"
             onPointerDown={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
           >
-            {videoDuration !== null && (
-              <span className="bg-black/50 backdrop-blur-sm rounded-full px-2.5 py-1 text-xs font-semibold text-white tabular-nums">
-                {formatDuration(currentTime)} / {formatDuration(videoDuration)}
-              </span>
-            )}
             <button
               onClick={async (e) => {
                 e.stopPropagation();
@@ -330,20 +352,41 @@ export default function PostCard({
             </div>
           )}
 
-          {/* Progress bar — fills in step with playback (onTimeUpdate-driven),
-              resets to 0 on loop since currentTime itself resets. */}
-          <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-white/20 pointer-events-none">
-            <div
-              className="h-full bg-white"
-              style={{ width: `${progressPercent}%` }}
-            />
-          </div>
+          {/* Progress line + ጊዜ በቀኝ ጫፍ — በሞባይል bottom nav በላይ (4.75rem)፣
+              በ desktop ደግሞ card ግርጌ። Nav ከፍታ ከተለየ ይሄን ቁጥር አስተካክል። */}
+          {videoDuration !== null && (
+            <div className="absolute left-3 right-3 bottom-[4.75rem] md:bottom-3 z-20 flex items-center gap-2.5 pointer-events-none">
+              <div className="relative h-1 flex-1 rounded-full bg-white/25">
+                <div
+                  className="h-full rounded-full bg-white"
+                  style={{ width: `${progressPercent}%` }}
+                />
+                <div
+                  className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow"
+                  style={{ left: `${progressPercent}%` }}
+                />
+              </div>
+              <span className="text-[11px] font-semibold text-white tabular-nums drop-shadow">
+                {formatDuration(currentTime)} / {formatDuration(videoDuration)}
+              </span>
+            </div>
+          )}
+
+          {hearts.map((h) => (
+            <FloatingHeart key={h.id} x={h.x} y={h.y} />
+          ))}
         </div>
       ) : (
         <div
           className="absolute inset-0 bg-black overflow-hidden md:relative md:h-[92vh] md:w-auto 
         md:aspect-[9/16] md:max-w-[420px] md:rounded-2xl"
-          onClick={handleMediaTap}
+          onClick={(e) =>
+            handleMediaTap(
+              e.clientX,
+              e.clientY,
+              e.currentTarget.getBoundingClientRect(),
+            )
+          }
         >
           <div
             className="flex h-full transition-transform duration-300 ease-out"
@@ -416,9 +459,14 @@ export default function PostCard({
               </div>
             </>
           )}
+
+          {hearts.map((h) => (
+            <FloatingHeart key={h.id} x={h.x} y={h.y} />
+          ))}
         </div>
       )}
 
+      {/* Media load failure overlay — z-10: ከ media በላይ፣ ከሁሉም chrome (z-20/30) በታች */}
       {mediaError && (
         <div className="absolute inset-0 z-10 bg-black flex flex-col items-center justify-center gap-3 text-white">
           <WifiOff className="w-10 h-10 opacity-70" />
@@ -433,7 +481,8 @@ export default function PostCard({
         </div>
       )}
 
-      <div className="absolute bottom-20 left-3 right-16 z-20 md:bottom-8">
+      {/* ===== User Info (bottom left) ===== */}
+      <div className="absolute bottom-24 left-3 right-16 z-20 md:bottom-8">
         <div className="flex items-center gap-2.5 mb-2">
           <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white bg-gray-400 shrink-0">
             {post.userAvatar ? (
@@ -476,7 +525,9 @@ export default function PostCard({
             <p
               className={`text-white text-xs leading-relaxed drop-shadow md:text-input-text 
             transition-all ${captionExpanded ? "" : "line-clamp-2"}`}
-            ></p>
+            >
+              {post.caption}
+            </p>
             {post.caption.length > 80 && (
               <button
                 onClick={(e) => {
@@ -490,20 +541,11 @@ export default function PostCard({
             )}
           </div>
         )}
-        {post.type === "video" && (
-          <div className="mt-1.5 flex items-center gap-1.5 text-white/90 md:text-input-text">
-            <div
-              className={`w-3.5 h-3.5 rounded-full bg-gradient-to-br from-zinc-200 to-zinc-500 shrink-0 ${isPlaying ? "animate-spin" : ""}`}
-            />
-            <span className="text-[11px] font-medium truncate">
-              Original sound - @{post.username}
-            </span>
-          </div>
-        )}
       </div>
 
+      {/* ===== Action Buttons (right side) ===== */}
       <div
-        className="absolute bottom-20 right-3 z-20 flex flex-col items-center gap-4
+        className="absolute bottom-24 right-3 z-20 flex flex-col items-center gap-4
 md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
       >
         <ActionBtn
@@ -511,6 +553,7 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
           label={likeCount}
           active={liked}
           activeColor="text-rose-500"
+          popOnActivate
           onClick={() => toggleLikePost(post.id)}
         />
         <ActionBtn
@@ -561,6 +604,7 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
         </button>
       </div>
 
+      {/* ===== Comments Modal ===== */}
       {isCommentsOpen && (
         <CommentModal
           comments={comments}
@@ -588,22 +632,72 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
   );
 }
 
+// Double-tap ላይ በመንካት ቦታ ብቅ ብሎ የሚጠፋ ትልቅ ልብ። Web Animations API በ mount
+// ላይ 1 ጊዜ ብቻ ነው የሚሰራው፣ ስለዚህ CSS keyframes ፋይል መንካት አያስፈልግም።
+function FloatingHeart({ x, y }: { x: number; y: number }) {
+  const ref = useRef<SVGSVGElement>(null);
+
+  useEffect(() => {
+    ref.current?.animate(
+      [
+        { transform: "scale(0.3) rotate(-12deg)", opacity: 0 },
+        { transform: "scale(1.25) rotate(-8deg)", opacity: 1, offset: 0.3 },
+        { transform: "scale(1) rotate(-8deg)", opacity: 1, offset: 0.65 },
+        { transform: "scale(1.1) translateY(-40px) rotate(-8deg)", opacity: 0 },
+      ],
+      { duration: 850, easing: "ease-out", fill: "forwards" },
+    );
+  }, []);
+
+  return (
+    <Heart
+      ref={ref}
+      size={HEART_SIZE}
+      fill="currentColor"
+      className="absolute z-20 pointer-events-none text-rose-500 drop-shadow-lg"
+      style={{ left: x - HEART_SIZE / 2, top: y - HEART_SIZE / 2 }}
+    />
+  );
+}
+
 function ActionBtn({
   icon,
   label,
   active,
   activeColor,
   onClick,
+  popOnActivate = false,
 }: {
   icon: React.ReactNode;
   label: number;
   active: boolean;
   activeColor: string;
   onClick: () => void;
+  popOnActivate?: boolean;
 }) {
+  const iconRef = useRef<HTMLDivElement>(null);
+  const wasActive = useRef(active);
+
+  // ከ false → true ሲቀየር ብቻ (Like ሲነቃ) አንድ ጊዜ pop ያደርጋል፤ ገጹ ሲጫን
+  // አስቀድሞ liked የሆኑ ፖስቶች ላይ አይነሳም።
+  useEffect(() => {
+    if (popOnActivate && active && !wasActive.current) {
+      iconRef.current?.animate(
+        [
+          { transform: "scale(1)" },
+          { transform: "scale(1.4)" },
+          { transform: "scale(1)" },
+        ],
+        { duration: 300, easing: "ease-out" },
+      );
+    }
+    wasActive.current = active;
+  }, [active, popOnActivate]);
+
   return (
     <button onClick={onClick} className="flex flex-col items-center gap-0.5">
       <div
+        ref={iconRef}
         className={`w-12 h-11 rounded-full flex items-center justify-center transition-colors
           shadow-lg drop-shadow-lg md:bg-surface md:shadow-md
            ${active ? activeColor : "text-white md:text-input-text"}`}

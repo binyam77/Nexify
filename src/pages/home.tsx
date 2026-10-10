@@ -5,11 +5,17 @@ import PostCard from "../components/PostCard";
 import avatarImg from "../assets/user.png";
 import { useAuth } from "../context/AuthContext";
 import { useFeed } from "../context/FeedContext";
-import { ChevronUp, ChevronDown, Loader2, Search, WifiOff,Video } from "lucide-react";
+import {
+  ChevronUp,
+  ChevronDown,
+  Loader2,
+  Search,
+  WifiOff,
+  Video,
+} from "lucide-react";
 import type { User } from "../types";
 import SearchOverlay from "../components/SearchOverlay";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
-
 
 // Feed's end ጋር ይሄን ያህል ሲቀር ነው loadMore() የሚነሳው (scroll ላይ delay እንዳይሰማ)
 const PREFETCH_THRESHOLD = 3;
@@ -55,7 +61,7 @@ export default function Home() {
     setCurrentIndex((i) => Math.max(i - 1, 0));
   }, []);
 
-   // Infinite scroll — feed's end ጋር ስንደርስ ቀጣይ page በራሱ ይጫናል።
+  // Infinite scroll — feed's end ጋር ስንደርስ ቀጣይ page በራሱ ይጫናል።
   // `!loadMoreError` ካልጨመርን፣ 1 failure ከሆነ በኋላ isLoadingMore→false ተመልሶ
   // effect ራሱ ወዲያውኑ ደግሞ loadMore() ይጠራል (Retry banner ቢታይም ጀርባ ላይ
   // ደጋግሞ ይሞክራል) — ይሄ ያንን silent retry-storm ያስቆማል፣ ተጠቃሚው Retry
@@ -69,7 +75,14 @@ export default function Home() {
     ) {
       void loadMore();
     }
-  }, [currentIndex, posts.length, hasMore, isLoadingMore, loadMoreError, loadMore]);
+  }, [
+    currentIndex,
+    posts.length,
+    hasMore,
+    isLoadingMore,
+    loadMoreError,
+    loadMore,
+  ]);
 
   // ① Keyboard — desktop
   useEffect(() => {
@@ -122,7 +135,7 @@ export default function Home() {
       document.removeEventListener("touchend", onEnd);
     };
   }, [goNext, goPrev]);
- // ምንም ግንኙነት ከሌለ like/comment/share ጨርሶ ማድረግ አይቻልም — PostCard ራሱ
+  // ምንም ግንኙነት ከሌለ like/comment/share ጨርሶ ማድረግ አይቻልም — PostCard ራሱ
   // render አይደረግም። Browser's online event ሲመለስ overlay ራሱ በራሱ ይጠፋል።
   if (!isOnline) {
     return (
@@ -175,7 +188,7 @@ export default function Home() {
         <Search size={18} />
         {isSearchOpen && (
           <SearchOverlay
-            onClose={() => setIsSearchOpen(false)}
+                      onClose={() => setIsSearchOpen(false)}
             onSelectPost={(postId) => {
               setIsSearchOpen(false);
               navigate(`/post/${postId}`);
@@ -184,24 +197,35 @@ export default function Home() {
         )}
       </button>
       <div className="h-full w-full flex items-center justify-center">
-        <PostCard
-          key={posts[currentIndex]?.id}
-          post={posts[currentIndex]}
-          currentUser={currentUser}
-          onView={() => incrementView(posts[currentIndex]?.id)}
-          onMessageUser={handleMessageUser}
-        />
+        {/* Search ክፍት ሆኖ ሳለ PostCard ጨርሶ አይሰራም (unmount) — የ Mute/Like
+            ወዘተ icons ከ Search UI ጋር እንዳይደራረቡ፣ እና ቪዲዮው ከጀርባ ድምፅ
+            እንዳያሰማ። Search ሲዘጋ PostCard ተመልሶ ይጫናል። */}
+        {!isSearchOpen && (
+          <PostCard
+            key={posts[currentIndex]?.id}
+            post={posts[currentIndex]}
+            currentUser={currentUser}
+            onView={() => incrementView(posts[currentIndex]?.id)}
+            onMessageUser={handleMessageUser}
+          />
+        )}
       </div>
 
-           {/* Desktop scroll arrows only */}
+      {/* Desktop scroll arrows only */}
       {posts.length > 1 && (
         <div className="hidden md:flex fixed right-8 top-1/2 -translate-y-1/2 flex-col gap-3 z-50">
-          <button onClick={goPrev} disabled={currentIndex === 0}
-            className="w-10 h-10 rounded-full bg-input/90 hover:bg-input shadow-lg flex items-center justify-center text-input-text disabled:opacity-30 transition-all">
+          <button
+            onClick={goPrev}
+            disabled={currentIndex === 0}
+            className="w-10 h-10 rounded-full bg-input/90 hover:bg-input shadow-lg flex items-center justify-center text-input-text disabled:opacity-30 transition-all"
+          >
             <ChevronUp className="w-5 h-5" />
           </button>
-          <button onClick={goNext} disabled={currentIndex === posts.length - 1 && !hasMore}
-            className="w-10 h-10 rounded-full bg-input/90 hover:bg-input shadow-lg flex items-center justify-center text-input-text disabled:opacity-30 transition-all">
+          <button
+            onClick={goNext}
+            disabled={currentIndex === posts.length - 1 && !hasMore}
+            className="w-10 h-10 rounded-full bg-input/90 hover:bg-input shadow-lg flex items-center justify-center text-input-text disabled:opacity-30 transition-all"
+          >
             <ChevronDown className="w-5 h-5" />
           </button>
         </div>

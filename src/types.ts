@@ -88,7 +88,8 @@ export interface Message {
   reactions?: { emoji: string; count: number; users: string[] }[]; // ተጠቃሚዎች የሰጡት ምላሽ (List of user reactions to this message)
   seen?: boolean; //ተቀባይ አይቶታል ወይ (Read receipt) — TODO: backend ሲመጣ Socket.IO 'message:read' event ይህን ያዘምናል
   isPinned?: boolean; // Group/Channel admin የሰካው መልዕክት
-   createdAt?: string; // ISO — የ channel post "now / 5m / 2h" አንጻራዊ ሰዓት ለማስላት
+  createdAt?: string; // ISO — የ channel post "now / 5m / 2h" አንጻራዊ ሰዓት ለማስላት
+  senderAvatar?: string; // የላኪ ፎቶ URL (Group bubble ላይ ይታያል)
   pending?: boolean; // Offline queue ውስጥ እየጠበቀ ነው ወይም እየተላከ ነው (not yet server-confirmed)
   clientMessageId?: string; // Optimistic entry ን ከ real broadcast ጋር ለማዛመድ (reconciliation) ብቻ ጥቅም ላይ ይውላል — UI ላይ አይታይም
 }

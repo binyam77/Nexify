@@ -10,7 +10,7 @@ import type { Chat } from "../types";
 interface NewChannelModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onCreateChannel: (newChat: Chat) => void;
+  onCreateChannel: (newChat: Chat) => Promise<boolean> | boolean | void;
 }
 // ሁሉም አዲስ channel በነባሪ ሰማያዊ (Ocean Blue) — የቀለም ምርጫ ተወግዷል
 const DEFAULT_THEME = "bg-gradient-2";
@@ -26,6 +26,7 @@ export default function NewChannelModal({
   const [avatarUrl, setAvatarUrl] = useState<string>("");
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   if (!isOpen) return null;
@@ -57,10 +58,10 @@ export default function NewChannelModal({
     if (fileInputRef.current) fileInputRef.current.value = "";
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const trimmedName = name.trim();
-    if (!trimmedName) return;
+    if (!trimmedName || isSubmitting) return;
 
     const words = trimmedName.split(" ");
     const avatarLabel =
@@ -89,7 +90,16 @@ export default function NewChannelModal({
       isCreatedByMe: true,
     };
 
-    onCreateChannel(newChat);
+    setIsSubmitting(true);
+    let ok: boolean | void = false;
+    try {
+      ok = await onCreateChannel(newChat);
+    } finally {
+      setIsSubmitting(false);
+    }
+    // አልተሳካም (ለምሳሌ ግንኙነት የለም) → ፎርሙ ክፍት ይቆያል፣ የተጻፈው አይጠፋም
+    if (ok === false) return;
+
     setAvatarUrl("");
     setName("");
     setBio("");
@@ -207,7 +217,7 @@ export default function NewChannelModal({
         <div className="max-w-lg mx-auto">
           <button
             onClick={handleSubmit}
-            disabled={!name.trim()}
+            disabled={!name.trim() || isSubmitting}
             className="w-full py-3.5 bg-brand hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-brand text-white text-sm font-extrabold rounded-2xl transition-all shadow-md"
           >
             Create Channel

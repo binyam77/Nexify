@@ -20,8 +20,9 @@ interface ChatsSidebarProps {
   onRetrySuggested?: () => void;
   suggestedSearchQuery?: string;
   onSuggestedSearchChange?: (query: string) => void;
+  listError?: string | null;
+  onRetryList?: () => void;
 }
-
 // Title: ChatsSidebar Component (Messages inbox + Communities discovery)
 export default function ChatsSidebar({
   chats,
@@ -35,6 +36,8 @@ export default function ChatsSidebar({
   onRetrySuggested,
   suggestedSearchQuery = "",
   onSuggestedSearchChange,
+  listError = null,
+  onRetryList,
 }: ChatsSidebarProps) {
   // አንድ ነጠላ search — ዋጋው በ parent ይያዛል (debounced public search ያንቀሳቅሳል)
   const searchQuery = suggestedSearchQuery;
@@ -147,6 +150,23 @@ export default function ChatsSidebar({
       </div>
       {/* ===== ነጠላ ዝርዝር: My chats + (ሲፈለግ) Public results ===== */}
       <div className="flex-1 overflow-y-auto">
+            {listError && (
+          <div className="mx-4 mt-3 p-3 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-rose-700">
+                Couldn't load your chats
+              </p>
+              <p className="text-[11px] text-rose-500 truncate">{listError}</p>
+            </div>
+            <button
+              onClick={onRetryList}
+              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shrink-0"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
         {!isSearching && joinedChats.length === 0 && (
           <div className="flex flex-col items-center justify-center p-8 text-center h-full">
             <Globe className="w-10 h-10 text-gray-300 mb-3" />

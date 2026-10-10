@@ -56,6 +56,17 @@ import {
   mapChatMessageToMessage,
 } from "../lib/realtime.mappers";
 import { useRealtime } from "../context/RealtimeContext";
+import { useConnectionGate } from "../hooks/useConnectionGate";
+import { isServerReachable } from "../lib/connection-check";
+
+// ስህተቱን ለተጠቃሚ (እና ለ debug) የሚታይ አጭር ጽሑፍ ማድረግ
+function describeError(err: unknown): string {
+  if (err instanceof Error && err.message) return err.message;
+  if (typeof err === "object" && err !== null && "message" in err) {
+    return String((err as { message: unknown }).message);
+  }
+  return "Unknown error";
+}
 // ==========================================
 // Title: This is the primary Community.tsx file
 // ==========================================
@@ -88,6 +99,15 @@ export default function Community() {
   const [suggestedSearchQuery, setSuggestedSearchQuery] = useState("");
   // የመጨረሻው (trimmed) የ search ጽሑፍ — ያረጀ response ዝርዝሩን እንዳይበክል
   const latestSearchRef = useRef("");
+  // የተቀላቀልናቸው realtime rooms — ግንኙነት ተመልሶ socket አዲስ ሲሆን ዳግም ለመቀላቀል
+  const joinedRoomsRef = useRef<Set<string>>(new Set());
+  // ዝርዝር መጫን ሲወድቅ — በዝርዝሩ ላይ በቋሚነት ይታያል (ከ toast በተለየ አይጠፋም)
+  const [listErrors, setListErrors] = useState<{
+    mine?: string;
+    chats?: string;
+  }>({});
+  // የ server መድረስ ፍተሻ ሁለቴ እንዳይጀመር
+  const checkingConnectionRef = useRef(false);
 
   // User profile details (Current member profile loaded dynamically from localStorage)
   const { user, accessToken } = useAuth();
@@ -101,6 +121,9 @@ export default function Community() {
     stopTyping,
     getOnlineUsers,
   } = useRealtime();
+  // ግንኙነት ደካማ/የለም ከሆነ Community አይሰራም
+  const { isUsable: canUseCommunity, browserOnline } =
+    useConnectionGate(isConnected);
   const userProfile = {
     name: user?.name || user?.username || "User",
     role: user?.bio?.split(".")[0] || "Developer",
@@ -130,6 +153,30 @@ export default function Community() {
     setTimeout(() => setToastMessage(null), 3000);
   };
 
+  // ግንኙነት ከሌለ ለ server ድርጊቶች አጭር መልእክት ብቻ (ምንም አይቀየርም)
+  // ለ edit/delete/pin/react: browser offline ከሆነ አጭር መልእክት (socket ሁኔታ አይመለከትም)
+  const requireConnection = (): boolean => {
+    if (browserOnline) return true;
+    triggerToast("No connection — try again when you're back online.");
+    return false;
+  };
+
+  // "+" ካርድ ውስጥ Create ከመግባት በፊት: server በ 4 ሰከንድ ውስጥ ይደረሳል?
+  // (ደካማ/የለም → አይገባም፣ ካርዱ ክፍት ይቆያል)
+  const ensureReachable = async (): Promise<boolean> => {
+    if (!accessToken || checkingConnectionRef.current) return false;
+    checkingConnectionRef.current = true;
+    try {
+      const ok = await isServerReachable(accessToken);
+      if (!ok) {
+        triggerToast("Weak or no connection — can't create right now.");
+      }
+      return ok;
+    } finally {
+      checkingConnectionRef.current = false;
+    }
+  };
+
   // ================= LOAD COMMUNITIES: "Mine" (joined) =================
   const loadMine = async (token: string, currentUserId: string) => {
     try {
@@ -137,6 +184,7 @@ export default function Community() {
       const mineChats = mine.items.map((item) =>
         mapCommunityListItemToChat(item, currentUserId),
       );
+      setListErrors((p) => ({ ...p, mine: undefined }));
       setChats((prev) => {
         // ቀድሞ የነበሩ "mine" community entries ብቻ ይተካሉ — suggested communities
         // እና ሁሉም conversation entries (chat/privateGroup) አይነኩም
@@ -147,7 +195,7 @@ export default function Community() {
       });
     } catch (err) {
       console.error("Failed to load your communities:", err);
-      triggerToast("⚠️ Could not load your communities.");
+      setListErrors((p) => ({ ...p, mine: describeError(err) }));
     }
   };
 
@@ -158,6 +206,7 @@ export default function Community() {
       const conversationChats = result.items.map((item) =>
         mapConversationListItemToChat(item, currentUserId),
       );
+      setListErrors((p) => ({ ...p, chats: undefined }));
       setChats((prev) => {
         const withoutConversations = prev.filter(
           (c) => c.type !== "chat" && c.type !== "privateGroup",
@@ -170,7 +219,7 @@ export default function Community() {
       });
     } catch (err) {
       console.error("Failed to load your chats:", err);
-      triggerToast("⚠️ Could not load your chats.");
+      setListErrors((p) => ({ ...p, chats: describeError(err) }));
     }
   };
 
@@ -199,6 +248,12 @@ export default function Community() {
     } finally {
       setIsLoadingSuggested(false);
     }
+  };
+
+  const retryLists = () => {
+    if (!accessToken || !user) return;
+    void loadMine(accessToken, user.id);
+    void loadConversations(accessToken, user.id);
   };
 
   const handleRetrySuggested = () => {
@@ -425,8 +480,22 @@ export default function Community() {
   // ================= OFFLINE QUEUE: flush on (re)connect =================
   useEffect(() => {
     if (!socket) return;
+    const flushQueue = async () => {
+      // ገና አልተገናኘም → ቆይ፤ socket "connect" ሲል ዳግም ይጠራል
+      if (!socket.connected) return;
 
-    const flushQueue = () => {
+      // 1) rooms ን ዳግም ተቀላቀል — አዲስ socket ከ rooms ውጪ ነው፤ ካልተቀላቀለ
+      //    የላክነው መልዕክት ተመልሶ አይደርስም ("Waiting…" አይጠፋም) እና live መልዕክት ይቆማል
+      const roomKeys = new Set(joinedRoomsRef.current);
+      getQueue().forEach((m) => roomKeys.add(`${m.scope}:${m.targetId}`));
+      await Promise.allSettled(
+        [...roomKeys].map((key) => {
+          const [scope, targetId] = key.split(":");
+          return joinRoom(scope as "community" | "conversation", targetId);
+        }),
+      );
+
+      // 2) "Waiting…" መልዕክቶችን ላክ — clientMessageId idempotent ስለሆነ ሁለቴ አይፈጠርም
       getQueue().forEach((m) => {
         sendMessage({
           scope: m.scope,
@@ -441,19 +510,24 @@ export default function Community() {
             err,
           );
         });
-        // Not dequeued here — Patch F5's handleMessageNew dequeues once the
-        // server actually confirms the message (persisted or already-was).
+        // Not dequeued here — handleMessageNew dequeues once the server
+        // actually confirms the message (persisted or already-was).
       });
     };
 
-    socket.on("connect", flushQueue);
-    window.addEventListener("online", flushQueue);
-    flushQueue(); // also try immediately, in case we're already connected on mount
+    const onReconnect = () => {
+      void flushQueue();
+    };
+
+    socket.on("connect", onReconnect);
+    window.addEventListener("online", onReconnect);
+    onReconnect(); // already connected on mount? (ያልተገናኘ ከሆነ ራሱ ይወጣል)
 
     return () => {
-      socket.off("connect", flushQueue);
-      window.removeEventListener("online", flushQueue);
+      socket.off("connect", onReconnect);
+      window.removeEventListener("online", onReconnect);
     };
+
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sendMessage is recreated every render; flushQueue reads current values via closure each time this effect re-runs on socket identity change
   }, [socket]);
   // Total unread messages count for active chats to display on the sidebar
@@ -603,6 +677,7 @@ export default function Community() {
     if (isCommunityChat(target)) {
       try {
         await joinRoom("community", chatId);
+        joinedRoomsRef.current.add(`community:${chatId}`);
       } catch (err) {
         console.error("Failed to join realtime room:", err);
       }
@@ -623,6 +698,7 @@ export default function Community() {
     if (isConversationChat(target)) {
       try {
         await joinRoom("conversation", chatId);
+        joinedRoomsRef.current.add(`conversation:${chatId}`);
       } catch (err) {
         console.error("Failed to join realtime room:", err);
       }
@@ -665,7 +741,7 @@ export default function Community() {
       id: `pending-${clientMessageId}`,
       senderName: "Me",
       text,
-      time: getFormattedDateTime(),
+      time: canUseCommunity ? getFormattedDateTime() : "Waiting…",
       isSentByMe: true,
       mediaUrl,
       mediaType,
@@ -678,31 +754,40 @@ export default function Community() {
       [activeChatId]: [...(prev[activeChatId] || []), optimisticMsg],
     }));
 
-    sendMessage({
+    const queued = {
+      clientMessageId,
       scope,
       targetId: activeChatId,
       text: text || undefined,
       mediaUrl,
       mediaType: backendMediaType,
-      clientMessageId,
-    }).catch((err) => {
-      console.error("Failed to send message, queuing for retry:", err);
-      enqueue({
-        clientMessageId,
-        scope,
-        targetId: activeChatId,
-        text: text || undefined,
-        mediaUrl,
-        mediaType: backendMediaType,
-        createdAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    };
+
+    // ግንኙነት የለም/ደካማ → መልዕክቱ "Waiting…" ሆኖ ይቆያል፤ ሲመለስ በራሱ ይላካል
+    if (!canUseCommunity) {
+      enqueue(queued);
+      return;
+    }
+
+    Promise.resolve()
+      .then(() =>
+        sendMessage({
+          scope,
+          targetId: activeChatId,
+          text: text || undefined,
+          mediaUrl,
+          mediaType: backendMediaType,
+          clientMessageId,
+        }),
+      )
+      .catch((err) => {
+        console.error("Failed to send message, queuing for retry:", err);
+        enqueue(queued); // ጸጥ ብሎ "Waiting…" ሆኖ ይቆያል
       });
-      triggerToast(
-        "📡 No connection — message queued, will send automatically.",
-      );
-    });
   };
   const handleEditMessage = async (messageId: string, newText: string) => {
-    if (!activeChatId) return;
+    if (!activeChatId || !requireConnection()) return;
     const targetChat = chats.find((c) => c.id === activeChatId);
 
     if (isCommunityChat(targetChat)) {
@@ -745,7 +830,7 @@ export default function Community() {
   };
   // Delete message logic (removes message and dynamically recalculates sidebar preview)
   const handleDeleteMessage = async (messageId: string) => {
-    if (!activeChatId) return;
+    if (!activeChatId || !requireConnection()) return;
     const targetChat = chats.find((c) => c.id === activeChatId);
 
     if (isCommunityChat(targetChat)) {
@@ -812,7 +897,7 @@ export default function Community() {
   };
   // Pin/Unpin message toggle (Group/Channel ብቻ)
   const handlePinMessage = async (messageId: string) => {
-    if (!activeChatId) return;
+    if (!activeChatId || !requireConnection()) return;
     const targetChat = chats.find((c) => c.id === activeChatId);
     if (!isCommunityChat(targetChat) || !accessToken) return;
 
@@ -834,7 +919,7 @@ export default function Community() {
 
   // Reaction logic (Allows at most one selected reaction per message per user)
   const handleReactMessage = async (messageId: string, emoji: string) => {
-    if (!activeChatId || !accessToken || !user) return;
+    if (!activeChatId || !accessToken || !user || !requireConnection()) return;
     const targetChat = chats.find((c) => c.id === activeChatId);
     if (!isCommunityChat(targetChat)) return;
 
@@ -985,8 +1070,9 @@ export default function Community() {
   const handleCreateGroup = async (
     newChat: Chat,
     initialMembers: SelectableUser[],
-  ) => {
-    if (!accessToken) return;
+  ): Promise<boolean> => {
+    if (!requireConnection()) return false;
+    if (!accessToken) return false;
     try {
       const created = await createCommunityRequest(accessToken, {
         type: "GROUP",
@@ -1019,15 +1105,18 @@ export default function Community() {
       triggerToast(
         `🚀 Group "${finalChat.name}" created successfully${memberNote}!`,
       );
+      return true;
     } catch (err) {
       console.error("Failed to create group:", err);
       triggerToast("⚠️ Failed to create group. Please try again.");
+      return false;
     }
   };
 
   // Create new channel logic
-  const handleCreateChannel = async (newChat: Chat) => {
-    if (!accessToken) return;
+  const handleCreateChannel = async (newChat: Chat): Promise<boolean> => {
+    if (!requireConnection()) return false;
+    if (!accessToken) return false;
     try {
       const created = await createCommunityRequest(accessToken, {
         type: "CHANNEL",
@@ -1052,9 +1141,11 @@ export default function Community() {
       setMessagesDb((prev) => ({ ...prev, [finalChat.id]: [] }));
       setActiveChatId(finalChat.id);
       triggerToast(`📢 Channel "${finalChat.name}" created successfully!`);
+      return true;
     } catch (err) {
       console.error("Failed to create channel:", err);
       triggerToast("⚠️ Failed to create channel. Please try again.");
+      return false;
     }
   };
 
@@ -1167,7 +1258,7 @@ export default function Community() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeChatId, isCreateFlowOpen]);
   return (
-    <div className="flex w-full h-screen overflow-hidden bg-gray-50 text-gray-900 font-sans md:relative">
+    <div className="flex w-full h-screen overflow-hidden bg-gray-50 text-gray-900 font-sans relative">
       {/* Toast Notification */}
       {toastMessage && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 bg-gray-900 border border-gray-800 text-white font-extrabold text-xs md:text-sm px-5 py-3 rounded-xl shadow-2xl flex items-center gap-2.5 z-[100] animate-bounce select-none">
@@ -1199,6 +1290,8 @@ export default function Community() {
                 onRetrySuggested={handleRetrySuggested}
                 suggestedSearchQuery={suggestedSearchQuery}
                 onSuggestedSearchChange={setSuggestedSearchQuery}
+                listError={listErrors.mine ?? listErrors.chats ?? null}
+                onRetryList={retryLists}
               />
             </div>
 
@@ -1246,11 +1339,13 @@ export default function Community() {
       <CreateChoiceModal
         isOpen={isCreateChoiceOpen}
         onClose={() => setIsCreateChoiceOpen(false)}
-        onSelectChannel={() => {
+        onSelectChannel={async () => {
+          if (!(await ensureReachable())) return; // ካርዱ ክፍት ይቆያል
           setIsCreateChoiceOpen(false);
           setIsNewChannelOpen(true);
         }}
-        onSelectGroup={() => {
+        onSelectGroup={async () => {
+          if (!(await ensureReachable())) return; // ካርዱ ክፍት ይቆያል
           setIsCreateChoiceOpen(false);
           setIsMemberPickerOpen(true); // ደረጃ 1: Add Members
         }}

@@ -21,6 +21,7 @@ import {
   Square,
   Pin,
   PinOff,
+  Paperclip,
 } from "lucide-react";
 import ChannelInfoModal from "./ChannelInfoModal";
 import ChatInfoModal from "./ChatInfoModal";
@@ -94,7 +95,29 @@ function formatRelativeTime(
   if (day < 365) return `${Math.floor(day / 30)}mo`;
   return `${Math.floor(day / 365)}y`;
 }
+// Group bubble: የላኪ ስም እና (ፎቶ ከሌለ) avatar ቀለም — በስሙ ላይ ተመስርቶ ቋሚ ሆኖ ይመረጣል
+const GROUP_NAME_COLORS = [
+  "text-blue-600",
+  "text-emerald-600",
+  "text-violet-600",
+  "text-orange-500",
+  "text-pink-600",
+  "text-cyan-600",
+  "text-rose-600",
+  "text-teal-600",
+];
+const GROUP_AVATAR_BGS = [
+  "bg-blue-500",
+  "bg-emerald-500",
+  "bg-violet-500",
+  "bg-orange-500",
+  "bg-pink-500",
+  "bg-cyan-500",
+  "bg-rose-500",
+  "bg-teal-500",
+];
 
+// Title: MessageArea Component (Message Workspace Window)
 // Title: MessageArea Component (Message Workspace Window)
 // This section displays selected chat/room details, past conversations, and the message composition footer.
 // If the user has not joined the community (isJoined = false), the text area is replaced by a "Join Community" button.
@@ -162,6 +185,9 @@ export default function MessageArea({
 
   //ፎቶ ሲነካ ሙሉ፟ገት ለማሳየት ( options modal ካልሆነ የተለየ )
   const [viewingMedia, setViewingMedia] = useState<string | null>(null);
+
+  // Group: መልዕክት ላይ መታ ሲደረግ emoji panel የሚከፈትለት መልዕክት
+  const [reactionMessage, setReactionMessage] = useState<Message | null>(null);
 
   // Channel header ተነክቶ ሲከፈት (Cover/create name/Empty detail view)
   const [isChannelInfoOpen, setChannelInfoOpen] = useState(false);
@@ -241,6 +267,15 @@ export default function MessageArea({
     if (chat && chat.type === "channel" && !chat.isCreatedByMe) {
       setSelectedOptionsMessage(msg);
     }
+  };
+  // Group: መታ → emoji panel (ረዘም ብሎ መያዝ → ነባሩ options: Copy/Edit/Delete/Pin)
+  const handleGroupBubbleClick = (msg: Message) => {
+    if (longPressFiredRef.current) {
+      longPressFiredRef.current = false;
+      return;
+    }
+    if (msg.pending || !chat?.isJoined) return;
+    setReactionMessage(msg);
   };
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
   const [isSearchingMessages, setIsSearchingMessages] = useState(false);
@@ -405,8 +440,8 @@ export default function MessageArea({
       className="flex-1 flex flex-col bg-white h-full relative min-h-0 overflow-hidden"
       aria-label="Current Conversation"
     >
-      {/* 1a. Channel header — ነጭ፣ Telegram style (verified/search የለም) */}
-      {chat.type === "channel" && (
+      {/* 1a. Channel / Group header — ነጭ፣ Telegram style (verified/search የለም) */}
+      {(chat.type === "channel" || chat.type === "group") && (
         <header className="py-3 px-4 min-h-[68px] bg-white border-b border-gray-100 flex items-center gap-2 shrink-0 z-10">
           <button
             onClick={onBack}
@@ -416,7 +451,11 @@ export default function MessageArea({
             <ArrowLeft className="w-6 h-6" />
           </button>
           <div
-            onClick={() => setChannelInfoOpen(true)}
+            onClick={() =>
+              chat.type === "channel"
+                ? setChannelInfoOpen(true)
+                : setIsGroupInfoOpen(true)
+            }
             className="flex items-center gap-3 min-w-0 cursor-pointer"
           >
             {chat.avatarUrl ? (
@@ -438,7 +477,8 @@ export default function MessageArea({
                 {chat.name}
               </h2>
               <p className="text-sm text-gray-500 leading-tight">
-                {chat.membersCount} subscribers
+                {chat.membersCount}{" "}
+                {chat.type === "channel" ? "subscribers" : "members"}
               </p>
             </div>
           </div>
@@ -446,7 +486,7 @@ export default function MessageArea({
       )}
 
       {/* 1b. Header (Group / 1:1 chat) - Conversation title, online member count or last seen timestamp */}
-      {chat.type !== "channel" && (
+      {chat.type !== "channel" && chat.type !== "group" && (
         <header
           className="py-4 md:py-5 min-h-[76px] px-5 md:px-7 
      text-white border-b border-gray-100 flex items-center justify-between bg-brand shrink-0 shadow-sm z-10"
@@ -616,7 +656,9 @@ export default function MessageArea({
         className={
           chat.type === "channel"
             ? "flex-1 min-h-0 overflow-y-auto bg-white"
-            : "flex-1 min-h-0 px-5 py-6 md:px-10 md:py-8 overflow-y-auto space-y-6 md:space-y-7 bg-gray-50"
+            : chat.type === "group"
+              ? "flex-1 min-h-0 px-3 py-4 md:px-8 overflow-y-auto space-y-1.5 bg-[#eaf0f6]"
+              : "flex-1 min-h-0 px-5 py-6 md:px-10 md:py-8 overflow-y-auto space-y-6 md:space-y-7 bg-gray-50"
         }
       >
         {messages.length === 0 ? (
@@ -624,6 +666,12 @@ export default function MessageArea({
             <div className="flex items-center justify-center py-24 animate-in fade-in duration-300">
               <p className="text-sm text-gray-400 font-medium">
                 No messages yet
+              </p>
+            </div>
+          ) : chat.type === "group" ? (
+            <div className="flex items-center justify-center h-full animate-in fade-in duration-300">
+              <p className="text-xs text-gray-400 font-medium bg-white/70 px-3 py-1.5 rounded-full">
+                No messages yet — say hi 👋
               </p>
             </div>
           ) : chat.type === "chat" ? (
@@ -834,6 +882,158 @@ export default function MessageArea({
                     </div>
                   </div>
                 </article>
+              );
+            }
+
+            // ===== GROUP MESSAGE (Telegram style) =====
+            if (chat.type === "group") {
+              const mine = msg.isSentByMe;
+              const reactions = msg.reactions || [];
+              const colorIdx =
+                (msg.senderName || "")
+                  .split("")
+                  .reduce((acc, ch) => acc + ch.charCodeAt(0), 0) %
+                GROUP_NAME_COLORS.length;
+
+              return (
+                <div
+                  key={msg.id}
+                  className={`w-full flex items-end gap-2 min-w-0 ${
+                    mine ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  {!mine &&
+                    (msg.senderAvatar ? (
+                      <img
+                        src={msg.senderAvatar}
+                        alt={msg.senderName}
+                        className="w-9 h-9 rounded-full object-cover shrink-0"
+                        referrerPolicy="no-referrer"
+                      />
+                    ) : (
+                      <div
+                        className={`w-9 h-9 rounded-full flex items-center justify-center font-bold text-xs text-white shrink-0 ${GROUP_AVATAR_BGS[colorIdx]}`}
+                      >
+                        {(msg.senderName || "?").charAt(0).toUpperCase()}
+                      </div>
+                    ))}
+
+                  <article
+                    onMouseDown={() => startPressTimer(msg)}
+                    onTouchStart={(e) => handleMsgTouchStart(msg, e)}
+                    onTouchMove={handleMsgTouchMove}
+                    onMouseUp={cancelPressTimer}
+                    onTouchEnd={cancelPressTimer}
+                    onMouseLeave={cancelPressTimer}
+                    onClick={() => handleGroupBubbleClick(msg)}
+                    onContextMenu={(e) => {
+                      e.preventDefault();
+                      setSelectedOptionsMessage(msg);
+                    }}
+                    className={`max-w-[80%] md:max-w-[65%] min-w-0 px-3 py-2 shadow-sm cursor-pointer select-none break-words ${
+                      mine
+                        ? "bg-[#dcebfb] rounded-2xl rounded-br-md"
+                        : "bg-white rounded-2xl rounded-bl-md"
+                    }`}
+                  >
+                    {!mine && (
+                      <span
+                        className={`block text-[13px] font-bold mb-0.5 ${GROUP_NAME_COLORS[colorIdx]}`}
+                      >
+                        {msg.senderName}
+                      </span>
+                    )}
+
+                    {hasMedia && (
+                      <div className="rounded-xl overflow-hidden mb-1.5 bg-gray-100">
+                        {msg.mediaType === "video" ? (
+                          <video
+                            src={msg.mediaUrl}
+                            controls
+                            className="w-full max-h-72 object-cover"
+                          />
+                        ) : msg.mediaType === "audio" ? (
+                          <div className="p-2">
+                            <audio
+                              src={msg.mediaUrl}
+                              controls
+                              className="w-full"
+                            />
+                          </div>
+                        ) : msg.mediaType === "pdf" ? (
+                          <a
+                            href={msg.mediaUrl}
+                            download="document.pdf"
+                            onClick={(e) => e.stopPropagation()}
+                            className="flex items-center gap-3 p-3 hover:bg-gray-200/60 transition-colors"
+                          >
+                            <span className="w-9 h-9 rounded-lg bg-red-50 text-red-500 flex items-center justify-center text-xs font-bold shrink-0">
+                              PDF
+                            </span>
+                            <span className="text-sm font-bold text-gray-800 truncate">
+                              Document.pdf
+                            </span>
+                          </a>
+                        ) : (
+                          <img
+                            src={msg.mediaUrl}
+                            alt="message media"
+                            onClick={(e) => handleImageClick(e, msg.mediaUrl)}
+                            className="w-full max-h-72 object-cover cursor-zoom-in"
+                            referrerPolicy="no-referrer"
+                          />
+                        )}
+                      </div>
+                    )}
+
+                    {msg.text && (
+                      <p className="text-[15px] leading-snug text-gray-900 whitespace-pre-wrap select-text">
+                        {msg.text}
+                      </p>
+                    )}
+
+                    {reactions.length > 0 && (
+                      <div className="flex flex-wrap gap-1.5 mt-1.5">
+                        {reactions.map((r) => (
+                          <button
+                            key={r.emoji}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (chat.isJoined && !msg.pending) {
+                                onReactMessage(msg.id, r.emoji);
+                              }
+                            }}
+                            className={`text-sm px-2 py-0.5 rounded-full flex items-center gap-1 border transition-colors ${
+                              r.users.includes("Me")
+                                ? "bg-blue-100 border-blue-200 text-blue-700"
+                                : "bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100"
+                            }`}
+                          >
+                            <span>{r.emoji}</span>
+                            <span className="font-semibold text-xs">
+                              {r.count}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-end gap-1 mt-0.5 text-[11px] text-gray-400 select-none">
+                      {msg.isPinned && (
+                        <Pin className="w-3 h-3 text-amber-500" />
+                      )}
+                      {msg.isEdited && <span>edited</span>}
+                      <time>{msg.pending ? "sending…" : msg.time}</time>
+                      {mine && !msg.pending && (
+                        <CheckCheck
+                          className={`w-4 h-4 ${
+                            msg.seen ? "text-sky-500" : "text-gray-400"
+                          }`}
+                        />
+                      )}
+                    </div>
+                  </article>
+                </div>
               );
             }
 
@@ -1295,6 +1495,20 @@ export default function MessageArea({
             )}
 
             <form onSubmit={handleSend} className="flex items-end gap-2 w-full">
+              {chat.type === "group" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    fileInputRef.current?.click();
+                    setShowEmojiPicker(false);
+                  }}
+                  className="p-2.5 mb-0.5 text-gray-500 hover:text-brand hover:bg-gray-100 rounded-full transition-all shrink-0"
+                  aria-label="Attach file"
+                  title="Attach file"
+                >
+                  <Paperclip className="w-6 h-6" />
+                </button>
+              )}
               {/* Input wrapper: emoji + textarea + attach icon all live inside this single pill */}
               <div
                 className="flex-1 flex items-end gap-1 bg-white shadow-sm
@@ -1303,7 +1517,7 @@ export default function MessageArea({
                 <button
                   type="button"
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className={`p-2 rounded-full transition-all duration-200 shrink-0 mb-0.5 ${
+                  className={`${chat.type === "group" ? "hidden " : ""}p-2 rounded-full transition-all duration-200 shrink-0 mb-0.5 ${
                     showEmojiPicker
                       ? "text-blue-600 bg-blue-50"
                       : "text-gray-400 hover:text-blue-600 hover:bg-gray-100"
@@ -1322,14 +1536,32 @@ export default function MessageArea({
                     onUserTyping?.();
                   }}
                   onKeyDown={handleKeyDown}
-                  placeholder="Write a message..."
+                  placeholder={
+                    chat.type === "group" ? "Message" : "Write a message..."
+                  }
                   rows={1}
                   style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                   className="flex-1 bg-transparent px-1 py-2 text-sm font-medium text-input-text placeholder:placeholder-input-placeholder outline-none resize-none min-h-[20px] leading-relaxed [&::-webkit-scrollbar]:hidden"
                 />
 
+                {chat.type === "group" && (
+                  <button
+                    type="button"
+                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    className={`p-2 rounded-full transition-all duration-200 shrink-0 mb-0.5 ${
+                      showEmojiPicker
+                        ? "text-blue-600 bg-blue-50"
+                        : "text-gray-400 hover:text-blue-600 hover:bg-gray-100"
+                    }`}
+                    aria-label="Add emoji"
+                    title="Choose emoji"
+                  >
+                    <Smile className="w-6 h-6" />
+                  </button>
+                )}
+
                 {/* Attach (+) icon: only visible while the input is empty, like WhatsApp */}
-                {!inputText.trim() && (
+                {chat.type !== "group" && !inputText.trim() && (
                   <button
                     type="button"
                     onClick={() => {
@@ -1564,6 +1796,31 @@ export default function MessageArea({
                 </div>
               </div>
             )}
+          </div>
+        </div>
+      )}
+      {/* Group: emoji panel (መልዕክት ላይ መታ ሲደረግ) */}
+      {reactionMessage && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/40 animate-in fade-in duration-150"
+          onClick={() => setReactionMessage(null)}
+        >
+          <div
+            className="bg-white rounded-full shadow-2xl px-3 py-2 flex items-center gap-1 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {QUICK_EMOJIS.map((emoji) => (
+              <button
+                key={emoji}
+                onClick={() => {
+                  onReactMessage(reactionMessage.id, emoji);
+                  setReactionMessage(null);
+                }}
+                className="text-2xl p-1.5 hover:scale-125 active:scale-90 transition-transform"
+              >
+                {emoji}
+              </button>
+            ))}
           </div>
         </div>
       )}
