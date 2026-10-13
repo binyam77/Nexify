@@ -23,27 +23,27 @@ export default function ChatInfoModal({ chat, onClose }: ChatInfoModalProps) {
         className="bg-white rounded-2xl w-full max-w-md overflow-hidden shadow-2xl border border-gray-100 animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Cover */}
-        <div className="relative h-36 bg-gray-200">
-          {chat.cover ? (
-            <img src={chat.cover} alt="Cover" className="w-full h-full object-cover" />
-          ) : (
-            <div className={`w-full h-full ${chat.bgGradient}`} />
-          )}
+        {/* Close + Profile photo (cover የለም) */}
+        <div className="relative pt-8 flex justify-center">
           <button
             onClick={onClose}
-            className="absolute top-3 right-3 p-1.5 bg-black/40 hover:bg-black/60 text-white rounded-full transition-all"
+            className="absolute top-3 right-3 p-1.5 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-full transition-all"
             aria-label="Close"
           >
             <X className="w-4 h-4" />
           </button>
 
-          {/* Profile photo overlapping cover (circular for a person, not a room) */}
-          <div className="absolute -bottom-10 left-1/2 -translate-x-1/2 w-20 h-20 rounded-full border-4 border-white shadow-md overflow-hidden bg-gray-100">
+          <div className="w-24 h-24 rounded-full shadow-md overflow-hidden bg-gray-100">
             {chat.avatarUrl ? (
-              <img src={chat.avatarUrl} alt={chat.name} className="w-full h-full object-cover" />
+              <img
+                src={chat.avatarUrl}
+                alt={chat.name}
+                className="w-full h-full object-cover"
+              />
             ) : (
-              <div className={`w-full h-full ${chat.bgGradient} flex items-center justify-center text-white font-black text-lg`}>
+              <div
+                className={`w-full h-full ${chat.bgGradient} flex items-center justify-center text-white font-black text-xl`}
+              >
                 {chat.avatarLabel}
               </div>
             )}
@@ -51,16 +51,18 @@ export default function ChatInfoModal({ chat, onClose }: ChatInfoModalProps) {
         </div>
 
         {/* Name */}
-        <div className="pt-14 px-5 pb-5 text-center">
-          <h3 className="text-lg font-black text-gray-900 tracking-tight">{chat.name}</h3>
-          {chat.isOnline !== false ? (
+        <div className="pt-4 px-5 pb-5 text-center">
+          <h3 className="text-lg font-black text-gray-900 tracking-tight">
+            {chat.name}
+          </h3>
+          {chat.isOnline === true ? (
             <p className="text-xs text-emerald-600 font-bold mt-1 flex items-center justify-center gap-1">
               <Circle className="w-2 h-2 fill-emerald-500 text-emerald-500" />
               online
             </p>
           ) : (
             <p className="text-xs text-gray-400 font-semibold mt-1">
-              last seen {chat.lastSeen || "recently"}
+              {chat.lastSeen ? `last seen ${chat.lastSeen}` : "offline"}
             </p>
           )}
 

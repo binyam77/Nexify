@@ -25,24 +25,39 @@ interface RequestOptions {
   headers?: Record<string, string>;
 }
 
+// ደካማ network ላይ request ለዘላለም እንዳይንጠለጠል
+const REQUEST_TIMEOUT_MS = 15_000;
+
 async function performFetch(
   path: string,
   options: RequestOptions,
   authHeader?: string,
 ): Promise<{ ok: boolean; status: number; data: unknown }> {
-  const response = await fetch(`${API_URL}${path}`, {
-    method: options.method ?? "GET",
-    headers: {
-      "Content-Type": "application/json",
-      ...(authHeader ? { Authorization: authHeader } : {}),
-      ...options.headers,
-    },
-    credentials: "include",
-    body: options.body ? JSON.stringify(options.body) : undefined,
-  });
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), REQUEST_TIMEOUT_MS);
+  try {
+    const response = await fetch(`${API_URL}${path}`, {
+      method: options.method ?? "GET",
+      headers: {
+        "Content-Type": "application/json",
+        ...(authHeader ? { Authorization: authHeader } : {}),
+        ...options.headers,
+      },
+      credentials: "include",
+      body: options.body ? JSON.stringify(options.body) : undefined,
+      signal: controller.signal,
+    });
 
-  const data = await response.json().catch(() => null);
-  return { ok: response.ok, status: response.status, data };
+    const data = await response.json().catch(() => null);
+    // body እያነበበ timeout ቢመጣ `.catch(() => null)` ስህተቱን ይውጠዋል፣
+    // ያለዚህ ምልከታ እንደ ስኬት (data: null) ይመለስ ነበር
+    if (controller.signal.aborted) {
+      throw new DOMException("Request timed out", "AbortError");
+    }
+    return { ok: response.ok, status: response.status, data };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export async function apiClient<T>(

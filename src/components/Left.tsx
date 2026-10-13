@@ -39,6 +39,7 @@ function formatRelativeTime(timestamp: string): string {
 interface LeftProps {
   selectedPost: FeedPost;
   comments: CommentItem[];
+  totalComments: number;
   isLoadingComments: boolean;
   commentsError: string | null;
   loadMoreComments: (postId: string) => Promise<void>;
@@ -99,6 +100,7 @@ interface LeftProps {
 export default function Left({
   selectedPost,
   comments,
+  totalComments,
   isLoadingComments,
   commentsError,
   loadMoreComments,
@@ -237,7 +239,7 @@ export default function Left({
 
         <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-slate-500 select-none">
           <MessageCircle className="w-5 h-5" />
-          <span>{formatCount(comments.length)}</span>
+          <span>{formatCount(totalComments)}</span>
         </div>
 
         <button
@@ -267,7 +269,7 @@ export default function Left({
       <section className="flex-1 flex flex-col overflow-hidden px-5 pt-3">
         <div className="flex items-center justify-between mb-3 shrink-0">
           <h3 className="text-[14px] font-bold text-slate-800">
-            {comments.length} comments
+            {totalComments} comments
           </h3>
           <button
             onClick={() =>
@@ -616,7 +618,9 @@ export default function Left({
           </button>
         </form>
         {commentError && (
-          <p className="text-xs font-semibold text-rose-600 mt-2">{commentError}</p>
+          <p className="text-xs font-semibold text-rose-600 mt-2">
+            {commentError}
+          </p>
         )}
         {/* Emoji picker overlays */}
         {emojiPickerOpen && (

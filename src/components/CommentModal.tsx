@@ -6,7 +6,7 @@ import type { CommentItem, CommentSort } from "../types";
 
 interface CommentModalProps {
   comments: CommentItem[];
-  totalCount?:number;
+  totalCount?: number;
   currentUsername: string;
   isLoading?: boolean;
   error?: string | null;
@@ -62,7 +62,15 @@ export default function CommentModal({
   }
 
   return (
-    <>
+    // `contents` → layout ላይ ምንም አይጨምርም። በውስጡ የሚነሱ wheel/touch/key events
+    // ወደ Home.tsx's window/document-level feed-navigation listeners እንዳይደርሱ ያቆማል።
+    <div
+      className="contents"
+      onWheel={(e) => e.stopPropagation()}
+      onTouchStart={(e) => e.stopPropagation()}
+      onTouchEnd={(e) => e.stopPropagation()}
+      onKeyDown={(e) => e.stopPropagation()}
+    >
       {/* Mobile dim backdrop — Instagram bottom sheets ስር ያለውን feed ያደበዝዛሉ */}
       <div
         className="fixed inset-0 z-[9998] bg-black/40 md:hidden"
@@ -189,6 +197,6 @@ export default function CommentModal({
           </>
         )}
       </div>
-    </>
+    </div>
   );
 }

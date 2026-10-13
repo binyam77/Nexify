@@ -1,19 +1,27 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
-// Browser's native online/offline events — no polling, no backend call.
-export function useOnlineStatus(): boolean {
+// ኢንተርኔት ሲጠፋ/ሲመለስ ያውቃል። onReconnect ሲመለስ የወደቀ ነገር እንደገና ለመሞከር ይጠቅማል
+export function useOnlineStatus(onReconnect?: () => void): boolean {
   const [isOnline, setIsOnline] = useState(() =>
-    typeof navigator !== "undefined" ? navigator.onLine : true,
+    typeof navigator === "undefined" ? true : navigator.onLine,
   );
+  const callbackRef = useRef(onReconnect);
 
   useEffect(() => {
-    const goOnline = () => setIsOnline(true);
-    const goOffline = () => setIsOnline(false);
-    window.addEventListener("online", goOnline);
-    window.addEventListener("offline", goOffline);
+    callbackRef.current = onReconnect;
+  });
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      callbackRef.current?.();
+    };
+    const handleOffline = () => setIsOnline(false);
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
     return () => {
-      window.removeEventListener("online", goOnline);
-      window.removeEventListener("offline", goOffline);
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
     };
   }, []);
 

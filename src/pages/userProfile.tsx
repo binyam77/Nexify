@@ -8,6 +8,9 @@ import { useAuth } from "../context/AuthContext";
 import { useFeed } from "../context/FeedContext";
 import { fetchProfile } from "../api/profile.api";
 import { followUser, unfollowUser } from "../api/follow.api";
+import { ApiError } from "../lib/api-client";
+import OfflineState from "../components/OfflineState";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
 import {
   fetchUserPosts,
   likePost,
@@ -61,6 +64,8 @@ export default function UserProfile() {
   const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [hasMorePosts, setHasMorePosts] = useState(false);
   const postsCursorRef = useRef<string | null>(null);
+  const [isLoadingMorePosts, setIsLoadingMorePosts] = useState(false);
+  const [loadMorePostsError, setLoadMorePostsError] = useState(false);
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [isLoadingPosts, setIsLoadingPosts] = useState(true);
   const [postsError, setPostsError] = useState<string | null>(null);
@@ -91,25 +96,35 @@ export default function UserProfile() {
     null,
   );
 
-  useEffect(() => {
+  const [profileError, setProfileError] = useState<
+    "not_found" | "network" | null
+  >(null);
+  const profileRequestRef = useRef(0);
+
+  const loadProfile = useCallback(async () => {
     if (!username) return;
-    let cancelled = false;
-    async function load() {
-      setIsLoadingProfile(true);
-      try {
-        const data = await fetchProfile(username!);
-        if (!cancelled) setOtherProfile(data);
-      } catch (e) {
-        console.error("Failed to load profile:", e);
-      } finally {
-        if (!cancelled) setIsLoadingProfile(false);
-      }
+    const requestId = ++profileRequestRef.current;
+    setIsLoadingProfile(true);
+    setProfileError(null);
+    try {
+      const data = await fetchProfile(username);
+      if (requestId !== profileRequestRef.current) return;
+      setOtherProfile(data);
+    } catch (e) {
+      if (requestId !== profileRequestRef.current) return;
+      console.error("Failed to load profile:", e);
+      setOtherProfile(null);
+      setProfileError(
+        e instanceof ApiError && e.statusCode === 404 ? "not_found" : "network",
+      );
+    } finally {
+      if (requestId === profileRequestRef.current) setIsLoadingProfile(false);
     }
-    void load();
-    return () => {
-      cancelled = true;
-    };
   }, [username]);
+
+  useEffect(() => {
+    void loadProfile();
+  }, [loadProfile]);
 
   const loadPosts = useCallback(async () => {
     if (!otherProfile?.userId) return;
@@ -131,21 +146,45 @@ export default function UserProfile() {
   useEffect(() => {
     void loadPosts();
   }, [loadPosts]);
+
+  const retryAll = () => {
+    if (profileError) void loadProfile();
+    void loadPosts();
+  };
+  const isOnline = useOnlineStatus(() => {
+    if (profileError === "network") void loadProfile();
+    if (postsError) void loadPosts();
+  });
+
   // ራስህ ራስህ profile ውስጥ ከከፈትክ ወደ /profile (own page) ውሰድ — duplicate logic ማስወገጃ
   if (username && user?.username === username) {
     return <Navigate to="/profile" replace />;
   }
 
   const loadMorePosts = async () => {
-    if (!otherProfile?.userId || !hasMorePosts || !postsCursorRef.current)
+    if (
+      !otherProfile?.userId ||
+      !hasMorePosts ||
+      !postsCursorRef.current ||
+      isLoadingMorePosts
+    )
       return;
-    const page = await fetchUserPosts(
-      otherProfile.userId,
-      postsCursorRef.current,
-    );
-    setPosts((prev) => [...prev, ...page.items]);
-    setHasMorePosts(page.hasMore);
-    postsCursorRef.current = page.nextCursor;
+    setIsLoadingMorePosts(true);
+    setLoadMorePostsError(false);
+    try {
+      const page = await fetchUserPosts(
+        otherProfile.userId,
+        postsCursorRef.current,
+      );
+      setPosts((prev) => [...prev, ...page.items]);
+      setHasMorePosts(page.hasMore);
+      postsCursorRef.current = page.nextCursor;
+    } catch (e) {
+      console.error("Failed to load more posts:", e);
+      setLoadMorePostsError(true);
+    } finally {
+      setIsLoadingMorePosts(false);
+    }
   };
   const handleToggleFollow = async () => {
     if (!otherProfile || isFollowPending) return;
@@ -332,6 +371,21 @@ export default function UserProfile() {
       </div>
     );
   }
+  if (profileError === "network") {
+    return (
+      <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
+        <p className="text-sm text-rose-500 font-semibold">
+          Couldn't load this profile. Check your connection.
+        </p>
+        <button
+          onClick={() => void loadProfile()}
+          className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
   if (!otherProfile) {
     return (
       <div className="flex-1 flex items-center justify-center text-sm text-slate-400">
@@ -450,7 +504,9 @@ export default function UserProfile() {
         id="profile-posts-grid"
         className="max-w-4xl w-full mx-auto px-4 md:px-8 mb-6"
       >
-        {isLoadingPosts ? (
+        {!isOnline ? (
+          <OfflineState onRetry={retryAll} />
+        ) : isLoadingPosts ? (
           <div className="text-center text-xs text-slate-400 py-10">
             Loading posts...
           </div>
@@ -472,13 +528,18 @@ export default function UserProfile() {
             handleDeletePost={() => {}}
           />
         )}
-        {hasMorePosts && !isLoadingPosts && (
+        {isOnline && hasMorePosts && !isLoadingPosts && (
           <div className="flex justify-center mt-4">
             <button
               onClick={loadMorePosts}
-              className="px-4 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg"
+              disabled={isLoadingMorePosts}
+              className="px-4 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg disabled:opacity-50"
             >
-              Load more
+              {isLoadingMorePosts
+                ? "Loading..."
+                : loadMorePostsError
+                  ? "Couldn't load. Tap to retry"
+                  : "Load more"}
             </button>
           </div>
         )}

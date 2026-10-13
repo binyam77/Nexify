@@ -138,8 +138,12 @@ export function FeedProvider({ children }: { children: ReactNode }) {
     setIsLoadingMore(true);
     setLoadMoreError(null);
     try {
-      const page = await fetchFeed(nextCursorRef.current);
-      setPosts((prev) => [...prev, ...page.items]);
+           const page = await fetchFeed(nextCursorRef.current);
+      // አስቀድሞ ያለ ፖስት (ከ Search የተከፈተ ወይም በገጾች መካከል የተደጋገመ) አይጨመርም
+      setPosts((prev) => {
+        const seen = new Set(prev.map((p) => p.id));
+        return [...prev, ...page.items.filter((p) => !seen.has(p.id))];
+      });
       setHasMore(page.hasMore);
       nextCursorRef.current = page.nextCursor;
     } catch (e) {

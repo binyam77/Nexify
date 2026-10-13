@@ -12,127 +12,573 @@
    ============================================================ */
 
 @theme {
-  /* ---------- 1. Base Backgrounds ---------- */
-  --color-bodey-bg: #ffffff; /* ዋና የገጹ background */
-  --color-surface: #f8fafc; /* ካርድ፣ modal፣ ንዑስ ክፍል background */
-  --color-surface-raised: #ffffff; /* ከ surface ትንሽ ከፍ ያለ (dropdown, popover) */
-  --color-overlay: rgba(0, 0, 0, 0.4); /* modal/backdrop overlay */
+  /* =========================================================
+     BACKGROUND COLORS
+     ========================================================= */
 
-  /* ---------- 2. Borders & Dividers ---------- */
-  --color-border: #e2e8f0; /* መደበኛ border (cards, sections) */
-  --color-divider: #f1f5f9; /* ቀጭን መስመር መካከል content (feed items) */
+  /* Main website background
+     Use for: body, main page, app background */
+  --color-bg: #ffffff;
 
-  /* ---------- 3. Brand (ከሎጎ የተወሰደ) ---------- */
-  --background-image-brand: #2563eb;
- --color-brand: #1370fc; /* ዋና brand ቀለም */
-  --color-brand-light: #1da8fd; /* hover state */
-  --color-brand-dark: #198dfe; /* ጨለም ያለ shade - pressed/active state */
-  --color-brand-contrast: #ffffff; /* brand background ላይ የሚቀመጥ ጽሁፍ ቀለም */
+  /* Main content surface
+     Use for: cards, panels, sections, containers */
+  --color-surface: #f8fafc;
 
-  /* ---------- 4. Text Hierarchy ---------- */
-  --color-ink: #000000; /* ከፍተኛ contrast ጽሁፍ/icon (rare use) */
-  --color-text: #1e293b; /* መደበኛ body ጽሁፍ */
-  --color-text-h1: #0f172a; /* ዋና ርዕስ (h1) */
-  --color-text-h2: #1e293b; /* ንዑስ ርዕስ (h2) */
-  --color-small-text: #64748b; /* ሁለተኛ ደረጃ ጽሁፍ (timestamp, caption, meta) */
-  --color-placeholder: #94a3b8; /* input placeholder ጽሁፍ */
+  /* Secondary surface
+     Use for: sidebar, menus, secondary sections */
+  --color-surface-secondary: #f1f5f9;
 
- 
-  /* ---------- 5. Input Fields ---------- */
-  --color-input: #ffffff; /* input box background */
-  --color-input-text: #0f172a; /* input ውስጥ የተየብ ጽሁፍ */
-  --color-input-border: #e2e8f0; /* input መደበኛ border */
-  --color-input-hover: #019be5; /* input hover border/highlight */
-  --color-input-focus: #0071e3; /* input focus (typing) ቀለም */
-  --color-hover-input: #f8fafc; /* hover ስታደርግ የሚታይ background */
+  /* Hover surface
+     Use for: menu items, buttons, rows, cards on hover */
+  --color-surface-hover: #f1f5f9;
 
-  /* ---------- 6. Status Colors ---------- */
-  --color-success: #27bd5f; /* ስኬታማ ተግባር (post ተልኳል፣ follow success) */
-  --color-danger: #dc2626;
-  --color-danger-hover: #b91c1c; /* አደጋ/ስህተት (delete, block, error) */
-  --color-warning: #f59e0b; /* ማስጠንቀቂያ (unsaved changes, limits) */
-  --color-info: #0071e3; /* መረጃ መልእክት (brand ቀለም ተጋርቷል) */
+  /* Active / selected surface
+     Use for: selected navigation, selected tab, active item */
+  --color-surface-active: #eaf4ff;
 
-  /* ---------- 7. Interactive States ---------- */
-  --color-like: #ef4444; /* like/heart አዝራር ቀለም */
-  --color-online: #27bd5f; /* online status dot */
-  --color-verified: #0071e3; /* verified badge ቀለም */
+  /* =========================================================
+     TEXT COLORS
+     ========================================================= */
 
-  /* ---------- 8. Shadows ---------- */
-  --shadow-soft:
-    0 2px 6px rgba(15, 23, 42, 0.05), 0 8px 24px rgba(15, 23, 42, 0.04);
-  --shadow-input: 0 2px 8px rgba(15, 23, 42, 0.06);
-  --shadow-card: 0 4px 16px rgba(15, 23, 42, 0.08);
+  /* Primary text
+     Use for: headings, titles, main content */
+  --color-text-primary: #111827;
+
+  /* Secondary text
+     Use for: descriptions, subtitles, supporting text */
+  --color-text-secondary: #4b5563;
+
+  /* Muted text
+     Use for: timestamps, placeholders, hints */
+  --color-text-muted: #9ca3af;
+
+  /* Disabled text
+     Use for: disabled buttons, disabled fields, unavailable items */
+  --color-text-disabled: #d1d5db;
+
+  /* Text on primary color
+     Use for: primary buttons, primary badges */
+  --color-text-on-primary: #ffffff;
+
+  /* =========================================================
+     BORDER COLORS
+     ========================================================= */
+
+  /* Default border
+     Use for: cards, inputs, containers */
+  --color-border: #e5e7eb;
+
+  /* Strong border
+     Use for: important borders, focused areas */
+  --color-border-strong: #d1d5db;
+
+  /* Subtle border
+     Use for: very light separators and dividers */
+  --color-border-subtle: #f3f4f6;
+
+  /* =========================================================
+     PRIMARY / BRAND COLORS
+     ========================================================= */
+
+  /* Main brand color
+     Use for: primary buttons, active links, important actions */
+  --color-primary: #0185e5;
+
+  /* Primary hover
+     Use for: hover state of primary buttons and links */
+  --color-primary-hover: #0071e3;
+
+  /* Light primary
+     Use for: selected backgrounds, soft badges, highlights */
+  --color-primary-light: #eaf5ff;
+
+  /* Primary border
+     Use for: selected elements and focused inputs */
+  --color-primary-border: #93c5fd;
+
+  /* =========================================================
+     SPECIAL INPUT COLORS
+     Search / Login / Register / Authentication
+     ========================================================= */
+
+  /* Special input background
+     Use for: Search, Login, Register, Email, Username, Password */
+  --color-input-special-bg: #f8fafc;
+
+  /* Special input text
+     Use for: text inside Search/Login/Register inputs */
+  --color-input-special-text: #111827;
+
+  /* Special input placeholder
+     Use for: placeholder inside Search/Login inputs */
+  --color-input-special-placeholder: #9ca3af;
+
+  /* Special input border
+     Use for: Search/Login/Register input borders */
+  --color-input-special-border: #e5e7eb;
+
+  /* Special input focus
+     Use for: focused Search/Login/Register inputs */
+  --color-input-special-focus: #0185e5;
+
+  /* =========================================================
+     GENERAL INPUT COLORS
+     ========================================================= */
+
+  /* General input background
+     Use for: textarea, comments, settings, profile forms */
+  --color-input-bg: #ffffff;
+
+  /* General input text
+     Use for: text inside normal form fields */
+  --color-input-text: #111827;
+
+  /* General input placeholder
+     Use for: placeholders in normal inputs */
+  --color-input-placeholder: #9ca3af;
+
+  /* General input border
+     Use for: normal form input borders */
+  --color-input-border: #d1d5db;
+
+  /* General input focus
+     Use for: focused normal inputs */
+  --color-input-focus: #0185e5;
+
+  /* =========================================================
+     ICON COLORS
+     ========================================================= */
+
+  /* Primary icon
+     Use for: important navigation and action icons */
+  --color-icon-primary: #374151;
+
+  /* Secondary icon
+     Use for: less important icons */
+  --color-icon-secondary: #6b7280;
+
+  /* Muted icon
+     Use for: disabled or low-priority icons */
+  --color-icon-muted: #9ca3af;
+
+  /* Active icon
+     Use for: selected/active navigation icons */
+  --color-icon-active: #0185e5;
+
+  /* =========================================================
+     SUCCESS COLORS
+     ========================================================= */
+
+  /* Success
+     Use for: success messages, online status, successful actions */
+  --color-success: #22c55e;
+
+  /* Success background
+     Use for: success alerts, success badges */
+  --color-success-light: #ecfdf3;
+
+  /* Success border
+     Use for: success alert borders */
+  --color-success-border: #86efac;
+
+  /* =========================================================
+     WARNING COLORS
+     ========================================================= */
+
+  /* Warning
+     Use for: warnings and attention-required actions */
+  --color-warning: #f59e0b;
+
+  /* Warning background
+     Use for: warning alerts and warning badges */
+  --color-warning-light: #fffbeb;
+
+  /* Warning border
+     Use for: warning alert borders */
+  --color-warning-border: #fcd34d;
+
+  /* =========================================================
+     ERROR / DANGER COLORS
+     ========================================================= */
+
+  /* Error
+     Use for: validation errors and failed actions */
+  --color-error: #ef4444;
+
+  /* Error background
+     Use for: error messages and error alerts */
+  --color-error-light: #fef2f2;
+
+  /* Error border
+     Use for: error alert borders */
+  --color-error-border: #fca5a5;
+
+  /* =========================================================
+     INFO COLORS
+     ========================================================= */
+
+  /* Information
+     Use for: informational messages and notices */
+  --color-info: #3b82f6;
+
+  /* Information background
+     Use for: info alerts and informational badges */
+  --color-info-light: #eff6ff;
+
+  /* Information border
+     Use for: info alert borders */
+  --color-info-border: #93c5fd;
+
+  /* =========================================================
+     LINK COLORS
+     ========================================================= */
+
+  /* Normal link
+     Use for: clickable links */
+  --color-link: #0185e5;
+
+  /* Link hover
+     Use for: links when hovered */
+  --color-link-hover: #0071e3;
+
+  /* =========================================================
+     DIVIDER COLORS
+     ========================================================= */
+
+  /* Normal divider
+     Use for: post separators, settings rows, sections */
+  --color-divider: #e5e7eb;
+
+  /* Subtle divider
+     Use for: very light separators */
+  --color-divider-subtle: #f3f4f6;
+
+  /* =========================================================
+     OVERLAY
+     ========================================================= */
+
+  /* Modal overlay
+     Use for: modal, drawer and bottom-sheet background overlay */
+  --color-overlay: rgba(0, 0, 0, 0.45);
+
+  /* =========================================================
+     STATUS COLORS
+     ========================================================= */
+
+  /* Online status
+     Use for: online indicator */
+  --color-online: #22c55e;
+
+  /* Offline status
+     Use for: offline/unavailable indicator */
+  --color-offline: #9ca3af;
+
+  /* Verified
+     Use for: verified badge/icon */
+  --color-verified: #0185e5;
+
+  /* =========================================================
+     BASIC COLORS
+     ========================================================= */
+
+  /* White
+     Use for: white cards, modal backgrounds, text on dark/primary */
+  --color-white: #ffffff;
+
+  /* Black
+     Use for: maximum contrast when necessary */
+  --color-black: #000000;
 }
 
 :root.dark {
-  /* ---------- 1. Base Backgrounds ---------- */
-  --color-bodey-bg: #121212; /* ዋና የገጹ background - ጥቁር */
-  --color-surface: #1a1a1a; /* ካርድ፣ modal፣ ንዑስ ክፍል background */
-  --color-surface-raised: #232323; /* dropdown/popover background */
-  --color-overlay: rgba(0, 0, 0, 0.65); /* modal/backdrop overlay - ጨለም */
+  /* =========================================================
+     BACKGROUND COLORS
+     ========================================================= */
 
-  /* ---------- 2. Borders & Dividers ---------- */
-  --color-border: #2d2d2d; /* መደበኛ border (cards, sections) */
-  --color-divider: #232323; /* ቀጭን መስመር መካከል content */
+  /* Main website background
+     Use for: body, main page, app background */
+  --color-bg: #121212;
 
-  /* ---------- 3. Brand (ተመሳሳይ በሁሉም mode) ---------- */
-  --background-image-brand-one: #2563eb;
-  --color-brand: #1370fc; /* ዋና brand ቀለም */
-  --color-brand-light: #1da8fd; /* hover state */
-  --color-brand-dark: #198dfe; /* pressed/active state */
-  --color-brand-contrast: #ffffff; /* brand background ላይ ጽሁፍ */
+  /* Main content surface
+     Use for: cards, panels, sections, containers */
+  --color-surface: #1a1a1a;
 
-  /* ---------- 4. Text Hierarchy ---------- */
-  --color-ink: #ffffff; /* ከፍተኛ contrast ጽሁፍ/icon */
-  --color-text: #e2e8f0; /* መደበኛ body ጽሁፍ */
-  --color-text-h1: #ffffff; /* ዋና ርዕስ (h1) */
-  --color-text-h2: #f1f5f9; /* ንዑስ ርዕስ (h2) */
-  --color-small-text: #a1a1aa; /* ሁለተኛ ደረጃ ጽሁፍ */
-  --color-placeholder: #71717a; /* input placeholder ጽሁፍ */
- 
-/*------------- Highest input    ---------------------------*/
---color-input-placeholder-text:;
---color-input-bg:;
+  /* Secondary surface
+     Use for: sidebar, menus, secondary sections */
+  --color-surface-secondary: #202020;
 
-  /* ---------- 5. Input Fields ---------- */
-  --color-input: #1a1a1a; /* input box background */
-  --color-input-text: #ffffff; /* input ውስጥ የተየብ ጽሁፍ */
-  --color-input-border: #2d2d2d; /* input መደበኛ border */
-  --color-input-hover: #198dff; /* input hover border/highlight */
-  --color-input-focus: #198dff; /* input focus ቀለም */
-  --color-hover-input: #232323; /* hover ስታደርግ የሚታይ background */
+  /* Hover surface
+     Use for: menu items, buttons, rows, cards on hover */
+  --color-surface-hover: #252525;
 
-  /* ---------- 6. Status Colors (dark ላይ lighter/brighter ለ contrast) ---------- */
-  --color-success: #27bd5f; /* ስኬታማ ተግባር */
-  --color-danger: #f87171; /* አደጋ/ስህተት - lighter red ለ dark bg contrast */
-  --color-danger-hover: #b91c1c;
-  --color-warning: #fbbf24; /* ማስጠንቀቂያ - lighter yellow */
-  --color-info: #019be5; /* መረጃ መልእክት */
+  /* Active / selected surface
+     Use for: selected navigation, selected tab, active item */
+  --color-surface-active: #102a3d;
 
-  /* ---------- 7. Interactive States ---------- */
-  --color-like: #f87171; /* like/heart አዝራር - lighter red */
-  --color-online: #27bd5f; /* online status dot */
-  --color-verified: #019be5; /* verified badge */
-  
-  /* ---------- 8. Shadows (dark ላይ ጠንካራ/ጥልቅ) ---------- */
-  --shadow-soft: 0 2px 6px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.5);
-  --shadow-input: 0 2px 8px rgba(0, 0, 0, 0.35);
-  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.5);
+  /* =========================================================
+     TEXT COLORS
+     ========================================================= */
+
+  /* Primary text
+     Use for: headings, titles, main content */
+  --color-text-primary: #f5f5f5;
+
+  /* Secondary text
+     Use for: descriptions, subtitles, supporting text */
+  --color-text-secondary: #b3b3b3;
+
+  /* Muted text
+     Use for: timestamps, placeholders, hints */
+  --color-text-muted: #808080;
+
+  /* Disabled text
+     Use for: disabled buttons, disabled fields, unavailable items */
+  --color-text-disabled: #4d4d4d;
+
+  /* Text on primary color
+     Use for: primary buttons, primary badges */
+  --color-text-on-primary: #ffffff;
+
+  /* =========================================================
+     BORDER COLORS
+     ========================================================= */
+
+  /* Default border
+     Use for: cards, inputs, containers */
+  --color-border: #2d2d2d;
+
+  /* Strong border
+     Use for: important borders, focused areas */
+  --color-border-strong: #3a3a3a;
+
+  /* Subtle border
+     Use for: very light separators and dividers */
+  --color-border-subtle: #202020;
+
+  /* =========================================================
+     PRIMARY / BRAND COLORS
+     ========================================================= */
+
+  /* Main brand color
+     Use for: primary buttons, active links, important actions */
+  --color-primary: #0185e5;
+
+  /* Primary hover
+     Use for: hover state of primary buttons and links */
+  --color-primary-hover: #1595ed;
+
+  /* Light primary
+     Use for: selected backgrounds, soft badges, highlights */
+  --color-primary-light: #102a3d;
+
+  /* Primary border
+     Use for: selected elements and focused inputs */
+  --color-primary-border: #167fc1;
+
+  /* =========================================================
+     SPECIAL INPUT COLORS
+     Search / Login / Register / Authentication
+     ========================================================= */
+
+  /* Special input background
+     Use for: Search, Login, Register, Email, Username, Password */
+  --color-input-special-bg: #1b1b1b;
+
+  /* Special input text
+     Use for: text inside Search/Login/Register inputs */
+  --color-input-special-text: #f5f5f5;
+
+  /* Special input placeholder
+     Use for: placeholder inside Search/Login inputs */
+  --color-input-special-placeholder: #777777;
+
+  /* Special input border
+     Use for: Search/Login/Register input borders */
+  --color-input-special-border: #303030;
+
+  /* Special input focus
+     Use for: focused Search/Login/Register inputs */
+  --color-input-special-focus: #0185e5;
+
+  /* =========================================================
+     GENERAL INPUT COLORS
+     ========================================================= */
+
+  /* General input background
+     Use for: textarea, comments, settings, profile forms */
+  --color-input-bg: #171717;
+
+  /* General input text
+     Use for: text inside normal form fields */
+  --color-input-text: #f5f5f5;
+
+  /* General input placeholder
+     Use for: placeholders in normal inputs */
+  --color-input-placeholder: #777777;
+
+  /* General input border
+     Use for: normal form input borders */
+  --color-input-border: #353535;
+
+  /* General input focus
+     Use for: focused normal inputs */
+  --color-input-focus: #0185e5;
+
+  /* =========================================================
+     ICON COLORS
+     ========================================================= */
+
+  /* Primary icon
+     Use for: important navigation and action icons */
+  --color-icon-primary: #e5e5e5;
+
+  /* Secondary icon
+     Use for: less important icons */
+  --color-icon-secondary: #a3a3a3;
+
+  /* Muted icon
+     Use for: disabled or low-priority icons */
+  --color-icon-muted: #666666;
+
+  /* Active icon
+     Use for: selected/active navigation icons */
+  --color-icon-active: #0185e5;
+
+  /* =========================================================
+     SUCCESS COLORS
+     ========================================================= */
+
+  /* Success
+     Use for: success messages, online status, successful actions */
+  --color-success: #22c55e;
+
+  /* Success background
+     Use for: success alerts, success badges */
+  --color-success-light: #102a1a;
+
+  /* Success border
+     Use for: success alert borders */
+  --color-success-border: #237a42;
+
+  /* =========================================================
+     WARNING COLORS
+     ========================================================= */
+
+  /* Warning
+     Use for: warnings and attention-required actions */
+  --color-warning: #f59e0b;
+
+  /* Warning background
+     Use for: warning alerts and warning badges */
+  --color-warning-light: #2d230f;
+
+  /* Warning border
+     Use for: warning alert borders */
+  --color-warning-border: #8a6415;
+
+  /* =========================================================
+     ERROR / DANGER COLORS
+     ========================================================= */
+
+  /* Error
+     Use for: validation errors and failed actions */
+  --color-error: #ef4444;
+
+  /* Error background
+     Use for: error messages and error alerts */
+  --color-error-light: #2d1515;
+
+  /* Error border
+     Use for: error alert borders */
+  --color-error-border: #8f3030;
+
+  /* =========================================================
+     INFO COLORS
+     ========================================================= */
+
+  /* Information
+     Use for: informational messages and notices */
+  --color-info: #3b82f6;
+
+  /* Information background
+     Use for: info alerts and informational badges */
+  --color-info-light: #111f35;
+
+  /* Information border
+     Use for: info alert borders */
+  --color-info-border: #285ca8;
+
+  /* =========================================================
+     LINK COLORS
+     ========================================================= */
+
+  /* Normal link
+     Use for: clickable links */
+  --color-link: #1595ed;
+
+  /* Link hover
+     Use for: links when hovered */
+  --color-link-hover: #4aaef0;
+
+  /* =========================================================
+     DIVIDER COLORS
+     ========================================================= */
+
+  /* Normal divider
+     Use for: post separators, settings rows, sections */
+  --color-divider: #2d2d2d;
+
+  /* Subtle divider
+     Use for: very light separators */
+  --color-divider-subtle: #202020;
+
+  /* =========================================================
+     OVERLAY
+     ========================================================= */
+
+  /* Modal overlay
+     Use for: modal, drawer and bottom-sheet background overlay */
+  --color-overlay: rgba(0, 0, 0, 0.65);
+
+  /* =========================================================
+     STATUS COLORS
+     ========================================================= */
+
+  /* Online status
+     Use for: online indicator */
+  --color-online: #22c55e;
+
+  /* Offline status
+     Use for: offline/unavailable indicator */
+  --color-offline: #666666;
+
+  /* Verified
+     Use for: verified badge/icon */
+  --color-verified: #0185e5;
+
+  /* =========================================================
+     BASIC COLORS
+     ========================================================= */
+
+  /* White
+     Use for: white text, icons and elements requiring maximum contrast */
+  --color-white: #ffffff;
+
+  /* Black
+     Use for: overlays and maximum contrast when necessary */
+  --color-black: #000000;
 }
 @keyframes loading-dot {
   0%,
   100% {
     background-color: #d1d1d1;
-
   }
-  50%{
-  background-color:#000000;
+  50% {
+    background-color: #000000;
   }
 }
 .animate-loading-dot {
-  animation:loading-dot 1.2s
-  ease-in-out infinite;
+  animation: loading-dot 1.2s ease-in-out infinite;
 }
 @keyframes slideUp {
   from {

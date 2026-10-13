@@ -46,12 +46,19 @@ export default function FollowListModal({
     if (isOpen) void load();
   }, [isOpen, load]);
 
+  const [moreError, setMoreError] = useState(false);
   const loadMore = async () => {
     if (!hasMore || !cursorRef.current) return;
-    const page = await fetcher(userId, cursorRef.current);
-    setItems((prev) => [...prev, ...page.items]);
-    setHasMore(page.hasMore);
-    cursorRef.current = page.nextCursor;
+    setMoreError(false);
+    try {
+      const page = await fetcher(userId, cursorRef.current);
+      setItems((prev) => [...prev, ...page.items]);
+      setHasMore(page.hasMore);
+      cursorRef.current = page.nextCursor;
+    } catch (e) {
+      console.error(`Failed to load more ${type}:`, e);
+      setMoreError(true);
+    }
   };
 
   if (!isOpen) return null;
@@ -136,7 +143,7 @@ export default function FollowListModal({
                     onClick={loadMore}
                     className="text-xs font-bold text-blue-600 hover:underline"
                   >
-                    Load more
+                    {moreError ? "Couldn't load. Tap to retry" : "Load more"}
                   </button>
                 </div>
               )}

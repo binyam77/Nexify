@@ -18,6 +18,8 @@ import {
   unlikePost,
   sharePost,
 } from "../api/posts.api";
+import OfflineState from "../components/OfflineState";
+import { useOnlineStatus } from "../hooks/useOnlineStatus";
 // ንዑስ ክፍሎች ማስመጫ (Importing child components)
 import UserProfile from "../components/UserProfile";
 import ProfileVideo from "../components/ProfileVideo";
@@ -71,6 +73,8 @@ export default function Profile({
   const [hasMoreMyPosts, setHasMoreMyPosts] = useState(false);
   const [myPostsError, setMyPostsError] = useState<string | null>(null);
   const myPostsCursorRef = useRef<string | null>(null);
+  const [isLoadingMorePosts, setIsLoadingMorePosts] = useState(false);
+  const [loadMorePostsError, setLoadMorePostsError] = useState(false);
 
   const loadInitialMyPosts = useCallback(async () => {
     if (!user?.id) return;
@@ -93,12 +97,37 @@ export default function Profile({
     void loadInitialMyPosts();
   }, [loadInitialMyPosts]);
 
+  const retryAll = () => {
+    void loadInitialMyPosts();
+    if (profileLoadError) void retryLoadProfile();
+  };
+  // ኢንተርኔት ሲመለስ የወደቀ ነገር በራሱ እንደገና ይሞክራል
+  const isOnline = useOnlineStatus(() => {
+    if (myPostsError) void loadInitialMyPosts();
+    if (profileLoadError) void retryLoadProfile();
+  });
+
   const loadMoreMyPosts = async () => {
-    if (!user?.id || !hasMoreMyPosts || !myPostsCursorRef.current) return;
-    const page = await fetchUserPosts(user.id, myPostsCursorRef.current);
-    setMyPosts((prev) => [...prev, ...page.items]);
-    setHasMoreMyPosts(page.hasMore);
-    myPostsCursorRef.current = page.nextCursor;
+    if (
+      !user?.id ||
+      !hasMoreMyPosts ||
+      !myPostsCursorRef.current ||
+      isLoadingMorePosts
+    )
+      return;
+    setIsLoadingMorePosts(true);
+    setLoadMorePostsError(false);
+    try {
+      const page = await fetchUserPosts(user.id, myPostsCursorRef.current);
+      setMyPosts((prev) => [...prev, ...page.items]);
+      setHasMoreMyPosts(page.hasMore);
+      myPostsCursorRef.current = page.nextCursor;
+    } catch (e) {
+      console.error("Failed to load more posts:", e);
+      setLoadMorePostsError(true);
+    } finally {
+      setIsLoadingMorePosts(false);
+    }
   };
 
   // --- የተጠቃሚ መገለጫ ሁኔታ መቆጣጠሪያ (Profile Information States) ---
@@ -540,11 +569,11 @@ export default function Profile({
 
   return (
     <div
-      className="flex-1 flex flex-col h-full overflow-y-auto bg-bodey-bg pb-20 md:pb-6"
+      className="flex-1 flex flex-col h-full overflow-y-auto bg-bg pb-20 md:pb-6"
       id="profile-container"
     >
       {/* 1. Header Navigation banner */}
-      <header className="sticky top-0 left-0 right-0 h-16 bg-gradient-to-r hidden md:block bg-bodey-bg shadow-md z-40 flex items-center justify-between px-4 md:px-8 shrink-0"></header>
+      <header className="sticky top-0 left-0 right-0 h-16 bg-gradient-to-r hidden md:block bg-bg shadow-md z-40 flex items-center justify-between px-4 md:px-8 shrink-0"></header>
 
       {/* Hidden File inputs */}
       <input
@@ -570,13 +599,13 @@ export default function Profile({
       />
       {profileLoadError && (
         <div className="max-w-4xl w-full mx-auto px-4 md:px-8 pt-3">
-          <div className="flex items-center justify-between bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
-            <p className="text-xs font-semibold text-amber-700">
+          <div className="flex items-center justify-between bg-warning-light border border-warning-border rounded-xl px-4 py-2.5">
+            <p className="text-xs font-semibold text-warning">
               {profileLoadError}
             </p>
             <button
               onClick={retryLoadProfile}
-              className="text-xs font-bold text-amber-700 underline shrink-0 ml-3"
+              className="text-xs font-bold text-warning underline shrink-0 ml-3"
             >
               Retry
             </button>
@@ -606,18 +635,18 @@ export default function Profile({
         id="profile-posts-grid"
         className="max-w-4xl w-full mx-auto px-4 md:px-8 mb-6"
       >
-        {isLoadingMyPosts ? (
-          <div className="text-center text-xs text-slate-400 py-10">
+        {!isOnline ? (
+          <OfflineState onRetry={retryAll} />
+        ) : isLoadingMyPosts ? (
+          <div className="text-center text-xs text-text-muted py-10">
             Loading posts...
           </div>
         ) : myPostsError ? (
           <div className="flex flex-col items-center justify-center py-10 gap-3">
-            <p className="text-sm text-rose-500 font-semibold">
-              {myPostsError}
-            </p>
+            <p className="text-sm text-error font-semibold">{myPostsError}</p>
             <button
               onClick={loadInitialMyPosts}
-              className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
+              className="px-4 py-2 text-xs font-bold text-text-on-primary bg-primary hover:bg-primary-hover rounded-lg"
             >
               Retry
             </button>
@@ -629,13 +658,18 @@ export default function Profile({
             handleDeletePost={handleDeletePost}
           />
         )}
-        {hasMoreMyPosts && !isLoadingMyPosts && (
+        {isOnline && hasMoreMyPosts && !isLoadingMyPosts && (
           <div className="flex justify-center mt-4">
             <button
               onClick={loadMoreMyPosts}
-              className="px-4 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg"
+              disabled={isLoadingMorePosts}
+              className="px-4 py-2 text-xs font-bold text-link hover:bg-primary-light rounded-lg disabled:opacity-50"
             >
-              Load more
+              {isLoadingMorePosts
+                ? "Loading..."
+                : loadMorePostsError
+                  ? "Couldn't load. Tap to retry"
+                  : "Load more"}
             </button>
           </div>
         )}
@@ -650,12 +684,12 @@ export default function Profile({
           <div className="flex items-center px-4 py-3 shrink-0 relative">
             <button
               onClick={() => setIsEditModalOpen(false)}
-              className="p-1.5 text-text rounded-full hover:bg-surface-raised z-10"
+              className="p-1.5 text-text-primary rounded-full hover:bg-surface-hover z-10"
               aria-label="Back"
             >
               <ChevronLeft className="w-6 h-6" />
             </button>
-            <h3 className="absolute inset-x-0 text-center text-base font-black text-text-h2 pointer-events-none">
+            <h3 className="absolute inset-x-0 text-center text-base font-black text-text-primary pointer-events-none">
               Edit Profile
             </h3>
           </div>
@@ -668,7 +702,7 @@ export default function Profile({
                   onClick={() => photoInputRef.current?.click()}
                   className="relative w-36 h-36 cursor-pointer"
                 >
-                  <div className="w-full h-full rounded-full overflow-hidden bg-slate-100 flex items-center justify-center">
+                  <div className="w-full h-full rounded-full overflow-hidden bg-surface-secondary flex items-center justify-center">
                     {editPhotoPreview ? (
                       <img
                         src={editPhotoPreview}
@@ -676,16 +710,16 @@ export default function Profile({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <Camera className="w-10 h-10 text-slate-400" />
+                      <Camera className="w-10 h-10 text-icon-muted" />
                     )}
                   </div>
-                  <div className="absolute bottom-1 right-1 w-10 h-10 rounded-full bg-white shadow-md border border-slate-100 flex items-center justify-center">
-                    <Camera className="w-5 h-5 text-slate-700" />
+                  <div className="absolute bottom-1 right-1 w-10 h-10 rounded-full bg-white shadow-md border border-border-subtle flex items-center justify-center">
+                    <Camera className="w-5 h-5 text-icon-primary" />
                   </div>
                 </div>
                 <button
                   onClick={() => photoInputRef.current?.click()}
-                  className="mt-3 text-sm font-semibold text-blue-600 hover:underline"
+                  className="mt-3 text-sm font-semibold text-link hover:underline"
                 >
                   Change Photo
                 </button>
@@ -701,23 +735,23 @@ export default function Profile({
               {/* Fields */}
               <div className="space-y-5">
                 <div>
-                  <label className="block text-sm text-small-text mb-1.5">
+                  <label className="block text-sm text-text-secondary mb-1.5">
                     Display Name
                   </label>
                   <input
                     type="text"
                     value={editName}
                     onChange={(e) => setEditName(e.target.value.slice(0, 20))}
-                    className="w-full px-4 py-3 bg-input border border-input-border focus:border-input-focus outline-none rounded-xl text-base text-input-text"
+                    className="w-full px-4 py-3 bg-input-bg border border-input-border focus:border-input-focus outline-none rounded-xl text-base text-input-text"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm text-small-text mb-1.5">
+                  <label className="block text-sm text-text-secondary mb-1.5">
                     Username
                   </label>
                   <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base text-small-text select-none">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base text-text-muted select-none">
                       @
                     </span>
                     <input
@@ -726,20 +760,20 @@ export default function Profile({
                       onChange={(e) =>
                         setEditUsername(e.target.value.slice(0, 30))
                       }
-                      className="w-full pl-9 pr-4 py-3 bg-input border border-input-border focus:border-input-focus outline-none rounded-xl text-base text-input-text"
+                      className="w-full pl-9 pr-4 py-3 bg-input-bg border border-input-border focus:border-input-focus outline-none rounded-xl text-base text-input-text"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm text-small-text mb-1.5">
+                  <label className="block text-sm text-text-secondary mb-1.5">
                     Bio
                   </label>
                   <textarea
                     value={editBio}
                     onChange={(e) => setEditBio(e.target.value.slice(0, 150))}
                     rows={3}
-                    className="w-full px-4 py-3 bg-input border border-input-border focus:border-input-focus outline-none rounded-xl text-base text-input-text resize-none"
+                    className="w-full px-4 py-3 bg-input-bg border border-input-border focus:border-input-focus outline-none rounded-xl text-base text-input-text resize-none"
                   />
                 </div>
               </div>
@@ -748,7 +782,7 @@ export default function Profile({
               <button
                 onClick={handleSaveProfile}
                 disabled={isSavingProfile}
-                className="mt-8 w-full py-3.5 rounded-xl bg-brand hover:opacity-90 text-white text-base font-bold transition-opacity disabled:opacity-50"
+                className="mt-8 w-full py-3.5 rounded-xl bg-primary hover:opacity-90 text-text-on-primary text-base font-bold transition-opacity disabled:opacity-50"
               >
                 {isSavingProfile ? "Saving..." : "Save"}
               </button>
@@ -761,17 +795,17 @@ export default function Profile({
           MODAL: UPLOAD WITH HASHTAGS & PREVIEW
           ======================================================== */}
       {isUploadModalOpen && (
-        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto border border-gray-100 flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between sticky top-0 bg-white z-10">
-              <h3 className="text-lg font-black tracking-tight text-text">
+        <div className="fixed inset-0 bg-overlay backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto border border-border-subtle flex flex-col">
+            <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between sticky top-0 bg-white z-10">
+              <h3 className="text-lg font-black tracking-tight text-text-primary">
                 {uploadIsVideo
                   ? "🎬 Compose New Video Post"
                   : "🖼 Compose New Photo Post"}
               </h3>
               <button
                 onClick={() => setIsUploadModalOpen(false)}
-                className="p-1.5 hover:bg-gray-100 text-gray-400 rounded-xl"
+                className="p-1.5 hover:bg-surface-hover text-icon-muted rounded-xl"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -795,7 +829,7 @@ export default function Profile({
               </div>
 
               <div className="space-y-2">
-                <label className="block text-xs font-extrabold tracking-wider text-gray-400 uppercase">
+                <label className="block text-xs font-extrabold tracking-wider text-text-muted uppercase">
                   Write Caption Description
                 </label>
                 <textarea
@@ -805,25 +839,25 @@ export default function Profile({
                   }
                   placeholder="Enter a cool caption. Include #hashtags like #programming, #vlog..."
                   rows={4}
-                  className="w-full px-4 py-3 bg-gray-50 border focus:border-blue-500 rounded-2xl text-sm font-semibold"
+                  className="w-full px-4 py-3 bg-input-special-bg border border-input-special-border focus:border-input-special-focus rounded-2xl text-sm font-semibold"
                 />
               </div>
             </div>
             {uploadError && (
-              <p className="text-xs font-semibold text-amber-600 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+              <p className="text-xs font-semibold text-warning bg-warning-light border border-warning-border rounded-xl px-4 py-2.5">
                 {uploadError}
               </p>
             )}
-            <div className="px-6 py-4 border-t border-gray-100 flex gap-3 justify-end bg-white">
+            <div className="px-6 py-4 border-t border-border-subtle flex gap-3 justify-end bg-white">
               <button
                 onClick={() => setIsUploadModalOpen(false)}
-                className="px-4 py-2 bg-gray-100 text-xs font-bold text-gray-700 rounded-xl"
+                className="px-4 py-2 bg-surface-secondary text-xs font-bold text-text-secondary rounded-xl"
               >
                 Cancel
               </button>
               <button
                 onClick={handlePostMedia}
-                className="px-5 py-2 bg-emerald-600 text-xs font-bold text-white rounded-xl shadow-md"
+                className="px-5 py-2 bg-success text-xs font-bold text-text-on-primary rounded-xl shadow-md"
               >
                 Post Now ➤
               </button>
@@ -885,26 +919,26 @@ export default function Profile({
       )}
       {/* Custom styled Delete Confirmation Modal */}
       {deleteConfirmState?.isOpen && (
-        <div className="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
-          <div className="bg-surface rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-gray-100 flex flex-col text-center animate-fade-in">
-            <div className="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4 text-rose-500 animate-pulse">
+        <div className="fixed inset-0 bg-overlay backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+          <div className="bg-surface rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-border-subtle flex flex-col text-center animate-fade-in">
+            <div className="w-14 h-14 rounded-full bg-error-light flex items-center justify-center mx-auto mb-4 text-error animate-pulse">
               <Trash2 className="w-7 h-7" />
             </div>
 
-            <h3 className="text-lg font-black text-text mb-2">
+            <h3 className="text-lg font-black text-text-primary mb-2">
               {deleteConfirmState.type === "post"
                 ? "Delete Post?"
                 : deleteConfirmState.type === "reply"
                   ? "Delete Reply?"
                   : "Delete Comment?"}
             </h3>
-            <p className="text-xs text-small-text font-semibold mb-4">
+            <p className="text-xs text-text-secondary font-semibold mb-4">
               Are you sure you want to delete this permanently? This action
               cannot be undone.
             </p>
 
             {deleteError && (
-              <p className="text-xs font-semibold text-rose-600 bg-rose-50 border border-rose-200 rounded-lg px-3 py-2 mb-4">
+              <p className="text-xs font-semibold text-error bg-error-light border border-error-border rounded-lg px-3 py-2 mb-4">
                 {deleteError}
               </p>
             )}
@@ -916,14 +950,14 @@ export default function Profile({
                   setDeleteError(null);
                 }}
                 disabled={isDeletingPost}
-                className="flex-1 py-3 bg-surface-raised hover:bg-border rounded-xl text-xs font-black text-white transition-all disabled:opacity-50"
+                className="flex-1 py-3 bg-surface-secondary hover:bg-border rounded-xl text-xs font-black text-text-secondary transition-all disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={executeDeleteAction}
                 disabled={isDeletingPost}
-                className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black text-white shadow-lg transition-all disabled:opacity-50"
+                className="flex-1 py-3 bg-error hover:opacity-90 rounded-xl text-xs font-black text-text-on-primary shadow-lg transition-all disabled:opacity-50"
               >
                 {isDeletingPost ? "Deleting..." : "Delete"}
               </button>

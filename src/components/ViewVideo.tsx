@@ -11,6 +11,8 @@ import {
   Heart,
   MessageCircle,
   Share2,
+  Volume2,
+  VolumeX,
   Send,
   Pencil,
   Check,
@@ -34,6 +36,20 @@ function formatRelativeTime(timestamp: string): string {
     day: "numeric",
   });
 }
+function formatTime(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+const HEART_KEYFRAMES = `@keyframes heart-pop {
+  0% { transform: scale(0.3); opacity: 0; }
+  15% { transform: scale(1.25); opacity: 1; }
+  30% { transform: scale(1); opacity: 1; }
+  75% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(1.4) translateY(-40px); opacity: 0; }
+}`;
 // ViewVideo.tsx የProp ዓይነቶች መግለጫ (Props Interface for ViewVideo.tsx)
 interface ViewVideoProps {
   selectedPost: FeedPost;
@@ -108,6 +124,11 @@ export default function ViewVideo({
   formatCount,
 }: ViewVideoProps) {
   const comments = commentsMap[selectedPost.id] || [];
+  const loadedTotal = comments.reduce((n, c) => n + 1 + c.replies.length, 0);
+  const totalComments =
+    isLoadingComments || commentsError || hasMoreComments
+      ? Math.max(loadedTotal, selectedPost.commentsCount)
+      : loadedTotal;
   const shares = selectedPost.sharesCount;
 
   // የልጥፉ ባለቤት ማነው? (Detect who is the author of this post)
@@ -152,6 +173,120 @@ export default function ViewVideo({
   const [commentError, setCommentError] = useState<string | null>(null);
   const touchStartY = useRef<number | null>(null);
   const wheelLockRef = useRef(false);
+
+  const [isMuted, setIsMuted] = useState(false);
+  const [isSpeeding, setIsSpeeding] = useState(false);
+  const [hearts, setHearts] = useState<{ id: number; x: number; y: number }[]>(
+    [],
+  );
+  const heartIdRef = useRef(0);
+  const lastTapRef = useRef(0);
+  const tapTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const holdStartRef = useRef<{ x: number; y: number } | null>(null);
+  const speedingRef = useRef(false);
+  const suppressTapRef = useRef(false);
+
+  const showHeart = (x: number, y: number) => {
+    const id = ++heartIdRef.current;
+    setHearts((prev) => [...prev, { id, x, y }]);
+    setTimeout(() => setHearts((prev) => prev.filter((h) => h.id !== id)), 900);
+  };
+
+  // 1 tap = pause/play (0.3s ዘግይቶ)፣ 2 tap = like + ልብ
+  const handleMediaTap = (e: React.MouseEvent<HTMLElement>) => {
+    if (suppressTapRef.current) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const now = Date.now();
+    if (now - lastTapRef.current < 300) {
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+      lastTapRef.current = now; // ተከታታይ tap ሁሉ ልብ ይጨምራል
+      showHeart(x, y);
+      if (!selectedPost.liked) handleToggleLikePost(selectedPost.id);
+      return;
+    }
+    lastTapRef.current = now;
+    if (selectedPost.type === "video") {
+      tapTimerRef.current = setTimeout(() => handleVideoClick(), 300);
+    }
+  };
+
+  // በጎን ጠርዝ ይዞ መቆየት = 2×
+  const clearHoldTimer = () => {
+    if (holdTimerRef.current) {
+      clearTimeout(holdTimerRef.current);
+      holdTimerRef.current = null;
+    }
+    holdStartRef.current = null;
+  };
+  const handlePointerDown = (e: React.PointerEvent<HTMLElement>) => {
+    if (selectedPost.type !== "video") return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const relX = (e.clientX - rect.left) / rect.width;
+    if (relX > 0.3 && relX < 0.7) return;
+    holdStartRef.current = { x: e.clientX, y: e.clientY };
+    holdTimerRef.current = setTimeout(() => {
+      if (videoRef.current) videoRef.current.playbackRate = 2;
+      speedingRef.current = true;
+      suppressTapRef.current = true;
+      setIsSpeeding(true);
+    }, 350);
+  };
+  const handlePointerMove = (e: React.PointerEvent<HTMLElement>) => {
+    const start = holdStartRef.current;
+    if (!start || speedingRef.current) return;
+    if (Math.hypot(e.clientX - start.x, e.clientY - start.y) > 12) {
+      clearHoldTimer(); // swipe ነው፣ hold አይደለም
+    }
+  };
+  const endHold = () => {
+    clearHoldTimer();
+    if (speedingRef.current) {
+      speedingRef.current = false;
+      setIsSpeeding(false);
+      if (videoRef.current) videoRef.current.playbackRate = 1;
+      // ከ pointerup በኋላ የሚመጣው click እንደ tap እንዳይቆጠር
+      setTimeout(() => {
+        suppressTapRef.current = false;
+      }, 150);
+    }
+  };
+
+  useEffect(() => {
+    if (videoRef.current) videoRef.current.muted = isMuted;
+  }, [isMuted, selectedMediaSrc, selectedPost.id]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- post ሲቀየር gesture states reset
+    setIsSpeeding(false);
+    speedingRef.current = false;
+    setHearts([]);
+    clearHoldTimer();
+    if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedPost.id]);
+
+  useEffect(
+    () => () => {
+      if (tapTimerRef.current) clearTimeout(tapTimerRef.current);
+      if (holdTimerRef.current) clearTimeout(holdTimerRef.current);
+    },
+    [],
+  );
+
+  const heartsLayer = hearts.map((h) => (
+    <Heart
+      key={h.id}
+      className="absolute w-24 h-24 fill-rose-500 text-rose-500 pointer-events-none drop-shadow-lg"
+      style={{
+        left: h.x - 48,
+        top: h.y - 48,
+        animation: "heart-pop 0.9s ease-out forwards",
+      }}
+    />
+  ));
 
   // ስኬታማ ሲሆን ብቻ input ይጸዳል፣ ካልተሳካ ጽሁፉ ይቀራል (እንደገና ለመሞከር)
   const submitComment = async () => {
@@ -248,9 +383,10 @@ export default function ViewVideo({
   }, [selectedPost]);
 
   return (
-    <div className="fixed inset-0 bg-surface backdrop-blur-md flex items-center justify-center z-50 p-0 sm:p-4 animate-fade-in">
-      <div className="bg-black md:bg-white rounded-none sm:rounded-3xl w-full max-w-[1200px] h-full sm:h-[90vh] md:h-[88vh] overflow-hidden shadow-2xl border border-transparent sm:border-gray-200/50 flex flex-col md:flex-row relative">
+    <div className="fixed inset-0 bg-overlay backdrop-blur-md flex items-center justify-center z-50 p-0 sm:p-4 animate-fade-in">
+      <div className="bg-black md:bg-surface rounded-none sm:rounded-3xl w-full max-w-[1200px] h-full sm:h-[90vh] md:h-[88vh] overflow-hidden shadow-2xl border border-transparent sm:border-border flex flex-col md:flex-row relative">
         {/* ===== Left Side: Video/Image Container ===== */}
+        <style>{HEART_KEYFRAMES}</style>
         <div
           className="w-full h-full md:flex-1 bg-black flex items-center justify-center relative touch-none"
           onTouchStart={handleTouchStart}
@@ -274,7 +410,7 @@ export default function ViewVideo({
                 handleDeletePost(selectedPost.id, e);
                 handleClosePlayer();
               }}
-              className="absolute top-[18px] right-[18px] px-3.5 py-2 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center gap-1.5 text-xs font-black tracking-wide transition-all backdrop-blur-md z-30 shadow-lg pointer-events-auto md:hidden"
+              className="absolute top-[18px] right-[18px] px-3.5 py-2 rounded-full bg-error hover:bg-error/90 text-white flex items-center gap-1.5 text-xs font-black tracking-wide transition-all backdrop-blur-md z-30 shadow-lg pointer-events-auto md:hidden"
               title="Delete Post"
             >
               <Trash2 className="w-3.5 h-3.5 text-white" />
@@ -286,7 +422,13 @@ export default function ViewVideo({
           {selectedMediaSrc ? (
             selectedPost.type === "video" ? (
               <div
-                onClick={handleVideoClick}
+                onClick={handleMediaTap}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={endHold}
+                onPointerCancel={endHold}
+                onPointerLeave={endHold}
+                onContextMenu={(e) => e.preventDefault()}
                 className="w-full h-full cursor-pointer relative flex items-center justify-center group select-none"
               >
                 <video
@@ -318,9 +460,9 @@ export default function ViewVideo({
 
                 {/* Progress bar line */}
                 {videoDuration > 0 && (
-                  <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20 z-10 pointer-events-none">
+                  <div className="hidden md:block absolute bottom-0 left-0 right-0 h-1 bg-white/20 z-10 pointer-events-none">
                     <div
-                      className="h-full bg-blue-500 transition-all duration-100"
+                      className="h-full bg-primary transition-all duration-100"
                       style={{
                         width: `${(videoCurrentTime / videoDuration) * 100}%`,
                       }}
@@ -329,14 +471,27 @@ export default function ViewVideo({
                 )}
               </div>
             ) : (
-              <img
-                src={selectedMediaSrc || undefined}
-                alt="Post photo content"
-                className="w-full h-full object-contain block bg-black"
-              />
+              <div
+                onClick={handleMediaTap}
+                onContextMenu={(e) => e.preventDefault()}
+                className="w-full h-full relative select-none"
+              >
+                <img
+                  src={selectedMediaSrc || undefined}
+                  alt="Post photo content"
+                  className="w-full h-full object-contain block bg-black"
+                />
+                {heartsLayer}
+              </div>
             )
           ) : (
             <div className="text-white/40 text-sm">Media asset loading...</div>
+          )}
+          {heartsLayer}
+          {isSpeeding && (
+            <div className="absolute top-16 left-1/2 -translate-x-1/2 bg-black/55 text-white text-xs font-bold px-3 py-1 rounded-full z-20 pointer-events-none">
+              2×
+            </div>
           )}
         </div>
 
@@ -344,6 +499,7 @@ export default function ViewVideo({
         <Left
           selectedPost={selectedPost}
           comments={comments}
+          totalComments={totalComments}
           isLoadingComments={isLoadingComments}
           commentsError={commentsError}
           loadMoreComments={loadMoreComments}
@@ -387,9 +543,7 @@ export default function ViewVideo({
             >
               <Heart
                 className={`w-[26px] h-[26px] drop-shadow-md ${
-                  selectedPost.liked
-                    ? "fill-rose-500 text-rose-500"
-                    : "text-white"
+                  selectedPost.liked ? "fill-error text-error" : "text-white"
                 }`}
               />
               <span className="text-[11px] font-bold text-white drop-shadow-md select-none">
@@ -404,7 +558,7 @@ export default function ViewVideo({
             >
               <MessageCircle className="w-[26px] h-[26px] text-white drop-shadow-md" />
               <span className="text-[11px] font-bold text-white drop-shadow-md select-none">
-                {formatCount(comments.length)}
+                {formatCount(totalComments)}
               </span>
             </button>
 
@@ -418,6 +572,19 @@ export default function ViewVideo({
                 {shares > 0 ? formatCount(shares) : "Share"}
               </span>
             </button>
+            {selectedPost.type === "video" && (
+              <button
+                onClick={() => setIsMuted((m) => !m)}
+                className="flex flex-col items-center justify-center active:scale-90 transition-all focus:outline-none"
+                aria-label={isMuted ? "Unmute" : "Mute"}
+              >
+                {isMuted ? (
+                  <VolumeX className="w-[26px] h-[26px] text-white drop-shadow-md" />
+                ) : (
+                  <Volume2 className="w-[26px] h-[26px] text-white drop-shadow-md" />
+                )}
+              </button>
+            )}
           </div>
 
           {/* Bottom user details & caption overlays */}
@@ -427,7 +594,7 @@ export default function ViewVideo({
                 onClick={() => handleNavigateToUserProfile(postAuthor.username)}
                 className="flex items-center gap-2.5 cursor-pointer hover:opacity-85 active:scale-95 transition-all max-w-[85%]"
               >
-                <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white bg-slate-800 flex items-center justify-center text-white text-xs font-bold shrink-0">
+                <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white bg-surface-secondary flex items-center justify-center text-white text-xs font-bold shrink-0">
                   {postAuthor.photo ? (
                     <img
                       src={postAuthor.photo}
@@ -454,7 +621,7 @@ export default function ViewVideo({
                   return (
                     <span
                       key={i}
-                      className="text-blue-400 font-bold hover:underline cursor-pointer"
+                      className="text-link font-bold hover:underline cursor-pointer"
                     >
                       {word}
                     </span>
@@ -463,6 +630,21 @@ export default function ViewVideo({
                 return <span key={i}>{word}</span>;
               })}
             </p>
+            {selectedPost.type === "video" && videoDuration > 0 && (
+              <div className="flex items-center gap-3">
+                <div className="flex-1 h-[3px] bg-white/30 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-white rounded-full"
+                    style={{
+                      width: `${(videoCurrentTime / videoDuration) * 100}%`,
+                    }}
+                  />
+                </div>
+                <span className="text-[11px] font-semibold text-white/90 tabular-nums shrink-0">
+                  {formatTime(videoCurrentTime)} / {formatTime(videoDuration)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
@@ -473,23 +655,23 @@ export default function ViewVideo({
               className="fixed inset-0 bg-black/60 z-40 md:hidden"
               onClick={() => setMobileCommentsOpen(false)}
             />
-            <div className="fixed inset-x-0 bottom-0 h-[82vh] max-h-[82vh] bg-bodey-bg rounded-t-[32px] shadow-2xl z-50 flex flex-col transition-all duration-300 md:hidden overflow-hidden pointer-events-auto">
-              <div className="p-4 border-b border-input-border flex items-center justify-between shrink-0 bg-bodey-bg">
-                <h3 className="text-sm font-bold text-text-h2">
-                  {comments.length} comments
+            <div className="fixed inset-x-0 bottom-0 h-[82vh] max-h-[82vh] bg-surface rounded-t-[32px] shadow-2xl z-50 flex flex-col transition-all duration-300 md:hidden overflow-hidden pointer-events-auto">
+              <div className="p-4 border-b border-border flex items-center justify-between shrink-0 bg-surface">
+                <h3 className="text-sm font-bold text-text-primary">
+                  {totalComments} comments
                 </h3>
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() =>
                       setSortOrder(sortOrder === "newest" ? "oldest" : "newest")
                     }
-                    className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+                    className="text-xs font-semibold text-text-secondary hover:text-text-primary"
                   >
                     {sortOrder === "newest" ? "Newest" : "Oldest"}
                   </button>
                   <button
                     onClick={() => setMobileCommentsOpen(false)}
-                    className="text-small-text hover:text-slate-800 text-xs font-bold"
+                    className="text-text-secondary hover:text-text-primary text-xs font-bold"
                   >
                     Close
                   </button>
@@ -498,26 +680,28 @@ export default function ViewVideo({
 
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {isLoadingComments ? (
-                  <div className="text-center text-slate-400 text-sm py-12">
+                  <div className="text-center text-text-muted text-sm py-12">
                     Loading comments...
                   </div>
                 ) : commentsError ? (
                   <div className="flex flex-col items-center gap-2 py-12">
-                    <p className="text-sm text-rose-500 font-semibold">
+                    <p className="text-sm text-error font-semibold">
                       {commentsError}
                     </p>
                     <button
                       onClick={() => void loadComments(selectedPost.id)}
-                      className="text-xs font-bold text-blue-600 underline"
+                      className="text-xs font-bold text-link underline"
                     >
                       Retry
                     </button>
                   </div>
                 ) : comments.length === 0 ? (
-                  <div className="text-center text-slate-400 text-sm py-12 flex flex-col items-center justify-center">
+                  <div className="text-center text-text-muted text-sm py-12 flex flex-col items-center justify-center">
                     <span className="text-2xl mb-1">💬</span>
-                    <p className="font-bold text-slate-500">No comments yet</p>
-                    <p className="text-xs text-small-text">
+                    <p className="font-bold text-text-secondary">
+                      No comments yet
+                    </p>
+                    <p className="text-xs text-text-secondary">
                       Be the first to share your thoughts!
                     </p>
                   </div>
@@ -530,7 +714,7 @@ export default function ViewVideo({
                             setMobileCommentsOpen(false);
                             handleNavigateToUserProfile(comment.username);
                           }}
-                          className="w-9 h-9 rounded-full overflow-hidden bg-blue-500 flex items-center justify-center text-white text-xs font-bold shrink-0 cursor-pointer active:scale-95 transition-transform"
+                          className="w-9 h-9 rounded-full overflow-hidden bg-primary flex items-center justify-center text-text-on-primary text-xs font-bold shrink-0 cursor-pointer active:scale-95 transition-transform"
                         >
                           {comment.avatar ? (
                             <img
@@ -549,11 +733,11 @@ export default function ViewVideo({
                                 setMobileCommentsOpen(false);
                                 handleNavigateToUserProfile(comment.username);
                               }}
-                              className="text-sm font-bold text-slate-900 cursor-pointer hover:underline"
+                              className="text-sm font-bold text-text-primary cursor-pointer hover:underline"
                             >
                               {comment.username}
                             </span>
-                            <span className="text-xs text-slate-400">
+                            <span className="text-xs text-text-muted">
                               {formatRelativeTime(comment.timestamp)}
                             </span>
                           </div>
@@ -568,17 +752,17 @@ export default function ViewVideo({
                                 }
                                 autoFocus
                                 maxLength={500}
-                                className="flex-1 bg-input border border-input-border rounded-lg px-3 py-1.5 text-[13px] outline-none focus:border-brand-light"
+                                className="flex-1 bg-input-bg text-input-text border border-input-border rounded-lg px-3 py-1.5 text-[13px] outline-none focus:border-input-focus"
                               />
                               <button
                                 onClick={() => confirmEdit(comment.id)}
-                                className="w-7 h-7 bg-brand text-white rounded-full flex items-center justify-center shrink-0"
+                                className="w-7 h-7 bg-primary text-text-on-primary rounded-full flex items-center justify-center shrink-0"
                               >
                                 <Check className="w-3.5 h-3.5" />
                               </button>
                             </div>
                           ) : (
-                            <p className="text-sm text-slate-800 leading-relaxed break-words mt-0.5">
+                            <p className="text-sm text-text-primary leading-relaxed break-words mt-0.5">
                               {comment.text}
                             </p>
                           )}
@@ -592,7 +776,7 @@ export default function ViewVideo({
                                   setActiveReplyTo(comment.id);
                                 }
                               }}
-                              className="text-xs font-semibold text-slate-500 hover:text-slate-700"
+                              className="text-xs font-semibold text-text-secondary hover:text-text-primary"
                             >
                               Reply
                             </button>
@@ -602,7 +786,7 @@ export default function ViewVideo({
                                 <>
                                   <button
                                     onClick={() => startEditing(comment)}
-                                    className="text-slate-400 hover:text-brand"
+                                    className="text-text-muted hover:text-primary"
                                   >
                                     <Pencil className="w-3.5 h-3.5" />
                                   </button>
@@ -613,7 +797,7 @@ export default function ViewVideo({
                                         comment.id,
                                       )
                                     }
-                                    className="text-slate-400 hover:text-rose-600"
+                                    className="text-text-muted hover:text-error"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
@@ -635,7 +819,7 @@ export default function ViewVideo({
                                 setMobileCommentsOpen(false);
                                 handleNavigateToUserProfile(reply.username);
                               }}
-                              className="w-7 h-7 rounded-full overflow-hidden bg-teal-500 flex items-center justify-center text-white text-[10px] font-bold shrink-0 cursor-pointer"
+                              className="w-7 h-7 rounded-full overflow-hidden bg-primary-border flex items-center justify-center text-text-on-primary text-[10px] font-bold shrink-0 cursor-pointer"
                             >
                               {reply.avatar ? (
                                 <img
@@ -654,15 +838,15 @@ export default function ViewVideo({
                                     setMobileCommentsOpen(false);
                                     handleNavigateToUserProfile(reply.username);
                                   }}
-                                  className="text-sm font-bold text-slate-900 cursor-pointer hover:underline"
+                                  className="text-sm font-bold text-text-primary cursor-pointer hover:underline"
                                 >
                                   {reply.username}
                                 </span>
-                                <span className="text-xs text-slate-400">
+                                <span className="text-xs text-text-muted">
                                   {formatRelativeTime(reply.timestamp)}
                                 </span>
                               </div>
-                              <p className="text-sm text-slate-800 leading-relaxed break-words mt-0.5">
+                              <p className="text-sm text-text-primary leading-relaxed break-words mt-0.5">
                                 {reply.text}
                               </p>
                               {reply.username === profile.username && (
@@ -675,7 +859,7 @@ export default function ViewVideo({
                                         reply.id,
                                       )
                                     }
-                                    className="text-slate-400 hover:text-rose-600"
+                                    className="text-text-muted hover:text-error"
                                   >
                                     <Trash2 className="w-3.5 h-3.5" />
                                   </button>
@@ -700,11 +884,11 @@ export default function ViewVideo({
                             onChange={(e) => setReplyInputText(e.target.value)}
                             placeholder="Reply text..."
                             maxLength={200}
-                            className="flex-1 bg-input border border-input-border rounded-xl px-4 py-2 text-[12.5px] h-9 focus:border-brand-light outline-none transition-all"
+                            className="flex-1 bg-input-bg text-input-text border border-input-border rounded-xl px-4 py-2 text-[12.5px] h-9 focus:border-input-focus outline-none transition-all"
                           />
                           <button
                             type="submit"
-                            className="w-8.5 h-8.5 bg-brand text-white rounded-xl flex items-center justify-center shadow-sm shrink-0 active:scale-90"
+                            className="w-8.5 h-8.5 bg-primary text-text-on-primary rounded-xl flex items-center justify-center shadow-sm shrink-0 active:scale-90"
                           >
                             <Send className="w-3.5 h-3.5" />
                           </button>
@@ -718,7 +902,7 @@ export default function ViewVideo({
                     <button
                       onClick={() => void loadMoreComments(selectedPost.id)}
                       disabled={isLoadingMoreComments}
-                      className="text-xs font-bold text-blue-600 hover:underline disabled:opacity-50"
+                      className="text-xs font-bold text-link hover:underline disabled:opacity-50"
                     >
                       {isLoadingMoreComments
                         ? "Loading..."
@@ -729,9 +913,9 @@ export default function ViewVideo({
               </div>
 
               {/* Main Comment Box inside drawer */}
-              <div className="relative border-t border-input-border bg-surface shrink-0 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <div className="relative border-t border-border bg-surface shrink-0 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 {commentError && (
-                  <p className="text-xs font-semibold text-rose-600 mb-2">
+                  <p className="text-xs font-semibold text-error mb-2">
                     {commentError}
                   </p>
                 )}
@@ -766,15 +950,15 @@ export default function ViewVideo({
                       onChange={(e) => setCommentInputText(e.target.value)}
                       placeholder="Add comment..."
                       maxLength={300}
-                      className="w-full bg-input border border-input-border focus:border-input-focus rounded-full pl-10 pr-4 py-2.5 text-sm text-input-text outline-none transition-all"
+                      className="w-full bg-input-bg border border-input-border focus:border-input-focus rounded-full pl-10 pr-4 py-2.5 text-sm text-input-text outline-none transition-all"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={!commentInputText.trim() || isSubmitting}
-                    className="w-10 h-10 bg-brand disabled:opacity-40 text-white rounded-full flex items-center justify-center shadow-md shrink-0 active:scale-95 transition-transform"
+                    className="w-10 h-10 bg-primary disabled:opacity-40 text-text-on-primary rounded-full flex items-center justify-center shadow-md shrink-0 active:scale-95 transition-transform"
                   >
-                    <Send className="w-4 h-4 text-white" />
+                    <Send className="w-4 h-4 text-text-on-primary" />
                   </button>
                 </form>
               </div>

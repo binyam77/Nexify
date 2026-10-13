@@ -67,6 +67,47 @@ function describeError(err: unknown): string {
   }
   return "Unknown error";
 }
+
+// በ outbox (localStorage) የቆዩ "Waiting…" መልዕክቶችን ወደ Message መቀየር
+function pendingMessagesFor(chatId: string): Message[] {
+  return getQueue()
+    .filter((q) => q.targetId === chatId)
+    .map((q) => ({
+      id: `pending-${q.clientMessageId}`,
+      senderName: "Me",
+      text: q.text ?? "",
+      time: "Waiting…",
+      isSentByMe: true,
+      mediaUrl: q.mediaUrl,
+      mediaType: q.mediaType
+        ? (q.mediaType.toLowerCase() as Message["mediaType"])
+        : undefined,
+      pending: true,
+      createdAt: q.createdAt,
+      clientMessageId: q.clientMessageId,
+    }));
+}
+
+// የ server ታሪክ + እስካሁን ያሉ local (live/pending) + outbox — ሳይደገሙ፣ ምንም ሳይጠፉ
+function mergeHistory(
+  server: Message[],
+  local: Message[],
+  queued: Message[],
+): Message[] {
+  const ids = new Set(server.map((m) => m.id));
+  const clientIds = new Set(
+    server.map((m) => m.clientMessageId).filter(Boolean) as string[],
+  );
+  const extras: Message[] = [];
+  for (const m of [...local, ...queued]) {
+    if (ids.has(m.id)) continue;
+    if (m.clientMessageId && clientIds.has(m.clientMessageId)) continue;
+    ids.add(m.id);
+    if (m.clientMessageId) clientIds.add(m.clientMessageId);
+    extras.push(m);
+  }
+  return [...server, ...extras];
+}
 // ==========================================
 // Title: This is the primary Community.tsx file
 // ==========================================
@@ -108,6 +149,8 @@ export default function Community() {
   }>({});
   // የ server መድረስ ፍተሻ ሁለቴ እንዳይጀመር
   const checkingConnectionRef = useRef(false);
+  // ታሪካቸው ከ server የተጫነ chats (live መልዕክት ብቻ ያለው ግቤት "ተጭኗል" እንዳይመስል)
+  const loadedChatsRef = useRef<Set<string>>(new Set());
 
   // User profile details (Current member profile loaded dynamically from localStorage)
   const { user, accessToken } = useAuth();
@@ -122,8 +165,7 @@ export default function Community() {
     getOnlineUsers,
   } = useRealtime();
   // ግንኙነት ደካማ/የለም ከሆነ Community አይሰራም
-  const { isUsable: canUseCommunity, browserOnline } =
-    useConnectionGate(isConnected);
+  const { browserOnline } = useConnectionGate(isConnected);
   const userProfile = {
     name: user?.name || user?.username || "User",
     role: user?.bio?.split(".")[0] || "Developer",
@@ -444,6 +486,17 @@ export default function Community() {
     };
   }, [socket]);
 
+  // እኔ ከተቋረጥኩ የሌሎች presence አይታወቅም → የድሮው "online" መታየት የለበትም
+  useEffect(() => {
+    if (isConnected) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- UI ን ከ socket ሁኔታ ጋር ማመሳሰል
+    setChats((prev) =>
+      prev.map((c) =>
+        c.type === "chat" && c.isOnline ? { ...c, isOnline: false } : c,
+      ),
+    );
+  }, [isConnected]);
+
   // Snapshot: ሲገናኝ/እንደገና ሲገናኝ እና 1:1 chat ዝርዝር ሲቀየር አሁን ማን online እንደሆነ ጠይቅ
   const directUserIdsKey = chats
     .filter((c) => c.type === "chat" && c.participantUserId)
@@ -523,7 +576,14 @@ export default function Community() {
     window.addEventListener("online", onReconnect);
     onReconnect(); // already connected on mount? (ያልተገናኘ ከሆነ ራሱ ይወጣል)
 
+    // ደካማ ግንኙነት ላይ ያልተላኩ መልዕክቶች በየ 15 ሰከንድ እንደገና ይሞከራሉ
+    // (clientMessageId idempotent ስለሆነ ሁለቴ አይፈጠርም)
+    const retryTimer = setInterval(() => {
+      if (getQueue().length > 0) onReconnect();
+    }, 15_000);
+
     return () => {
+      clearInterval(retryTimer);
       socket.off("connect", onReconnect);
       window.removeEventListener("online", onReconnect);
     };
@@ -567,7 +627,7 @@ export default function Community() {
         await leaveCommunityRequest(accessToken, chatId);
       } catch (err) {
         console.error("Failed to leave community:", err);
-        triggerToast("⚠️ Failed to leave. Please try again.");
+        triggerToast(" Failed to leave. Please try again.");
         return;
       }
     }
@@ -609,7 +669,7 @@ export default function Community() {
         });
       } catch (err) {
         console.error("Failed to update community:", err);
-        triggerToast("⚠️ Failed to update. Please try again.");
+        triggerToast(" Failed to update. Please try again.");
         return;
       }
     }
@@ -628,7 +688,7 @@ export default function Community() {
         await deleteCommunityRequest(accessToken, chatId);
       } catch (err) {
         console.error("Failed to delete community:", err);
-        triggerToast("⚠️ Failed to delete. Please try again.");
+        triggerToast(" Failed to delete. Please try again.");
         return;
       }
     }
@@ -642,7 +702,7 @@ export default function Community() {
     if (activeChatId === chatId) {
       setActiveChatId(null);
     }
-    triggerToast("🗑️ Deleted successfully!");
+    triggerToast("Deleted successfully!");
   };
 
   // DEMO ONLY: contact "typing..." simulation — real backend ሲመጣ Socket.IO 'typing' event
@@ -681,16 +741,33 @@ export default function Community() {
       } catch (err) {
         console.error("Failed to join realtime room:", err);
       }
-      if (messagesDb[chatId]) return;
+      if (loadedChatsRef.current.has(chatId)) return;
       try {
         const result = await listMessagesRequest(accessToken, chatId);
         const mapped = result.items
           .map((m) => mapCommunityMessageToMessage(m, user.id))
           .reverse();
-        setMessagesDb((prev) => ({ ...prev, [chatId]: mapped }));
+        loadedChatsRef.current.add(chatId);
+        setMessagesDb((prev) => ({
+          ...prev,
+          [chatId]: mergeHistory(
+            mapped,
+            prev[chatId] ?? [],
+            pendingMessagesFor(chatId),
+          ),
+        }));
       } catch (err) {
         console.error("Failed to load messages:", err);
-        triggerToast("⚠️ Could not load messages.");
+        // ግንኙነት ከሌለ እንኳ በ outbox ያሉ ("Waiting…") መልዕክቶች ይታያሉ
+        setMessagesDb((prev) => ({
+          ...prev,
+          [chatId]: mergeHistory(
+            [],
+            prev[chatId] ?? [],
+            pendingMessagesFor(chatId),
+          ),
+        }));
+        if (browserOnline) triggerToast("⚠️ Could not load messages.");
       }
       return;
     }
@@ -702,18 +779,82 @@ export default function Community() {
       } catch (err) {
         console.error("Failed to join realtime room:", err);
       }
-      if (messagesDb[chatId]) return;
+      if (loadedChatsRef.current.has(chatId)) return;
       try {
         const result = await listChatMessagesRequest(accessToken, chatId);
         const mapped = result.items
           .map((m) => mapChatMessageToMessage(m, user.id))
           .reverse();
-        setMessagesDb((prev) => ({ ...prev, [chatId]: mapped }));
+        loadedChatsRef.current.add(chatId);
+        setMessagesDb((prev) => ({
+          ...prev,
+          [chatId]: mergeHistory(
+            mapped,
+            prev[chatId] ?? [],
+            pendingMessagesFor(chatId),
+          ),
+        }));
       } catch (err) {
         console.error("Failed to load messages:", err);
-        triggerToast("⚠️ Could not load messages.");
+        setMessagesDb((prev) => ({
+          ...prev,
+          [chatId]: mergeHistory(
+            [],
+            prev[chatId] ?? [],
+            pendingMessagesFor(chatId),
+          ),
+        }));
+        if (browserOnline) triggerToast(" Could not load messages.");
       }
     }
+  };
+
+  // server የላከውን (ack) መልዕክት ወደ UI ማስገባት — `message:new` ወደኛ ባይደርስም
+  // ("Sending" ላይ እንዳይቀር). message:new ቀድሞ ከደረሰ ምንም አያደርግም።
+  const reconcileSent = (
+    scope: "community" | "conversation",
+    targetId: string,
+    raw: unknown,
+  ) => {
+    if (!user || !raw) return;
+    const mapped =
+      scope === "community"
+        ? mapCommunityMessageToMessage(
+            raw as Parameters<typeof mapCommunityMessageToMessage>[0],
+            user.id,
+          )
+        : mapChatMessageToMessage(
+            raw as Parameters<typeof mapChatMessageToMessage>[0],
+            user.id,
+          );
+
+    setMessagesDb((prev) => {
+      const existing = prev[targetId] || [];
+      if (existing.some((m) => m.id === mapped.id)) return prev;
+      const isMyPending = (m: Message) =>
+        !!m.pending &&
+        !!m.clientMessageId &&
+        m.clientMessageId === mapped.clientMessageId;
+      const next = existing.some(isMyPending)
+        ? existing.map((m) => (isMyPending(m) ? mapped : m))
+        : [...existing, mapped];
+      return { ...prev, [targetId]: next };
+    });
+
+    setChats((prev) =>
+      prev.map((c) =>
+        c.id === targetId
+          ? {
+              ...c,
+              lastMsgText: mapped.mediaUrl
+                ? mapped.text || "📷 Media"
+                : mapped.text,
+              lastMsgSender: mapped.senderName,
+              lastMsgTime: mapped.time,
+            }
+          : c,
+      ),
+    );
   };
 
   const handleSendMessage = (
@@ -741,7 +882,7 @@ export default function Community() {
       id: `pending-${clientMessageId}`,
       senderName: "Me",
       text,
-      time: canUseCommunity ? getFormattedDateTime() : "Waiting…",
+      time: isConnected ? getFormattedDateTime() : "Sending…",
       isSentByMe: true,
       mediaUrl,
       mediaType,
@@ -763,27 +904,54 @@ export default function Community() {
       mediaType: backendMediaType,
       createdAt: new Date().toISOString(),
     };
-
-    // ግንኙነት የለም/ደካማ → መልዕክቱ "Waiting…" ሆኖ ይቆያል፤ ሲመለስ በራሱ ይላካል
-    if (!canUseCommunity) {
+    // ሁልጊዜ መጀመሪያ ወደ ዘላቂ outbox (localStorage) — Refresh ቢደረግ እንኳ አይጠፋም
+    let savedToOutbox = true;
+    try {
       enqueue(queued);
+    } catch (err) {
+      savedToOutbox = false;
+      console.error("Could not save message to the outbox:", err);
+    }
+
+    // ግንኙነት የለም/ደካማ → "Waiting…" ሆኖ ይቆያል፤ ሲመለስ በራሱ ይላካል
+    if (!isConnected) {
+      if (!savedToOutbox) {
+        triggerToast(" Couldn't keep this message while offline.");
+      }
       return;
     }
 
+    const sendTargetId = activeChatId;
+    const roomKey = `${scope}:${sendTargetId}`;
+
     Promise.resolve()
-      .then(() =>
-        sendMessage({
+      .then(async () => {
+        // ከ room ውጭ ከሆንን አስቀድመን እንቀላቀል (ያለዚያ የ server echo አይደርስም)
+        if (!joinedRoomsRef.current.has(roomKey)) {
+          await joinRoom(scope, sendTargetId);
+          joinedRoomsRef.current.add(roomKey);
+        }
+        return sendMessage({
           scope,
-          targetId: activeChatId,
+          targetId: sendTargetId,
           text: text || undefined,
           mediaUrl,
           mediaType: backendMediaType,
           clientMessageId,
-        }),
-      )
+        });
+      })
+      .then((saved) => {
+        dequeue(clientMessageId); // server አረጋግጧል → ከ outbox ውጣ
+        reconcileSent(scope, sendTargetId, saved); // "Sending" ወደ እውነተኛ መልዕክት
+      })
       .catch((err) => {
-        console.error("Failed to send message, queuing for retry:", err);
-        enqueue(queued); // ጸጥ ብሎ "Waiting…" ሆኖ ይቆያል
+        // outbox ውስጥ ይቆያል፤ በየ 15 ሰከንድ/ግንኙነት ሲመለስ እንደገና ይሞከራል
+        console.error("Failed to send message — kept in outbox:", err);
+        const reason = describeError(err);
+        // ጊዜ ማለፍ (ደካማ ግንኙነት) ጸጥ ይላል፤ server ሲከለክል (ለምሳሌ "Not a member…") ምክንያቱ ይታያል
+        if (!/timed out|not available yet/i.test(reason)) {
+          triggerToast(`⚠️ Not sent: ${reason}`);
+        }
       });
   };
   const handleEditMessage = async (messageId: string, newText: string) => {
@@ -796,7 +964,7 @@ export default function Community() {
         await editMessageRequest(accessToken, activeChatId, messageId, newText);
       } catch (err) {
         console.error("Failed to edit message:", err);
-        triggerToast("⚠️ Failed to edit message.");
+        triggerToast(" Failed to edit message.");
         return;
       }
     } else if (isConversationChat(targetChat)) {
@@ -810,7 +978,7 @@ export default function Community() {
         );
       } catch (err) {
         console.error("Failed to edit message:", err);
-        triggerToast("⚠️ Failed to edit message.");
+        triggerToast(" Failed to edit message.");
         return;
       }
     }
@@ -1161,16 +1329,19 @@ export default function Community() {
   }) => {
     if (!accessToken) return;
 
-    // Already-open check — by username, matching the existing local list.
+    // Already-open check — በ User.id (በ username ማዛመድ የደህንነት ችግር ነበረው)
     const existingChat = chats.find(
-      (c) => c.type === "chat" && c.participantUsername === otherUser.username,
+      (c) => c.type === "chat" && c.participantUserId === otherUser.userId,
     );
     if (existingChat) {
-      setActiveChatId(existingChat.id);
+      void handleSelectChat(existingChat.id); // ታሪክ ይጭናል፣ room ይገባል
       setActiveTab("community");
       triggerToast(`💬 Chat opened with ${otherUser.name}`);
       return;
     }
+
+    // አዲስ ውይይት server ይፈልጋል — ግንኙነት ከሌለ አጭር መልእክት
+    if (!requireConnection()) return;
 
     try {
       // ConversationsService.create() itself returns the EXISTING
@@ -1193,6 +1364,7 @@ export default function Community() {
         id: created.id,
         name: otherUser.name,
         participantUsername: otherUser.username,
+        participantUserId: otherUser.userId,
         bio: otherUser.bio,
         lastMsgText: "Welcome! Start your conversation here.",
         lastMsgSender: otherUser.name,
@@ -1211,9 +1383,15 @@ export default function Community() {
       };
 
       setChats((prev) => [newChat, ...prev]);
-      setMessagesDb((prev) => ({ ...prev, [newChat.id]: [] }));
+            setMessagesDb((prev) => ({ ...prev, [newChat.id]: [] }));
       setActiveChatId(newChat.id);
       setActiveTab("community");
+      // ከ room ጋር መቀላቀል — ያለዚያ የሌላው ሰው live መልዕክት አይደርስም
+      joinRoom("conversation", newChat.id)
+        .then(() =>
+          joinedRoomsRef.current.add(`conversation:${newChat.id}`),
+        )
+        .catch((err) => console.error("Failed to join realtime room:", err));
       triggerToast(`💬 Secure conversation started with ${otherUser.name}`);
     } catch (err) {
       console.error("Failed to start chat:", err);

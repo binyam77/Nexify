@@ -36,8 +36,6 @@ export default function ChatsSidebar({
   onRetrySuggested,
   suggestedSearchQuery = "",
   onSuggestedSearchChange,
-  listError = null,
-  onRetryList,
 }: ChatsSidebarProps) {
   // አንድ ነጠላ search — ዋጋው በ parent ይያዛል (debounced public search ያንቀሳቅሳል)
   const searchQuery = suggestedSearchQuery;
@@ -108,15 +106,15 @@ export default function ChatsSidebar({
   );
   return (
     <section
-      className="w-full md:w-[350px] border-r border-gray-100 bg-bodey-bg flex flex-col h-full shrink-0"
+      className="w-full md:w-[350px] border-r border-border bg-bg flex flex-col h-full shrink-0"
       aria-label="Chats List"
     >
       {/* ራስጌ - የአርዕስት ክፍል */}
-      <header className="p-5 bg-surface border-b border-gray-50 flex items-center justify-between shrink-0">
+      <header className="p-5 bg-surface border-b border-divider-subtle flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2.5">
           <div className="flex items-center gap-2.5">
             <h1
-              className="text-xl font-black tracking-tight text-text-h1"
+              className="text-xl font-black tracking-tight text-text-primary"
               id="brand-header-title"
             >
               Communities
@@ -126,7 +124,7 @@ export default function ChatsSidebar({
         <button
           type="button"
           onClick={onCreatePlusClick}
-          className="p-2 text-brand hover:bg-hover-input rounded-xl transition-all shrink-0"
+          className="p-2 text-primary hover:bg-surface-hover rounded-xl transition-all shrink-0"
           aria-label="Create new channel or group"
           title="Create"
         >
@@ -135,43 +133,26 @@ export default function ChatsSidebar({
       </header>
 
       {/* የፍለጋ ሳጥን (Search Bar) — Chats tab: local/private filter, Communities tab: public backend search */}
-      <div className="px-4 py-3 bg-input shadow-input shrink-0">
+      <div className="px-4 py-3 bg-input-bg shadow-sm shrink-0">
         <div className="relative">
           <input
             type="search"
             value={searchQuery}
             onChange={(e) => onSuggestedSearchChange?.(e.target.value)}
             placeholder="Search communities..."
-            className="w-full pl-10 pr-4 py-2.5 bg-surface-raised border border-input-border rounded-xl text-sm text-input-text placeholder:placeholder-input-text focus:bg-input
+            className="w-full pl-10 pr-4 py-2.5 bg-surface-secondary border border-input-border rounded-xl text-sm text-input-text placeholder:text-inputplaceholder focus:bg-input-bg
              focus:border-input-focus  outline-none transition-all "
           />
-          <Search className="absolute left-3.5 top-3 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3.5 top-3 w-4 h-4 text-icon-muted" />
         </div>
       </div>
       {/* ===== ነጠላ ዝርዝር: My chats + (ሲፈለግ) Public results ===== */}
       <div className="flex-1 overflow-y-auto">
-            {listError && (
-          <div className="mx-4 mt-3 p-3 rounded-xl bg-rose-50 border border-rose-100 flex items-center justify-between gap-3">
-            <div className="min-w-0">
-              <p className="text-xs font-bold text-rose-700">
-                Couldn't load your chats
-              </p>
-              <p className="text-[11px] text-rose-500 truncate">{listError}</p>
-            </div>
-            <button
-              onClick={onRetryList}
-              className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shrink-0"
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
         {!isSearching && joinedChats.length === 0 && (
           <div className="flex flex-col items-center justify-center p-8 text-center h-full">
-            <Globe className="w-10 h-10 text-gray-300 mb-3" />
-            <p className="text-sm font-semibold text-gray-600">No chats yet</p>
-            <p className="text-xs text-gray-400 mt-1 max-w-[220px]">
+            <Globe className="w-10 h-10 text-icon-muted mb-3" />
+            <p className="text-sm font-semibold text-text-secondary">No chats yet</p>
+            <p className="text-xs text-text-muted mt-1 max-w-[220px]">
               Search above to find public channels & groups, or tap + to create
               one.
             </p>
@@ -179,12 +160,12 @@ export default function ChatsSidebar({
         )}
 
         {isSearching && joinedChats.length > 0 && (
-          <h3 className="px-4.5 pt-4 pb-2 text-xs font-black text-gray-400 uppercase tracking-widest">
+          <h3 className="px-4.5 pt-4 pb-2 text-xs font-black text-text-muted uppercase tracking-widest">
             My chats
           </h3>
         )}
 
-        <div className="divide-y divide-gray-50">
+        <div className="divide-y divide-divider-subtle">
           {joinedChats.map((chat) => {
             const isActive = activeChatId === chat.id;
             return (
@@ -204,29 +185,29 @@ export default function ChatsSidebar({
                 title="Hold for options"
                 className={`flex items-center gap-3.5 px-4.5 py-4 cursor-pointer select-none transition-all duration-200 relative ${
                   isActive
-                    ? "bg-blue-50/70 border-l-3 border-brand"
-                    : "bg-input hover:bg-gray-50/60 "
+                    ? "bg-primary-light border-l-3 border-primary"
+                    : "bg-bg hover:bg-surface-hover "
                 }`}
               >
-                <div className="relative shrink-0 bg-brand rounded-full ">
+                <div className="relative shrink-0 bg-primary rounded-full ">
                   {chat.avatarUrl ? (
                     <img
                       src={chat.avatarUrl}
                       alt={chat.name}
-                      className="w-12 h-12 rounded-full object-cover shrink-0 shadow-sm border border-input"
+                      className="w-12 h-12 rounded-full object-cover shrink-0 shadow-sm border border-border"
                       referrerPolicy="no-referrer"
                     />
                   ) : (
                     <div
                       className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base
-                         text-white shrink-0 shadow-sm ${chat.bgGradient}`}
+                         text-text-on-primary shrink-0 shadow-sm ${chat.bgGradient}`}
                     >
                       {chat.avatarLabel}
                     </div>
                   )}
                   {chat.type === "chat" && chat.isOnline && (
                     <span
-                      className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"
+                      className="absolute bottom-0 right-0 w-3 h-3 bg-online border-2 border-white rounded-full"
                       aria-label="Online"
                     />
                   )}
@@ -234,24 +215,24 @@ export default function ChatsSidebar({
 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between mb-1">
-                    <h3 className="font-bold text-sm text-gray-900 truncate">
+                    <h3 className="font-bold text-sm text-text-primary truncate">
                       {chat.name}
                     </h3>
-                    <time className="text-[11px] text-gray-400 font-medium">
+                    <time className="text-[11px] text-text-muted font-medium">
                       {chat.lastMsgTime}
                     </time>
                   </div>
 
                   <div className="flex items-center justify-between gap-2">
-                    <p className="text-xs text-gray-500 truncate font-medium">
-                      <span className="text-gray-700 font-semibold">
+                    <p className="text-xs text-text-secondary truncate font-medium">
+                      <span className="text-text-primary font-semibold">
                         {chat.lastMsgSender}:{" "}
                       </span>
                       {chat.lastMsgText}
                     </p>
 
                     {chat.unreadCount > 0 ? (
-                      <span className="bg-blue-600 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full select-none shrink-0 min-w-[18px] text-center">
+                      <span className="bg-primary text-text-on-primary text-[10px] font-bold px-1.5 py-0.5 rounded-full select-none shrink-0 min-w-[18px] text-center">
                         {chat.unreadCount}
                       </span>
                     ) : null}
@@ -265,31 +246,31 @@ export default function ChatsSidebar({
         {/* ===== PUBLIC RESULTS (ሲፈለግ ብቻ) ===== */}
         {isSearching && (
           <div className="py-2">
-            <h3 className="px-4.5 pt-3 pb-2 text-xs font-black text-gray-400 uppercase tracking-widest">
+            <h3 className="px-4.5 pt-3 pb-2 text-xs font-black text-text-muted uppercase tracking-widest">
               Public results
             </h3>
 
             {suggestedError ? (
               <div className="flex flex-col items-center gap-3 px-4.5 py-6 text-center">
-                <p className="text-xs font-bold text-gray-600">
+                <p className="text-xs font-bold text-text-secondary">
                   {suggestedError}
                 </p>
                 <button
                   onClick={onRetrySuggested}
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition-all"
+                  className="px-5 py-2 bg-primary hover:bg-primary-hover text-text-on-primary text-xs font-bold rounded-xl transition-all"
                 >
                   Retry
                 </button>
               </div>
             ) : isLoadingSuggested ? (
               <div className="flex items-center justify-center gap-2 py-6">
-                <div className="w-5 h-5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" />
-                <p className="text-xs text-gray-400 font-semibold">
+                <div className="w-5 h-5 border-2 border-primary-border border-t-primary rounded-full animate-spin" />
+                <p className="text-xs text-text-muted font-semibold">
                   Searching...
                 </p>
               </div>
             ) : publicResults.length === 0 ? (
-              <p className="px-4.5 py-6 text-xs text-gray-400 font-medium text-center">
+              <p className="px-4.5 py-6 text-xs text-text-muted font-medium text-center">
                 {joinedChats.length === 0
                   ? "No results found."
                   : "No public communities found."}
@@ -309,23 +290,23 @@ export default function ChatsSidebar({
                     />
                   ) : (
                     <div
-                      className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base text-white shadow-sm shrink-0 ${chat.bgGradient}`}
+                      className={`w-12 h-12 rounded-full flex items-center justify-center font-bold text-base text-text-on-primary shadow-sm shrink-0 ${chat.bgGradient}`}
                     >
                       {chat.avatarLabel}
                     </div>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-sm text-gray-900 truncate">
+                    <h3 className="font-bold text-sm text-text-primary truncate">
                       {chat.name}
                     </h3>
-                    <p className="text-xs text-gray-400 truncate">
+                    <p className="text-xs text-text-muted truncate">
                       {chat.membersCount}{" "}
                       {chat.type === "channel" ? "subscribers" : "members"}
                     </p>
                   </div>
                   <button
                     onClick={() => onToggleJoin(chat.id)}
-                    className="px-3.5 py-1.5 text-xs font-bold rounded-full bg-blue-600 hover:bg-blue-700 text-white transition-colors shrink-0"
+                    className="px-3.5 py-1.5 text-xs font-bold rounded-full bg-primary hover:bg-primary-hover text-text-on-primary transition-colors shrink-0"
                   >
                     {chat.type === "channel" ? "Subscribe" : "Join"}
                   </button>
@@ -339,27 +320,27 @@ export default function ChatsSidebar({
       {/* Delete Confirmation Modal (hold-to-delete) */}
       {confirmDeleteChat && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[110] p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 bg-overlay backdrop-blur-sm flex items-center justify-center z-[110] p-4 animate-in fade-in duration-200"
           onClick={() => setConfirmDeleteChat(null)}
         >
           <div
-            className="bg-white w-full max-w-xs rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in zoom-in-95 duration-200 p-5 text-center"
+            className="bg-surface w-full max-w-xs rounded-2xl shadow-2xl border border-border-subtle overflow-hidden animate-in zoom-in-95 duration-200 p-5 text-center"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-3 text-rose-500">
+            <div className="w-12 h-12 rounded-full bg-error-light flex items-center justify-center mx-auto mb-3 text-error">
               <Trash2 className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-black text-slate-800 mb-1">
+            <h3 className="text-base font-black text-text-primary mb-1">
               Delete "{confirmDeleteChat.name}" ?
             </h3>
-            <p className="text-xs text-slate-500 font-semibold mb-5">
+            <p className="text-xs text-text-secondary font-semibold mb-5">
               This action cannot be undone. All messages will be permanently
               removed.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDeleteChat(null)}
-                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-black text-slate-500 transition-all"
+                className="flex-1 py-2.5 bg-surface-secondary hover:bg-border rounded-xl text-xs font-black text-text-secondary transition-all"
               >
                 Cancel
               </button>
@@ -368,7 +349,7 @@ export default function ChatsSidebar({
                   onDeleteChat(confirmDeleteChat.id);
                   setConfirmDeleteChat(null);
                 }}
-                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black text-white shadow-md transition-all"
+                className="flex-1 py-2.5 bg-error hover:bg-opacity-90 rounded-xl text-xs font-black text-text-on-primary shadow-md transition-all"
               >
                 Delete
               </button>

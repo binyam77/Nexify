@@ -15,7 +15,12 @@ let socket: Socket | null = null;
 // (React StrictMode double-invokes effects in development, and this makes
 // that harmless).
 export function connectSocket(accessToken: string): Socket {
-  if (socket?.connected) return socket;
+   // socket አስቀድሞ ካለ (እየተገናኘ ወይም ተገናኝቶ) ሁለተኛ አትክፈት፤ token ብቻ አድስ
+  if (socket) {
+    socket.auth = { token: accessToken };
+    if (!socket.connected) socket.connect();
+    return socket;
+  }
 
   socket = io(API_URL, {
     // Verified once at connect time by RealtimeGateway.handleConnection —

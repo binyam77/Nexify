@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 import { searchPosts } from "../api/posts.api";
 import { useSearchHistory } from "../hooks/useSearchHistory";
+import { useAuth } from "../context/AuthContext";
 import type { FeedPost } from "../types";
 
 interface SearchOverlayProps {
@@ -33,7 +34,10 @@ export default function SearchOverlay({
   const [searchError, setSearchError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const { history, addTerm, removeTerm } = useSearchHistory();
+  const { user } = useAuth();
+  const { history, addTerm, removeTerm } = useSearchHistory(
+    user?.id ?? "anonymous",
+  );
 
   useEffect(() => {
     inputRef.current?.focus();
@@ -102,7 +106,7 @@ export default function SearchOverlay({
     >
       {/* Header */}
       <div className="flex items-center gap-2 px-3 py-3 border-b border-input-border shrink-0">
-             <button
+        <button
           type="button"
           onClick={onClose}
           aria-label="Back"

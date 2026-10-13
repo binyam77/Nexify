@@ -70,7 +70,7 @@ export default function UserProfile({
             onClick={() => directPhotoInputRef.current?.click()}
             className="relative w-24 h-24 md:w-28 md:h-28 shrink-0 cursor-pointer group"
           >
-            <div className="w-full h-full rounded-full border-4 border-white shadow-xl overflow-hidden bg-blue-100 flex items-center justify-center">
+            <div className="w-full h-full rounded-full border-4 border-bg shadow-xl overflow-hidden bg-primary-light flex items-center justify-center">
               {profile.photo ? (
                 <img
                   src={profile.photo}
@@ -78,12 +78,12 @@ export default function UserProfile({
                   className="w-full h-full object-cover"
                 />
               ) : (
-                <div className="w-full h-full bg-slate-100 flex items-center justify-center">
-                  <Camera className="w-8 h-8 text-slate-400" />
+                <div className="w-full h-full bg-surface-secondary flex items-center justify-center">
+                  <Camera className="w-8 h-8 text-icon-muted" />
                 </div>
               )}
             </div>
-            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-black/70 flex items-center justify-center border-2 border-white group-hover:scale-110 transition-transform z-10">
+            <div className="absolute -bottom-1 -right-1 w-8 h-8 rounded-full bg-black/70 flex items-center justify-center border-2 border-bg group-hover:scale-110 transition-transform z-10">
               <Camera className="w-4 h-4 text-white" />
             </div>
           </div>
@@ -93,10 +93,10 @@ export default function UserProfile({
               onClick={onOpenFollowers}
               className="flex flex-col items-center"
             >
-              <span className="text-base sm:text-lg font-black text-text tracking-tight">
+              <span className="text-base sm:text-lg font-black text-text-primary tracking-tight">
                 {formatCount(followersCount)}
               </span>
-              <span className="text-[11px] text-small-text font-semibold">
+              <span className="text-[11px] text-text-secondary font-semibold">
                 Followers
               </span>
             </button>
@@ -104,10 +104,10 @@ export default function UserProfile({
               onClick={onOpenFollowing}
               className="flex flex-col items-center"
             >
-              <span className="text-base sm:text-lg font-black text-text tracking-tight">
+              <span className="text-base sm:text-lg font-black text-text-primary tracking-tight">
                 {formatCount(starsCount)}
               </span>
-              <span className="text-[11px] text-small-text font-semibold">
+              <span className="text-[11px] text-text-secondary font-semibold">
                 Following
               </span>
             </button>
@@ -115,10 +115,10 @@ export default function UserProfile({
               onClick={scrollToPosts}
               className="flex flex-col items-center"
             >
-              <span className="text-base sm:text-lg font-black text-text tracking-tight">
+              <span className="text-base sm:text-lg font-black text-text-primary tracking-tight">
                 {formatCount(postsCount)}
               </span>
-              <span className="text-[11px] text-small-text font-semibold">
+              <span className="text-[11px] text-text-secondary font-semibold">
                 Videos
               </span>
             </button>
@@ -126,19 +126,19 @@ export default function UserProfile({
         </div>
 
         <div className="mb-3">
-          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-text-h2 leading-tight">
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-text-primary leading-tight">
             {profile.name}
           </h2>
-          <p className="text-xs sm:text-sm font-bold text-brand-dark mt-0.5">
+          <p className="text-xs sm:text-sm font-bold text-primary mt-0.5">
             @{profile.username}
           </p>
         </div>
 
-               {/* Bio — ከ Edit ቁልፍ በላይ፣ link ካለ ሰማያዊ */}
+        {/* Bio — ከ Edit ቁልፍ በላይ፣ link ካለ ሰማያዊ */}
         {profile.bio && (
           <div className="mb-4">
             <p
-              className={`text-sm font-medium text-text leading-relaxed break-words whitespace-pre-line ${
+              className={`text-sm font-medium text-text-primary leading-relaxed break-words whitespace-pre-line ${
                 !isBioExpanded ? "line-clamp-2" : ""
               }`}
             >
@@ -147,7 +147,7 @@ export default function UserProfile({
             {isLongBio && (
               <button
                 onClick={() => setIsBioExpanded(!isBioExpanded)}
-                className="mt-1 text-xs font-extrabold text-blue-600 hover:text-indigo-600 flex items-center gap-1 transition-colors"
+                className="mt-1 text-xs font-extrabold text-link hover:text-link-hover flex items-center gap-1 transition-colors"
               >
                 {isBioExpanded ? (
                   <>
@@ -169,7 +169,7 @@ export default function UserProfile({
         <div className="flex items-center gap-2.5 mb-5">
           <button
             onClick={handleOpenEditModal}
-            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-slate-100 hover:bg-hover-input text-text font-bold text-sm transition-all"
+            className="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-surface-secondary hover:bg-surface-hover text-text-primary font-bold text-sm transition-all"
           >
             <Edit className="w-4 h-4" />
             <span>Edit Profile</span>
@@ -177,7 +177,7 @@ export default function UserProfile({
 
           <Link
             to="/settings"
-            className="w-11 h-11 flex items-center justify-center rounded-xl bg-slate-100 hover:bg-hover-input text-text transition-all shrink-0"
+            className="w-11 h-11 flex items-center justify-center rounded-xl bg-surface-secondary hover:bg-surface-hover text-text-primary transition-all shrink-0"
           >
             <Settings size={18} strokeWidth={2.5} />
           </Link>
@@ -186,7 +186,7 @@ export default function UserProfile({
         {/* Videos tab — ከታች መስመር ብቻ (ከላይ የለም)፣ ፖስቶች ከሱ ጋር ይጣበቃሉ */}
         <button
           onClick={scrollToPosts}
-          className="w-full flex items-center justify-center gap-1.5 border-b border-gray-200/60 py-3 text-xs font-black uppercase tracking-wider text-brand-dark"
+          className="w-full flex items-center justify-center gap-1.5 border-b border-border py-3 text-xs font-black uppercase tracking-wider text-primary"
         >
           <Grid className="w-3.5 h-3.5" />
           <span>Videos</span>

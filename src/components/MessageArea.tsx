@@ -274,7 +274,7 @@ export default function MessageArea({
       longPressFiredRef.current = false;
       return;
     }
-    if (msg.pending || !chat?.isJoined) return;
+    if (chat?.type !== "group" || msg.pending || !chat.isJoined) return;
     setReactionMessage(msg);
   };
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
@@ -435,13 +435,18 @@ export default function MessageArea({
     );
   }
 
+  // Group እና የግል chat ተመሳሳይ Telegram-style composer (ክሊፕ በግራ፣ emoji በቀኝ) ይጠቀማሉ
+  const isGroupLikeChat = chat.type === "group" || chat.type === "chat";
+
   return (
     <section
       className="flex-1 flex flex-col bg-white h-full relative min-h-0 overflow-hidden"
       aria-label="Current Conversation"
     >
       {/* 1a. Channel / Group header — ነጭ፣ Telegram style (verified/search የለም) */}
-      {(chat.type === "channel" || chat.type === "group") && (
+      {(chat.type === "channel" ||
+        chat.type === "group" ||
+        chat.type === "chat") && (
         <header className="py-3 px-4 min-h-[68px] bg-white border-b border-gray-100 flex items-center gap-2 shrink-0 z-10">
           <button
             onClick={onBack}
@@ -454,7 +459,9 @@ export default function MessageArea({
             onClick={() =>
               chat.type === "channel"
                 ? setChannelInfoOpen(true)
-                : setIsGroupInfoOpen(true)
+                : chat.type === "chat"
+                  ? setIsChatInfoOpen(true)
+                  : setIsGroupInfoOpen(true)
             }
             className="flex items-center gap-3 min-w-0 cursor-pointer"
           >
@@ -476,132 +483,146 @@ export default function MessageArea({
               <h2 className="text-base font-bold text-gray-900 truncate leading-tight">
                 {chat.name}
               </h2>
-              <p className="text-sm text-gray-500 leading-tight">
-                {chat.membersCount}{" "}
-                {chat.type === "channel" ? "subscribers" : "members"}
-              </p>
+              {chat.type === "chat" ? (
+                <p
+                  className={`text-sm leading-tight ${
+                    chat.isOnline === true
+                      ? "text-emerald-500 font-medium"
+                      : "text-gray-500"
+                  }`}
+                >
+                  {chat.isOnline === true ? "online" : "offline"}
+                </p>
+              ) : (
+                <p className="text-sm text-gray-500 leading-tight">
+                  {chat.membersCount}{" "}
+                  {chat.type === "channel" ? "subscribers" : "members"}
+                </p>
+              )}
             </div>
           </div>
         </header>
       )}
 
       {/* 1b. Header (Group / 1:1 chat) - Conversation title, online member count or last seen timestamp */}
-      {chat.type !== "channel" && chat.type !== "group" && (
-        <header
-          className="py-4 md:py-5 min-h-[76px] px-5 md:px-7 
+      {chat.type !== "channel" &&
+        chat.type !== "group" &&
+        chat.type !== "chat" && (
+          <header
+            className="py-4 md:py-5 min-h-[76px] px-5 md:px-7 
      text-white border-b border-gray-100 flex items-center justify-between bg-brand shrink-0 shadow-sm z-10"
-        >
-          <div className="flex items-center gap-3.5 ">
-            {/* Back button shown on mobile view only */}
-            <button
-              onClick={onBack}
-              className="md:hidden p-1.5 text-gray-900 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-              aria-label="Back to chat list"
-            >
-              <ArrowLeft className="w-5 h-5 " />
-            </button>
+          >
+            <div className="flex items-center gap-3.5 ">
+              {/* Back button shown on mobile view only */}
+              <button
+                onClick={onBack}
+                className="md:hidden p-1.5 text-gray-900 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+                aria-label="Back to chat list"
+              >
+                <ArrowLeft className="w-5 h-5 " />
+              </button>
 
-            {/* Channel ብቻ ተነክቶ Detail view ይከፈታል*/}
+              {/* Channel ብቻ ተነክቶ Detail view ይከፈታል*/}
 
-            <div
-              onClick={() => {
-                if (chat.type === "channel") setChannelInfoOpen(true);
-                else if (chat.type === "chat") setIsChatInfoOpen(true);
-                else if (chat.type === "group") setIsGroupInfoOpen(true);
-              }}
-              className="flex items-center gap-3.5 min-w-0 cursor-pointer"
-            >
-              {chat.avatarUrl ? (
-                <img
-                  src={chat.avatarUrl}
-                  alt={chat.name}
-                  className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-sm border border-input-border"
-                  referrerPolicy="no-referrer"
-                />
-              ) : (
-                <div
-                  className={`w-10 h-10 rounded-xl bg-success flex items-center justify-center
-                font-bold text-sm text-white shrink-0 shadow-sm ${chat.bgGradient}`}
-                >
-                  {chat.avatarLabel}
-                </div>
-              )}
-              <div className="min-w-0">
-                <h2
-                  className="text-[19px] md:text-base font-bold text-input
-              truncate tracking-tight"
-                >
-                  {chat.name}
-                </h2>
-
-                {chat.type === "group" ? (
-                  <span
-                    className="text-[11px] md:text-xs text-input font-bold tracking-wide 
-              flex items-center gap-1 leading-none mt-0.5"
-                    id="group-online-status"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse"></span>
-                    <span>{chat.onlineCount} online</span>
-                  </span>
-                ) : chat.type === "channel" ? (
-                  <span
-                    className="text-[11px] md:text-xs text-input font-bold tracking-wide 
-              flex items-center gap-1 leading-none mt-0.5"
-                    id="channel-subscriber-status"
-                  >
-                    <span>📢 {chat.membersCount} subscribers</span>
-                  </span>
-                ) : chat.isOnline !== false ? (
-                  <span
-                    className="text-[11px] md:text-xs text-gray-100 font-extrabold tracking-wider flex items-center gap-1 px-2 py-0.5 rounded-md mt-0.5"
-                    id="chat-online-status"
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full bg-success inline-block"></span>
-                    <span>online</span>
-                  </span>
+              <div
+                onClick={() => {
+                  if (chat.type === "channel") setChannelInfoOpen(true);
+                  else if (chat.type === "chat") setIsChatInfoOpen(true);
+                  else if (chat.type === "group") setIsGroupInfoOpen(true);
+                }}
+                className="flex items-center gap-3.5 min-w-0 cursor-pointer"
+              >
+                {chat.avatarUrl ? (
+                  <img
+                    src={chat.avatarUrl}
+                    alt={chat.name}
+                    className="w-10 h-10 rounded-xl object-cover shrink-0 shadow-sm border border-input-border"
+                    referrerPolicy="no-referrer"
+                  />
                 ) : (
-                  <span
-                    className="text-[11px] md:text-xs text-gray-500  flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded-md mt-0.5 animate-in fade-in duration-200"
-                    id="chat-online-status"
+                  <div
+                    className={`w-10 h-10 rounded-xl bg-success flex items-center justify-center
+                font-bold text-sm text-white shrink-0 shadow-sm ${chat.bgGradient}`}
                   >
-                    <span className="w-1.5 h-1.5 rounded-full bg-gray-400 inline-block animate-pulse"></span>
-                    <span>last seen {chat.lastSeen || "recently"}</span>
-                  </span>
+                    {chat.avatarLabel}
+                  </div>
                 )}
+                <div className="min-w-0">
+                  <h2
+                    className="text-[19px] md:text-base font-bold text-input
+              truncate tracking-tight"
+                  >
+                    {chat.name}
+                  </h2>
+
+                  {chat.type === "group" ? (
+                    <span
+                      className="text-[11px] md:text-xs text-input font-bold tracking-wide 
+              flex items-center gap-1 leading-none mt-0.5"
+                      id="group-online-status"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-success inline-block animate-pulse"></span>
+                      <span>{chat.onlineCount} online</span>
+                    </span>
+                  ) : chat.type === "channel" ? (
+                    <span
+                      className="text-[11px] md:text-xs text-input font-bold tracking-wide 
+              flex items-center gap-1 leading-none mt-0.5"
+                      id="channel-subscriber-status"
+                    >
+                      <span> {chat.membersCount} subscribers</span>
+                    </span>
+                  ) : chat.isOnline === true ? (
+                    <span
+                      className="text-[11px] md:text-xs text-gray-100 font-extrabold tracking-wider flex items-center gap-1 px-2 py-0.5 rounded-md mt-0.5"
+                      id="chat-online-status"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-success inline-block"></span>
+                      <span>online</span>
+                    </span>
+                  ) : (
+                    <span
+                      className="text-[11px] md:text-xs text-gray-500  flex items-center gap-1 bg-gray-100 px-2 py-0.5 rounded-md mt-0.5 animate-in fade-in duration-200"
+                      id="chat-online-status"
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-gray-400 inline-block animate-pulse"></span>
+                      <span>last seen {chat.lastSeen || "recently"}</span>
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-          {/* Top-right action buttons (Search & Options) */}
-          <div className="flex items-center gap-1">
-            <button
-              onClick={() => {
-                setIsSearchingMessages(!isSearchingMessages);
-                if (isSearchingMessages) {
-                  setMessageSearchQuery("");
-                }
-              }}
-              className={`p-2 rounded-xl transition-all ${
-                isSearchingMessages
-                  ? "text-input-text bg-blue-50"
-                  : "text-input-text hover:text-gray-900 hover:bg-gray-100"
-              }`}
-              aria-label="Search messages"
-              title="Search"
-            >
-              <Search className="w-5 h-5" />
-            </button>
-            {chat.type === "group" && (
+            {/* Top-right action buttons (Search & Options) */}
+            <div className="flex items-center gap-1">
               <button
-                onClick={() => setIsGroupInfoOpen(true)}
-                className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all"
-                aria-label="Group info"
+                onClick={() => {
+                  setIsSearchingMessages(!isSearchingMessages);
+                  if (isSearchingMessages) {
+                    setMessageSearchQuery("");
+                  }
+                }}
+                className={`p-2 rounded-xl transition-all ${
+                  isSearchingMessages
+                    ? "text-input-text bg-blue-50"
+                    : "text-input-text hover:text-gray-900 hover:bg-gray-100"
+                }`}
+                aria-label="Search messages"
+                title="Search"
               >
-                <EllipsisVertical className="w-5 h-5" />
+                <Search className="w-5 h-5" />
               </button>
-            )}
-          </div>
-        </header>
-      )}
+              {chat.type === "group" && (
+                <button
+                  onClick={() => setIsGroupInfoOpen(true)}
+                  className="p-2 text-gray-500 hover:text-gray-900 hover:bg-gray-100 rounded-xl transition-all"
+                  aria-label="Group info"
+                >
+                  <EllipsisVertical className="w-5 h-5" />
+                </button>
+              )}
+            </div>
+          </header>
+        )}
       {/* Pinned message banner (Group/Channel ብቻ) */}
       {(chat.type === "group" || chat.type === "channel") &&
         messages.some((m) => m.isPinned) && (
@@ -656,7 +677,7 @@ export default function MessageArea({
         className={
           chat.type === "channel"
             ? "flex-1 min-h-0 overflow-y-auto bg-white"
-            : chat.type === "group"
+            : chat.type === "group" || chat.type === "chat"
               ? "flex-1 min-h-0 px-3 py-4 md:px-8 overflow-y-auto space-y-1.5 bg-[#eaf0f6]"
               : "flex-1 min-h-0 px-5 py-6 md:px-10 md:py-8 overflow-y-auto space-y-6 md:space-y-7 bg-gray-50"
         }
@@ -690,44 +711,10 @@ export default function MessageArea({
                   display: inline-block;
                 }
               `}</style>
-              <div className="relative">
-                <div className="w-20 h-20 rounded-full overflow-hidden shadow-md border-4 border-white ring-2 ring-blue-50 flex items-center justify-center shrink-0">
-                  {chat.avatarUrl ? (
-                    <img
-                      src={chat.avatarUrl}
-                      alt={chat.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div
-                      className={`w-full h-full ${chat.bgGradient} flex items-center justify-center text-white font-black text-xl`}
-                    >
-                      {chat.avatarLabel}
-                    </div>
-                  )}
-                </div>
-                <span className="absolute -bottom-1 -right-2 text-3xl nexify-wave-emoji select-none">
-                  👋
-                </span>
-              </div>
-              <div>
-                <h4 className="text-base font-black text-gray-800">
-                  {chat.name}
-                </h4>
-                <p className="text-xs text-gray-400 mt-1.5 max-w-[220px] mx-auto">
-                  This is the start of your conversation.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setInputText("👋 Hi!");
-                  setTimeout(() => textareaRef.current?.focus(), 50);
-                }}
-                className="px-5 py-2 bg-blue-50 hover:bg-blue-100 text-blue-600 text-xs font-bold rounded-full transition-all active:scale-95"
-              >
-                👋 Say Hi
-              </button>
+              <span className="text-6xl nexify-wave-emoji select-none">👋</span>
+              <p className="text-xs text-gray-400 max-w-[220px] mx-auto">
+                This is the start of your conversation.
+              </p>
             </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 animate-in fade-in duration-300 gap-3 px-6 text-center">
@@ -885,8 +872,8 @@ export default function MessageArea({
               );
             }
 
-            // ===== GROUP MESSAGE (Telegram style) =====
-            if (chat.type === "group") {
+            // ===== GROUP / PRIVATE CHAT MESSAGE (Telegram style) =====
+            if (chat.type === "group" || chat.type === "chat") {
               const mine = msg.isSentByMe;
               const reactions = msg.reactions || [];
               const colorIdx =
@@ -902,7 +889,8 @@ export default function MessageArea({
                     mine ? "justify-end" : "justify-start"
                   }`}
                 >
-                  {!mine &&
+                  {chat.type === "group" &&
+                    !mine &&
                     (msg.senderAvatar ? (
                       <img
                         src={msg.senderAvatar}
@@ -936,7 +924,7 @@ export default function MessageArea({
                         : "bg-white rounded-2xl rounded-bl-md"
                     }`}
                   >
-                    {!mine && (
+                    {chat.type === "group" && !mine && (
                       <span
                         className={`block text-[13px] font-bold mb-0.5 ${GROUP_NAME_COLORS[colorIdx]}`}
                       >
@@ -1387,7 +1375,7 @@ export default function MessageArea({
       </div>
 
       {/* 3. የመልዕክት መጻፊያ ወይም የመቀላቀያ (Join) አዝራር */}
-      <footer className="border-t border-gray-100 bg-white px-4 pt-4  md:pb-4 shrink-0 relative select-none">
+      <footer className="border-t border-gray-100 bg-white px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] shrink-0 relative select-none">
         {canCompose ? (
           // መታፍ ይችላል:private chat; channel creator ወይም የተከላከለው group
           <div className="relative">
@@ -1495,7 +1483,7 @@ export default function MessageArea({
             )}
 
             <form onSubmit={handleSend} className="flex items-end gap-2 w-full">
-              {chat.type === "group" && (
+              {isGroupLikeChat && (
                 <button
                   type="button"
                   onClick={() => {
@@ -1517,7 +1505,7 @@ export default function MessageArea({
                 <button
                   type="button"
                   onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                  className={`${chat.type === "group" ? "hidden " : ""}p-2 rounded-full transition-all duration-200 shrink-0 mb-0.5 ${
+                  className={`${isGroupLikeChat ? "hidden " : ""}p-2 rounded-full transition-all duration-200 shrink-0 mb-0.5 ${
                     showEmojiPicker
                       ? "text-blue-600 bg-blue-50"
                       : "text-gray-400 hover:text-blue-600 hover:bg-gray-100"
@@ -1537,14 +1525,14 @@ export default function MessageArea({
                   }}
                   onKeyDown={handleKeyDown}
                   placeholder={
-                    chat.type === "group" ? "Message" : "Write a message..."
+                    isGroupLikeChat ? "Message" : "Write a message..."
                   }
                   rows={1}
                   style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}
                   className="flex-1 bg-transparent px-1 py-2 text-sm font-medium text-input-text placeholder:placeholder-input-placeholder outline-none resize-none min-h-[20px] leading-relaxed [&::-webkit-scrollbar]:hidden"
                 />
 
-                {chat.type === "group" && (
+                {isGroupLikeChat && (
                   <button
                     type="button"
                     onClick={() => setShowEmojiPicker(!showEmojiPicker)}
@@ -1561,7 +1549,7 @@ export default function MessageArea({
                 )}
 
                 {/* Attach (+) icon: only visible while the input is empty, like WhatsApp */}
-                {chat.type !== "group" && !inputText.trim() && (
+                {!isGroupLikeChat && !inputText.trim() && (
                   <button
                     type="button"
                     onClick={() => {
@@ -1632,7 +1620,7 @@ export default function MessageArea({
           // Subscribe አድርጓል ግን creator ስላልሆነ መጻፍ አይችልም — emoji reaction ብቻ
           <div className="text-center py-3">
             <p className="text-xs text-gray-400 font-semibold">
-              📢 Only the channel owner can post here. You can react to posts
+               Only the channel owner can post here. You can react to posts
               with emoji.
             </p>
           </div>

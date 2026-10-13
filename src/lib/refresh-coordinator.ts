@@ -14,6 +14,16 @@ async function rawRefresh(): Promise<string> {
   const data = (await response.json()) as { accessToken: string };
   return data.accessToken;
 }
+// ብዙ tabs በአንድ ጊዜ refresh ከጠሩ (ለምሳሌ browser session restore)፣ ሁሉም ተመሳሳይ
+// cookie ይዘው ይሄዳሉ፤ rotating refresh token ደግሞ አንዱን ብቻ ያሳልፋል፣ የተቀሩት
+// logout ይሆናሉ። Web Lock ሁሉንም tabs በተራ ያደርጋል፤ ተራው ሲደርስ ብሮውዘሩ አዲሱን
+// cookie ይልካል። Web Locks ከሌለ (ያረጀ browser/insecure context) ወደ ድሮው ይመለሳል።
+function refreshAcrossTabs(): Promise<string> {
+  if (typeof navigator !== "undefined" && "locks" in navigator) {
+    return navigator.locks.request("nexify-auth-refresh", () => rawRefresh());
+  }
+  return rawRefresh();
+}
 
 // Single shared in-flight promise — this is the ONLY place a real network
 // call to /auth/refresh is ever made. Both AuthContext's mount-time
@@ -27,7 +37,7 @@ let inFlight: Promise<string> | null = null;
 
 export function refreshAccessToken(): Promise<string> {
   if (!inFlight) {
-    inFlight = rawRefresh()
+    inFlight = refreshAcrossTabs()
       .then((token) => {
         setStoredToken(token);
         return token;

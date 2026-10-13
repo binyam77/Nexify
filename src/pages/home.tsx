@@ -47,7 +47,7 @@ export default function Home() {
     navigate(ROUTES.community, { state: { openChatWith: creator } });
   };
   const currentUser: User = {
-    id: user?.username || "me",
+    id: user?.id || "me",
     fullName: user?.username || "User",
     email: user?.email || "",
     avatarUrl: user?.photo || avatarImg,
@@ -188,7 +188,7 @@ export default function Home() {
         <Search size={18} />
         {isSearchOpen && (
           <SearchOverlay
-                      onClose={() => setIsSearchOpen(false)}
+            onClose={() => setIsSearchOpen(false)}
             onSelectPost={(postId) => {
               setIsSearchOpen(false);
               navigate(`/post/${postId}`);

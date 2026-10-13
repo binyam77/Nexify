@@ -49,7 +49,7 @@ export default function SinglePostView() {
   const post = posts.find((p) => p.id === id);
 
   const currentUser: User = {
-    id: user?.username || "me",
+        id: user?.id || "me",
     fullName: user?.username || "User",
     email: user?.email || "",
     avatarUrl: user?.photo || avatarImg,

@@ -77,7 +77,7 @@ export default function CommentCard({
 
   // ⚠️ Assumption: profile route is `/profile/:username` — ይህ ካልሆነ ንገረኝ
   function goToProfile() {
-    navigate(`/profile/${comment.username}`);
+    navigate(`/profile/${encodeURIComponent(comment.username)}`);
   }
 
   function saveEdit() {
@@ -270,7 +270,7 @@ function ReplyCard({
   const timeAgo = useRelativeTime(reply.timestamp);
 
   function goToProfile() {
-    navigate(`/profile/${reply.username}`);
+       navigate(`/profile/${encodeURIComponent(reply.username)}`); 
   }
 
   return (

@@ -245,7 +245,7 @@ export default function PostCard({
   const isMultiPhoto = post.type === "photo" && post.mediaUrls.length > 1;
 
   function goToProfile() {
-    navigate(`/profile/${post.username}`);
+    navigate(`/profile/${encodeURIComponent(post.username)}`);
   }
 
   return (
