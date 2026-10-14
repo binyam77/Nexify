@@ -22,14 +22,14 @@ export default function ProfileVideo({
   handleDeletePost,
 }: ProfileVideoProps) {
   return (
-    <div className="min-h-48">
+ <div className="min-h-48">
       {filteredPosts.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-14 text-center px-4 animate-fade-in">
           <span className="text-4xl mb-3">🎬</span>
-          <h3 className="text-base font-extrabold text-text mb-1">
+          <h3 className="text-base font-extrabold text-text-primary mb-1">
             No videos yet
           </h3>
-          <p className="text-xs text-small-text max-w-xs">
+          <p className="text-xs text-text-secondary max-w-xs">
             {viewMode === "me"
               ? "Tap the + button to share your first video or photo."
               : "This user hasn't posted anything yet."}
@@ -45,7 +45,7 @@ export default function ProfileVideo({
               <div
                 key={post.id}
                 onClick={() => handleOpenPlayer(post)}
-                className="aspect-[9/16] bg-gray-900 overflow-hidden relative cursor-pointer group transition-all duration-300"
+                className="aspect-[9/16] bg-surface-secondary overflow-hidden relative cursor-pointer group transition-all duration-300"
               >
                 {/* 1. Media Preview Grid Block */}
                 {mediaSrc ? (
@@ -70,7 +70,7 @@ export default function ProfileVideo({
                     />
                   )
                 ) : (
-                  <div className="w-full h-full flex items-center justify-center bg-gray-800 text-white/50 text-xs">
+                  <div className="w-full h-full flex items-center justify-center bg-surface-secondary text-text-muted text-xs">
                     Loading file...
                   </div>
                 )}
@@ -85,7 +85,7 @@ export default function ProfileVideo({
                     {viewMode === "me" && (
                       <button
                         onClick={(e) => handleDeletePost(post.id, e)}
-                        className="p-1.5 bg-rose-600/90 hover:bg-rose-700 text-white rounded-lg transition-colors shadow-sm"
+                        className="p-1.5 bg-error/90 hover:bg-error text-white rounded-lg transition-colors shadow-sm"
                         title="Delete Post"
                       >
                         <Trash2 className="w-3.5 h-3.5" />

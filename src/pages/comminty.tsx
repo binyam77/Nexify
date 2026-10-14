@@ -767,7 +767,7 @@ export default function Community() {
             pendingMessagesFor(chatId),
           ),
         }));
-        if (browserOnline) triggerToast("⚠️ Could not load messages.");
+        if (browserOnline) triggerToast(" Could not load messages.");
       }
       return;
     }
@@ -950,7 +950,7 @@ export default function Community() {
         const reason = describeError(err);
         // ጊዜ ማለፍ (ደካማ ግንኙነት) ጸጥ ይላል፤ server ሲከለክል (ለምሳሌ "Not a member…") ምክንያቱ ይታያል
         if (!/timed out|not available yet/i.test(reason)) {
-          triggerToast(`⚠️ Not sent: ${reason}`);
+          triggerToast(` Not sent: ${reason}`);
         }
       });
   };
@@ -1007,7 +1007,7 @@ export default function Community() {
         await deleteMessageRequest(accessToken, activeChatId, messageId);
       } catch (err) {
         console.error("Failed to delete message:", err);
-        triggerToast("⚠️ Failed to delete message.");
+        triggerToast(" Failed to delete message.");
         return;
       }
     } else if (isConversationChat(targetChat)) {
@@ -1016,7 +1016,7 @@ export default function Community() {
         await deleteChatMessageRequest(accessToken, activeChatId, messageId);
       } catch (err) {
         console.error("Failed to delete message:", err);
-        triggerToast("⚠️ Failed to delete message.");
+        triggerToast(" Failed to delete message.");
         return;
       }
     }
@@ -1061,7 +1061,7 @@ export default function Community() {
       }),
     );
 
-    triggerToast("🗑️ Message deleted successfully!");
+    triggerToast(" Message deleted successfully!");
   };
   // Pin/Unpin message toggle (Group/Channel ብቻ)
   const handlePinMessage = async (messageId: string) => {
@@ -1073,7 +1073,7 @@ export default function Community() {
       await togglePinMessageRequest(accessToken, activeChatId, messageId);
     } catch (err) {
       console.error("Failed to toggle pin:", err);
-      triggerToast("⚠️ Failed to update pin.");
+      triggerToast(" Failed to update pin.");
       return;
     }
 
@@ -1095,7 +1095,7 @@ export default function Community() {
       await reactToMessageRequest(accessToken, activeChatId, messageId, emoji);
     } catch (err) {
       console.error("Failed to react:", err);
-      triggerToast("⚠️ Failed to react.");
+      triggerToast(" Failed to react.");
       return;
     }
 
@@ -1177,14 +1177,14 @@ export default function Community() {
       await joinCommunityRequest(accessToken, chatId);
     } catch (err) {
       console.error("Failed to join community:", err);
-      triggerToast("⚠️ Failed to join. Please try again.");
+      triggerToast(" Failed to join. Please try again.");
       return;
     }
 
     setChats((prev) =>
       prev.map((c) => {
         if (c.id === chatId) {
-          triggerToast(`🎉 You have successfully joined "${c.name}"!`);
+          triggerToast(` You have successfully joined "${c.name}"!`);
           return {
             ...c,
             isJoined: true,
@@ -1271,12 +1271,12 @@ export default function Community() {
           ? ` (${initialMembers.length} member${initialMembers.length > 1 ? "s" : ""} selected locally — real invites need the Profile domain)`
           : "";
       triggerToast(
-        `🚀 Group "${finalChat.name}" created successfully${memberNote}!`,
+        ` Group "${finalChat.name}" created successfully${memberNote}!`,
       );
       return true;
     } catch (err) {
       console.error("Failed to create group:", err);
-      triggerToast("⚠️ Failed to create group. Please try again.");
+      triggerToast(" Failed to create group. Please try again.");
       return false;
     }
   };
@@ -1308,11 +1308,11 @@ export default function Community() {
       setChats((prev) => [finalChat, ...prev]);
       setMessagesDb((prev) => ({ ...prev, [finalChat.id]: [] }));
       setActiveChatId(finalChat.id);
-      triggerToast(`📢 Channel "${finalChat.name}" created successfully!`);
+      triggerToast(` Channel "${finalChat.name}" created successfully!`);
       return true;
     } catch (err) {
       console.error("Failed to create channel:", err);
-      triggerToast("⚠️ Failed to create channel. Please try again.");
+      triggerToast(" Failed to create channel. Please try again.");
       return false;
     }
   };
@@ -1336,7 +1336,7 @@ export default function Community() {
     if (existingChat) {
       void handleSelectChat(existingChat.id); // ታሪክ ይጭናል፣ room ይገባል
       setActiveTab("community");
-      triggerToast(`💬 Chat opened with ${otherUser.name}`);
+      triggerToast(` Chat opened with ${otherUser.name}`);
       return;
     }
 
@@ -1392,10 +1392,10 @@ export default function Community() {
           joinedRoomsRef.current.add(`conversation:${newChat.id}`),
         )
         .catch((err) => console.error("Failed to join realtime room:", err));
-      triggerToast(`💬 Secure conversation started with ${otherUser.name}`);
+      triggerToast(`Secure conversation started with ${otherUser.name}`);
     } catch (err) {
       console.error("Failed to start chat:", err);
-      triggerToast("⚠️ Failed to start chat. Please try again.");
+      triggerToast(" Failed to start chat. Please try again.");
     }
   };
   // Profile >> Community chat redirect  +  Notifications >> Community redirect

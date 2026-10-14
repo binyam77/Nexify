@@ -11,7 +11,6 @@ import {
   Loader2,
   Search,
   WifiOff,
-  Video,
 } from "lucide-react";
 import type { User } from "../types";
 import SearchOverlay from "../components/SearchOverlay";

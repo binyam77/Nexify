@@ -35,7 +35,7 @@ export default function Settings() {
   const navigate = useNavigate();
 
   return (
-    <main className="w-full max-w-2xl mx-auto min-h-screen bg-bodey-bg text-text">
+    <main className="w-full max-w-2xl mx-auto min-h-screen bg-bg text-text">
       {view === "main" && (
         <MainSettingsView onNavigate={setView} onBack={() => navigate(-1)} />
       )}

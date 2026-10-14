@@ -108,16 +108,16 @@ export default function NewChannelModal({
   };
 
   return (
-    <div className="fixed inset-0 h-[100svh] bg-bodey-bg z-50 flex flex-col animate-in fade-in duration-150">
+    <div className="fixed inset-0 h-[100svh] bg-bg z-50 flex flex-col animate-in fade-in duration-150">
       <header className="relative px-4 py-4 flex items-center shrink-0">
         <button
           onClick={onClose}
-          className="relative z-10 p-1.5 text-gray-700 hover:bg-gray-50 rounded-xl transition-all"
+          className="relative z-10 p-1.5 text-icon-primary hover:bg-surface-hover rounded-xl transition-all"
           aria-label="Back"
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
-        <h3 className="absolute inset-x-0 text-center text-lg font-extrabold text-gray-900 tracking-tight pointer-events-none">
+        <h3 className="absolute inset-x-0 text-center text-lg font-extrabold text-text-primary tracking-tight pointer-events-none">
           Create Channel
         </h3>
       </header>
@@ -130,7 +130,7 @@ export default function NewChannelModal({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-28 h-28 rounded-full overflow-hidden flex items-center justify-center bg-blue-100 text-gray-500 hover:bg-blue-200 transition-colors"
+                className="w-28 h-28 rounded-full overflow-hidden flex items-center justify-center bg-primary-light text-icon-secondary hover:bg-surface-hover transition-colors"
                 aria-label="Add photo"
               >
                 {avatarUrl ? (
@@ -143,14 +143,14 @@ export default function NewChannelModal({
                   <Camera className="w-10 h-10" />
                 )}
               </button>
-              <span className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-white shadow-md flex items-center justify-center text-brand pointer-events-none">
+              <span className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-surface shadow-md flex items-center justify-center text-primary pointer-events-none">
                 <Camera className="w-4 h-4" />
               </span>
             </div>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="text-sm font-medium text-gray-500"
+              className="text-sm font-medium text-text-secondary"
             >
               {avatarUrl ? "Change Photo" : "Add Photo"}
             </button>
@@ -158,7 +158,7 @@ export default function NewChannelModal({
               <button
                 type="button"
                 onClick={handleRemoveAvatar}
-                className="text-xs font-bold text-red-500"
+                className="text-xs font-bold text-error"
               >
                 Remove
               </button>
@@ -176,7 +176,7 @@ export default function NewChannelModal({
           <div>
             <label
               htmlFor="channelName"
-              className="block text-sm font-extrabold text-gray-900 mb-2"
+              className="block text-sm font-extrabold text-text-primary mb-2"
             >
               Channel Name
             </label>
@@ -188,7 +188,7 @@ export default function NewChannelModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Channel name"
-              className="w-full bg-input border border-input-border rounded-2xl px-4 py-3 text-sm font-medium text-input-text placeholder-gray-400 focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all duration-200"
+              className="w-full bg-input-bg border border-input-border rounded-2xl px-4 py-3 text-sm font-medium text-input-text placeholder-input-placeholder focus:border-input-focus focus:ring-1 focus:ring-input-focus outline-none transition-all duration-200"
             />
           </div>
 
@@ -196,7 +196,7 @@ export default function NewChannelModal({
           <div>
             <label
               htmlFor="channelBio"
-              className="block text-sm font-extrabold text-gray-900 mb-2"
+              className="block text-sm font-extrabold text-text-primary mb-2"
             >
               Bio
             </label>
@@ -207,7 +207,7 @@ export default function NewChannelModal({
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               placeholder="Describe your channel"
-              className="w-full bg-input border border-input-border rounded-2xl px-4 py-3 text-sm font-medium text-input-text placeholder-gray-400 focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all duration-200 resize-none"
+              className="w-full bg-input-bg border border-input-border rounded-2xl px-4 py-3 text-sm font-medium text-input-text placeholder-input-placeholder focus:border-input-focus focus:ring-1 focus:ring-input-focus outline-none transition-all duration-200 resize-none"
             />
           </div>
         </div>
@@ -218,7 +218,7 @@ export default function NewChannelModal({
           <button
             onClick={handleSubmit}
             disabled={!name.trim() || isSubmitting}
-            className="w-full py-3.5 bg-brand hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-brand text-white text-sm font-extrabold rounded-2xl transition-all shadow-md"
+            className="w-full py-3.5 bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:hover:bg-primary text-text-on-primary text-sm font-extrabold rounded-2xl transition-all shadow-md"
           >
             Create Channel
           </button>

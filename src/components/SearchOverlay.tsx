@@ -105,12 +105,12 @@ export default function SearchOverlay({
       onTouchEnd={(e) => e.stopPropagation()}
     >
       {/* Header */}
-      <div className="flex items-center gap-2 px-3 py-3 border-b border-input-border shrink-0">
+      <div className="flex items-center gap-2 px-3 py-3 border-b border-border shrink-0">
         <button
           type="button"
           onClick={onClose}
           aria-label="Back"
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-input-text active:bg-input"
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-icon-primary active:bg-surface-hover"
         >
           <ArrowLeft size={22} />
         </button>
@@ -123,7 +123,7 @@ export default function SearchOverlay({
               void runSearch(query);
             }}
             aria-label="Search"
-            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-input-placeholder"
+            className="absolute left-3.5 top-1/2 -translate-y-1/2 text-icon-muted"
           >
             <SearchIcon size={16} />
           </button>
@@ -138,13 +138,13 @@ export default function SearchOverlay({
               }
             }}
             placeholder="Search Video"
-            className="w-full rounded-full bg-input pl-9 pr-9 py-2 text-sm text-input-text placeholder-input-placeholder outline-none"
+            className="w-full rounded-full bg-input-special-bg pl-9 pr-9 py-2 text-sm text-input-special-text placeholder-input-special-placeholder outline-none"
           />
           {query && (
             <button
               onClick={() => setQuery("")}
               aria-label="Clear"
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-input-placeholder"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-icon-muted"
             >
               <X size={16} />
             </button>
@@ -156,18 +156,18 @@ export default function SearchOverlay({
       <div className="flex-1 overflow-y-auto">
         {!query.trim() ? (
           history.length === 0 ? (
-            <div className="p-6 text-center text-sm text-input-placeholder">
+            <div className="p-6 text-center text-sm text-text-muted">
               No search history
             </div>
           ) : (
             <div className="py-2">
-              <p className="px-4 py-2 text-xs font-semibold text-input-placeholder">
+              <p className="px-4 py-2 text-xs font-semibold text-text-muted">
                 History
               </p>
               {history.map((term) => (
                 <div
                   key={term}
-                  className="flex items-center justify-between px-4 py-3 border-b border-input-border"
+                  className="flex items-center justify-between px-4 py-3 border-b border-border"
                 >
                   <button
                     onClick={() => handleHistoryTap(term)}
@@ -175,16 +175,16 @@ export default function SearchOverlay({
                   >
                     <Clock
                       size={16}
-                      className="text-input-placeholder shrink-0"
+                      className="text-icon-muted shrink-0"
                     />
-                    <span className="text-sm text-input-text truncate">
+                    <span className="text-sm text-text-primary truncate">
                       {term}
                     </span>
                   </button>
                   <button
                     onClick={() => removeTerm(term)}
                     aria-label="Remove"
-                    className="text-input-placeholder p-1"
+                    className="text-icon-muted p-1"
                   >
                     <X size={16} />
                   </button>
@@ -193,16 +193,16 @@ export default function SearchOverlay({
             </div>
           )
         ) : isSearching ? (
-          <div className="p-6 text-center text-sm text-input-placeholder">
+          <div className="p-6 text-center text-sm text-text-muted">
             Searching...
           </div>
         ) : searchError ? (
           <div className="flex flex-col items-center justify-center gap-3 p-10 text-center">
-            <WifiOff size={28} className="text-input-placeholder" />
-            <p className="text-sm text-input-placeholder">{searchError}</p>
+            <WifiOff size={28} className="text-icon-muted" />
+            <p className="text-sm text-text-muted">{searchError}</p>
             <button
               onClick={() => void runSearch(query)}
-              className="flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white active:scale-95 transition-transform"
+              className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-text-on-primary active:scale-95 transition-transform"
             >
               <RotateCw size={14} />
               Retry
@@ -210,8 +210,8 @@ export default function SearchOverlay({
           </div>
         ) : hasSearched && results.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-2 p-10 text-center">
-            <SearchIcon size={28} className="text-input-placeholder" />
-            <p className="text-sm text-input-placeholder">No results found</p>
+            <SearchIcon size={28} className="text-icon-muted" />
+            <p className="text-sm text-text-muted">No results found</p>
           </div>
         ) : (
           <div className="grid grid-cols-3 gap-0.5 p-0.5">

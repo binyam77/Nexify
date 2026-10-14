@@ -366,7 +366,7 @@ export default function UserProfile() {
 
   if (isLoadingProfile) {
     return (
-      <div className="flex-1 flex items-center justify-center text-sm text-slate-400">
+      <div className="flex-1 flex items-center justify-center text-sm text-text-muted">
         Loading...
       </div>
     );
@@ -374,12 +374,12 @@ export default function UserProfile() {
   if (profileError === "network") {
     return (
       <div className="flex-1 flex flex-col items-center justify-center gap-3 px-6 text-center">
-        <p className="text-sm text-rose-500 font-semibold">
+        <p className="text-sm text-error font-semibold">
           Couldn't load this profile. Check your connection.
         </p>
         <button
           onClick={() => void loadProfile()}
-          className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
+          className="px-4 py-2 text-xs font-bold text-text-on-primary bg-primary hover:bg-primary-hover rounded-lg"
         >
           Retry
         </button>
@@ -388,17 +388,17 @@ export default function UserProfile() {
   }
   if (!otherProfile) {
     return (
-      <div className="flex-1 flex items-center justify-center text-sm text-slate-400">
+      <div className="flex-1 flex items-center justify-center text-sm text-text-muted">
         User not found.
       </div>
     );
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-y-auto bg-bodey-bg pb-20 md:pb-6">
+    <div className="flex-1 flex flex-col h-full overflow-y-auto bg-bg pb-20 md:pb-6">
       <div className="max-w-4xl w-full mx-auto px-4 md:px-8 pt-5">
         <div className="flex items-center justify-between mb-5">
-          <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-white shadow-xl overflow-hidden shrink-0 bg-blue-100 flex items-center justify-center">
+          <div className="w-24 h-24 md:w-28 md:h-28 rounded-full border-4 border-bg shadow-xl overflow-hidden shrink-0 bg-primary-light flex items-center justify-center">
             {otherProfile.photo ? (
               <img
                 src={otherProfile.photo}
@@ -417,10 +417,10 @@ export default function UserProfile() {
               onClick={() => setFollowListModal("followers")}
               className="flex flex-col items-center"
             >
-              <span className="text-base sm:text-lg font-black text-text">
+              <span className="text-base sm:text-lg font-black text-text-primary">
                 {formatCount(otherProfile.followersCount)}
               </span>
-              <span className="text-[11px] text-small-text font-semibold">
+              <span className="text-[11px] text-text-secondary font-semibold">
                 Followers
               </span>
             </button>
@@ -428,10 +428,10 @@ export default function UserProfile() {
               onClick={() => setFollowListModal("following")}
               className="flex flex-col items-center"
             >
-              <span className="text-base sm:text-lg font-black text-text">
+              <span className="text-base sm:text-lg font-black text-text-primary">
                 {formatCount(otherProfile.followingCount)}
               </span>
-              <span className="text-[11px] text-small-text font-semibold">
+              <span className="text-[11px] text-text-secondary font-semibold">
                 Following
               </span>
             </button>
@@ -439,10 +439,10 @@ export default function UserProfile() {
               onClick={scrollToPosts}
               className="flex flex-col items-center"
             >
-              <span className="text-base sm:text-lg font-black text-text">
+              <span className="text-base sm:text-lg font-black text-text-primary">
                 {formatCount(otherProfile.postsCount)}
               </span>
-              <span className="text-[11px] text-small-text font-semibold">
+              <span className="text-[11px] text-text-secondary font-semibold">
                 Videos
               </span>
             </button>
@@ -450,17 +450,17 @@ export default function UserProfile() {
         </div>
 
         <div className="mb-3">
-          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-text-h2">
+          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-text-primary">
             {otherProfile.name}
           </h2>
-          <p className="text-xs sm:text-sm font-bold text-brand-dark mt-0.5">
+          <p className="text-xs sm:text-sm font-bold text-primary mt-0.5">
             @{otherProfile.username}
           </p>
         </div>
 
         {otherProfile.bio && (
           <div className="mb-4">
-            <p className="text-sm font-medium text-text leading-relaxed break-words whitespace-pre-line">
+            <p className="text-sm font-medium text-text-primary leading-relaxed break-words whitespace-pre-line">
               <LinkifiedText text={otherProfile.bio} />
             </p>
           </div>
@@ -472,28 +472,28 @@ export default function UserProfile() {
             disabled={isFollowPending}
             className={`flex-1 py-2.5 rounded-xl text-sm font-bold transition-all disabled:opacity-50 ${
               otherProfile.isFollowedByMe
-                ? "bg-slate-100 hover:bg-slate-200 text-text"
-                : "bg-brand text-white hover:opacity-90"
+                ? "bg-surface-secondary hover:bg-surface-hover text-text-primary"
+                : "bg-primary text-text-on-primary hover:opacity-90"
             }`}
           >
             {otherProfile.isFollowedByMe ? "Following" : "Follow"}
           </button>
           <button
             onClick={handleStartChat}
-            className="flex-1 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-text text-sm font-bold transition-all"
+            className="flex-1 py-2.5 rounded-xl bg-surface-secondary hover:bg-surface-hover text-text-primary text-sm font-bold transition-all"
           >
             Message
           </button>
         </div>
         {followError && (
-          <p className="text-xs font-semibold text-rose-600 mb-3">
+          <p className="text-xs font-semibold text-error mb-3">
             {followError}
           </p>
         )}
 
         <button
           onClick={scrollToPosts}
-          className="w-full flex items-center justify-center gap-1.5 border-b border-gray-200/60 py-3 text-xs font-black uppercase tracking-wider text-brand-dark"
+          className="w-full flex items-center justify-center gap-1.5 border-b border-border py-3 text-xs font-black uppercase tracking-wider text-primary"
         >
           <Grid className="w-3.5 h-3.5" />
           <span>Videos</span>
@@ -507,15 +507,15 @@ export default function UserProfile() {
         {!isOnline ? (
           <OfflineState onRetry={retryAll} />
         ) : isLoadingPosts ? (
-          <div className="text-center text-xs text-slate-400 py-10">
+          <div className="text-center text-xs text-text-muted py-10">
             Loading posts...
           </div>
         ) : postsError ? (
           <div className="flex flex-col items-center justify-center py-10 gap-3">
-            <p className="text-sm text-rose-500 font-semibold">{postsError}</p>
+            <p className="text-sm text-error font-semibold">{postsError}</p>
             <button
               onClick={loadPosts}
-              className="px-4 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg"
+              className="px-4 py-2 text-xs font-bold text-text-on-primary bg-primary hover:bg-primary-hover rounded-lg"
             >
               Retry
             </button>
@@ -533,7 +533,7 @@ export default function UserProfile() {
             <button
               onClick={loadMorePosts}
               disabled={isLoadingMorePosts}
-              className="px-4 py-2 text-xs font-bold text-blue-600 hover:bg-blue-50 rounded-lg disabled:opacity-50"
+              className="px-4 py-2 text-xs font-bold text-link hover:bg-surface-hover rounded-lg disabled:opacity-50"
             >
               {isLoadingMorePosts
                 ? "Loading..."
@@ -593,17 +593,17 @@ export default function UserProfile() {
         />
       )}
       {deleteConfirmState?.isOpen && (
-        <div className="fixed inset-0 bg-black/65 backdrop-blur-sm flex items-center justify-center z-[110] p-4">
-          <div className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-gray-100 flex flex-col text-center">
-            <div className="w-14 h-14 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-4 text-rose-500">
+        <div className="fixed inset-0 bg-overlay backdrop-blur-sm flex items-center justify-center z-[110] p-4">
+          <div className="bg-surface rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-border flex flex-col text-center">
+            <div className="w-14 h-14 rounded-full bg-error-light flex items-center justify-center mx-auto mb-4 text-error">
               <Trash2 className="w-7 h-7" />
             </div>
-            <h3 className="text-lg font-black text-slate-800 mb-2">
+            <h3 className="text-lg font-black text-text-primary mb-2">
               {deleteConfirmState.type === "reply"
                 ? "Delete Reply?"
                 : "Delete Comment?"}
             </h3>
-            <p className="text-xs text-slate-500 font-semibold mb-6">
+            <p className="text-xs text-text-secondary font-semibold mb-6">
               Are you sure you want to delete this permanently? This action
               cannot be undone.
             </p>
@@ -611,14 +611,14 @@ export default function UserProfile() {
               <button
                 onClick={() => setDeleteConfirmState(null)}
                 disabled={isDeletingComment}
-                className="flex-1 py-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-black text-slate-500 transition-all"
+                className="flex-1 py-3 bg-surface-secondary hover:bg-surface-hover rounded-xl text-xs font-black text-text-secondary transition-all"
               >
                 Cancel
               </button>
               <button
                 onClick={executeDeleteComment}
                 disabled={isDeletingComment}
-                className="flex-1 py-3 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black text-white shadow-lg transition-all"
+                className="flex-1 py-3 bg-error hover:bg-error/90 rounded-xl text-xs font-black text-white shadow-lg transition-all"
               >
                 Delete
               </button>

@@ -73,14 +73,14 @@ export default function CommentModal({
     >
       {/* Mobile dim backdrop — Instagram bottom sheets ስር ያለውን feed ያደበዝዛሉ */}
       <div
-        className="fixed inset-0 z-[9998] bg-black/40 md:hidden"
+        className="fixed inset-0 z-[9998] bg-overlay md:hidden"
         onClick={onClose}
       />
 
-      <div className="animate-slide-up fixed inset-x-0 bottom-0 z-[9999] flex h-[80vh] w-full flex-col overflow-hidden rounded-t-[20px] bg-bodey-bg shadow-2xl md:inset-x-auto md:inset-y-4 md:bottom-auto md:right-4 md:h-[calc(100vh-2rem)] md:max-h-none md:w-[420px] md:rounded-[18px]">
-        <div className="flex shrink-0 items-center justify-between border-b border-zinc-800 bg-bodey-bg px-4 py-3.5">
+      <div className="animate-slide-up fixed inset-x-0 bottom-0 z-[9999] flex h-[80vh] w-full flex-col overflow-hidden rounded-t-[20px] bg-surface shadow-2xl md:inset-x-auto md:inset-y-4 md:bottom-auto md:right-4 md:h-[calc(100vh-2rem)] md:max-h-none md:w-[420px] md:rounded-[18px]">
+        <div className="flex shrink-0 items-center justify-between border-b border-border bg-surface px-4 py-3.5">
           <div className="w-8" />
-          <h3 className="text-[15px] font-semibold text-white">
+          <h3 className="text-[15px] font-semibold text-text-primary">
             {error ? "Comments" : `${totalCount ?? comments.length} comments`}
           </h3>
           <div className="flex items-center gap-2">
@@ -88,7 +88,7 @@ export default function CommentModal({
               <select
                 value={sort}
                 onChange={(e) => setSort(e.target.value as CommentSort)}
-                className="rounded-md border-none bg-zinc-800 px-1.5 py-1 text-[10px] font-semibold text-zinc-300 outline-none"
+                className="rounded-md border-none bg-surface-secondary px-1.5 py-1 text-[10px] font-semibold text-text-secondary outline-none"
               >
                 <option value="newest">⬇ Newest</option>
                 <option value="oldest">⬆ Oldest</option>
@@ -97,7 +97,7 @@ export default function CommentModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex h-7 w-7 items-center justify-center rounded-full text-zinc-400 hover:text-white"
+              className="flex h-7 w-7 items-center justify-center rounded-full text-icon-secondary hover:text-icon-primary"
               aria-label="Close comments"
             >
               <X size={18} />
@@ -111,12 +111,12 @@ export default function CommentModal({
             connection). */}
         {error ? (
           <div className="flex flex-1 flex-col items-center justify-center gap-3 px-6 text-center">
-            <WifiOff size={28} className="text-zinc-500" />
-            <p className="text-sm text-zinc-400">{error}</p>
+            <WifiOff size={28} className="text-icon-muted" />
+            <p className="text-sm text-text-secondary">{error}</p>
             <button
               type="button"
               onClick={onRetry}
-              className="flex items-center gap-2 rounded-full bg-brand px-4 py-2 text-sm font-semibold text-white active:scale-95 transition-transform"
+              className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-semibold text-text-on-primary active:scale-95 transition-transform"
             >
               <RotateCw size={14} />
               Retry
@@ -124,14 +124,14 @@ export default function CommentModal({
           </div>
         ) : (
           <>
-            <div className="scrollbar-thin flex min-h-[200px] flex-1 flex-col gap-4 overflow-y-auto bg-bodey-bg px-4 py-4">
+            <div className="scrollbar-thin flex min-h-[200px] flex-1 flex-col gap-4 overflow-y-auto bg-surface px-4 py-4">
               {isLoading && comments.length === 0 ? (
-                <div className="m-auto flex flex-col items-center gap-2 text-zinc-500">
+                <div className="m-auto flex flex-col items-center gap-2 text-text-muted">
                   <Loader2 size={22} className="animate-spin" />
                   <span className="text-xs">Loading...</span>
                 </div>
               ) : sortedComments.length === 0 ? (
-                <div className="m-auto px-4 py-6 text-center text-sm leading-relaxed text-zinc-500">
+                <div className="m-auto px-4 py-6 text-center text-sm leading-relaxed text-text-muted">
                   <span className="mb-2 block text-3xl">💬</span>
                   No comments yet. Be the first!
                 </div>
@@ -153,7 +153,7 @@ export default function CommentModal({
                       type="button"
                       onClick={onLoadMore}
                       disabled={isLoadingMore}
-                      className="mx-auto mt-1 rounded-full bg-zinc-800 px-4 py-1.5 text-xs font-semibold text-zinc-300 disabled:opacity-50"
+                      className="mx-auto mt-1 rounded-full bg-surface-secondary px-4 py-1.5 text-xs font-semibold text-text-secondary disabled:opacity-50"
                     >
                       {isLoadingMore ? "Loading..." : "See more comments"}
                     </button>
@@ -162,9 +162,9 @@ export default function CommentModal({
               )}
             </div>
 
-            <div className="flex shrink-0 flex-col border-t border-zinc-800 bg-surface">
+            <div className="flex shrink-0 flex-col border-t border-border bg-surface">
               {postFailed && (
-                <p className="px-4 pt-2 text-[11px] font-medium text-rose-400">
+                <p className="px-4 pt-2 text-[11px] font-medium text-error">
                   Not sent - check connection and try again
                 </p>
               )}
@@ -182,13 +182,13 @@ export default function CommentModal({
                     if (postFailed) setPostFailed(false);
                   }}
                   onKeyDown={(e) => e.key === "Enter" && void handlePost()}
-                  className="flex-1 rounded-full border border-input-border resize-none bg-input px-3.5 py-1.5 text-[13px] leading-tight text-input-text placeholder-placeholder outline-none focus:border-brand-light"
+                  className="flex-1 rounded-full border border-input-border resize-none bg-input-bg px-3.5 py-1.5 text-[13px] leading-tight text-input-text placeholder-input-placeholder outline-none focus:border-input-focus"
                 />
                 <button
                   type="button"
                   onClick={() => void handlePost()}
                   disabled={!newCommentText.trim()}
-                  className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-brand text-white disabled:opacity-40 hover:brightness-110 active:scale-95"
+                  className="flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-full bg-primary text-text-on-primary disabled:opacity-40 hover:brightness-110 active:scale-95"
                 >
                   <Send size={15} />
                 </button>

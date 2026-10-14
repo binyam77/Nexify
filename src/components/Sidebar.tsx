@@ -122,7 +122,7 @@ export default function Sidebar(props: SidebarProps) {
     <aside
       // 1. hideOnMobile እዚህ ጋ ጥቅም ላይ ውሏል
       className={cn(
-        "hidden h-screen  shrink-0 flex-col justify-between border-r border-input-border bg-bodey-bg  py-6 md:flex transition-all duration-200 ",
+        "hidden h-screen  shrink-0 flex-col justify-between border-r border-border bg-bg  py-6 md:flex transition-all duration-200 ",
         isCollapsed ? "w-[76px] px-2" : "w-[280px] px-5",
         hideOnMobile && "md:hidden",
       )}
@@ -135,7 +135,7 @@ export default function Sidebar(props: SidebarProps) {
           )}
         >
           {!isCollapsed && (
-            <h1 className="flex items-center gap-3 text-2xl font-extrabold text-text truncate">
+            <h1 className="flex items-center gap-3 text-2xl font-extrabold text-text-primary truncate">
               <img
                 src={logo}
                 alt="Nexify logo"
@@ -146,7 +146,7 @@ export default function Sidebar(props: SidebarProps) {
           )}
           <button
             onClick={toggleCollapsed}
-            className="p-2 rounded-lg hover:bg-hover-input text-text transition-colors shrink-0"
+            className="p-2 rounded-lg hover:bg-surface-hover text-icon-primary transition-colors shrink-0"
             aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
             title={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
@@ -164,7 +164,7 @@ export default function Sidebar(props: SidebarProps) {
           >
             <MagnifyingGlass
               size={14}
-              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-ink"
+              className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-icon-muted"
             />
 
             <input
@@ -172,14 +172,14 @@ export default function Sidebar(props: SidebarProps) {
               value={query}
               onChange={(e) => handleSearch(e.target.value)}
               placeholder="Search..."
-              className="w-full rounded-md border border-input-border
-            placeholder:placeholder-placeholder bg-input shadow-input py-3 pl-10 pr-3 text-sm text-ink
-             outline-none focus:border-input-focus"
+              className="w-full rounded-md border border-input-special-border
+            placeholder:text-input-special-placeholder bg-input-special-bg shadow-input py-3 pl-10 pr-3 text-sm text-input-special-text
+             outline-none focus:border-input-special-focus"
             />
             {searchResults.length > 0 && (
               <div
-                className="absolute top-full left-0 right-0 mt-1 bg-input border border-input-border
-             roundedlg shawdow-lg z-50 overflow-hidden"
+                className="absolute top-full left-0 right-0 mt-1 bg-input-special-bg border border-input-special-border
+             rounded-lg shadow-lg z-50 overflow-hidden"
               >
                 {searchResults.map(({ label, to, icon: Icon }) => (
                   <NavLink
@@ -189,7 +189,7 @@ export default function Sidebar(props: SidebarProps) {
                       setQuery("");
                       setSearchResults([]);
                     }}
-                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-text hover:bg-slate-50"
+                    className="flex items-center gap-3 px-4 py-2.5 text-sm text-text-primary hover:bg-surface-hover"
                   >
                     <Icon size={16} />
                     {label}
@@ -210,9 +210,9 @@ export default function Sidebar(props: SidebarProps) {
               title={isCollapsed ? label : undefined}
               className={({ isActive }) =>
                 cn(
-                  "flex items-center rounded-lg py-3.5 text-lg font-bold text-text transition-colors hover:bg-hover-input",
+                  "flex items-center rounded-lg py-3.5 text-lg font-bold text-text-primary transition-colors hover:bg-surface-hover",
                   isCollapsed ? "justify-center px-2" : "justify-between px-4",
-                  (isActive || activeTab === tab) && "bg-hover-input",
+                  (isActive || activeTab === tab) && "bg-surface-active",
                 )
               }
             >
@@ -220,7 +220,7 @@ export default function Sidebar(props: SidebarProps) {
                 <div className="relative shrink-0">
                   <Icon size={20} />
                   {isCollapsed && badge > 0 && (
-                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-rose-500" />
+                    <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-error" />
                   )}
                 </div>
                 {!isCollapsed && label}
@@ -228,7 +228,7 @@ export default function Sidebar(props: SidebarProps) {
 
               {/* 3. unreadCommunityCount እዚህ ጋ ጥቅም ላይ ውሏል */}
               {!isCollapsed && badge > 0 && (
-                <span className="bg-rose-500 text-one-text text-xs px-2 py-0.5 rounded-full font-bold">
+                <span className="bg-error text-text-on-primary text-xs px-2 py-0.5 rounded-full font-bold">
                   {badge}
                 </span>
               )}
@@ -239,7 +239,7 @@ export default function Sidebar(props: SidebarProps) {
           <button
             onClick={onUploadClick}
             title={isCollapsed ? "Upload New" : undefined}
-            className="mt-4 w-full bg-brand text-one-text py-2.5 rounded-lg font-bold text-sm hover:bg-brand-dark shadow-input transition-colors"
+            className="mt-4 w-full bg-primary text-text-on-primary py-2.5 rounded-lg font-bold text-sm hover:bg-primary-hover shadow-input transition-colors"
           >
             {isCollapsed ? "+" : "Upload New"}
           </button>
@@ -247,16 +247,16 @@ export default function Sidebar(props: SidebarProps) {
       </div>
 
       {!isCollapsed && (
-        <div className="flex flex-col gap-2 border-t border-slate-200 pt-4">
-          <div className="flex flex-wrap gap-2.5 text-xs text-slate-500">
+        <div className="flex flex-col gap-2 border-t border-divider pt-4">
+          <div className="flex flex-wrap gap-2.5 text-xs text-text-secondary">
             {footerLinks.map((link) => (
-              <Link key={link.to} to={link.to} className="hover:text-slate-900">
+              <Link key={link.to} to={link.to} className="hover:text-text-primary">
                 {link.label}
               </Link>
             ))}
           </div>
 
-          <p className="text-[11px] text-slate-400">
+          <p className="text-[11px] text-text-muted">
             &copy; {new Date().getFullYear()} Nexify
           </p>
         </div>

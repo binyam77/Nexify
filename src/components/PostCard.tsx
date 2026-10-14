@@ -337,9 +337,9 @@ export default function PostCard({
               className="bg-black/50 rounded-full p-2 backdrop-blur-sm"
             >
               {isMuted ? (
-                <VolumeX className="w-5 h-5 text-input" />
+                <VolumeX className="w-5 h-5 text-white" />
               ) : (
-                <Volume2 className="w-5 h-5 text-input" />
+                <Volume2 className="w-5 h-5 text-white" />
               )}
             </button>
           </div>
@@ -484,7 +484,7 @@ export default function PostCard({
       {/* ===== User Info (bottom left) ===== */}
       <div className="absolute bottom-24 left-3 right-16 z-20 md:bottom-8">
         <div className="flex items-center gap-2.5 mb-2">
-          <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white bg-gray-400 shrink-0">
+          <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white bg-surface-secondary shrink-0">
             {post.userAvatar ? (
               <img
                 src={post.userAvatar}
@@ -501,7 +501,7 @@ export default function PostCard({
             <button
               type="button"
               onClick={goToProfile}
-              className="text-input font-bold text-sm drop-shadow md:text-ink hover:underline"
+              className="text-white font-bold text-sm drop-shadow md:text-text-primary hover:underline"
             >
               @{post.username}
             </button>
@@ -511,8 +511,8 @@ export default function PostCard({
                 className={`text-[11px] font-bold px-2.5 py-0.5  rounded-full border transition-colors
             ${
               post.isFollowing
-                ? "border border-input-border text-input  md:border-input-border md:text-input-text"
-                : "border-brand-light bg-brand text-input w-15  md:border-brand-light md:text-input md:bg-brand"
+                ? "border border-white/60 text-white  md:border-border md:text-text-primary"
+                : "border-primary-border bg-primary text-text-on-primary w-15  md:border-primary-border md:text-text-on-primary md:bg-primary"
             }`}
               >
                 {post.isFollowing ? "Following" : "Follow"}
@@ -523,7 +523,7 @@ export default function PostCard({
         {post.caption && (
           <div>
             <p
-              className={`text-white text-xs leading-relaxed drop-shadow md:text-input-text 
+              className={`text-white text-xs leading-relaxed drop-shadow md:text-text-primary 
             transition-all ${captionExpanded ? "" : "line-clamp-2"}`}
             >
               {post.caption}
@@ -534,7 +534,7 @@ export default function PostCard({
                   e.stopPropagation();
                   setCaptionExpanded((c) => !c);
                 }}
-                className="mt-0.5 text-xs font-semibold text-white/70 hover:text-white transition-colors md:text-input-placeholder"
+                className="mt-0.5 text-xs font-semibold text-white/70 hover:text-white transition-colors md:text-text-muted"
               >
                 {captionExpanded ? "less" : "more"}
               </button>
@@ -552,7 +552,7 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
           icon={<Heart size={26} fill={liked ? "currentColor" : "none"} />}
           label={likeCount}
           active={liked}
-          activeColor="text-rose-500"
+          activeColor="text-error"
           popOnActivate
           onClick={() => toggleLikePost(post.id)}
         />
@@ -560,7 +560,7 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
           icon={<MessageCircle size={25} />}
           label={post.commentsCount}
           active={isCommentsOpen}
-          activeColor="text-blue-400"
+          activeColor="text-link"
           onClick={() => setIsCommentsOpen(true)}
         />
         {!isOwnPost && (
@@ -575,10 +575,10 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
             className="flex flex-col items-center gap-0.5"
             type="button"
           >
-            <div className="w-12 h-11 rounded-full flex items-center justify-center shadow-lg drop-shadow-lg text-white transition-transform active:scale-90 md:bg-surface md:shadow-md md:drop-shadow-none md:text-input-text">
+            <div className="w-12 h-11 rounded-full flex items-center justify-center shadow-lg drop-shadow-lg text-white transition-transform active:scale-90 md:bg-surface md:shadow-md md:drop-shadow-none md:text-text-primary">
               <MessagesSquare size={22} />
             </div>
-            <span className="text-white text-xs font-medium leading-none drop-shadow md:text-input-text md:drop-shadow-none">
+            <span className="text-white text-xs font-medium leading-none drop-shadow md:text-text-primary md:drop-shadow-none">
               Chat
             </span>
           </button>
@@ -594,11 +594,11 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
           <div
             className="w-12 h-11 rounded-full flex items-center justify-center
     shadow-lg drop-shadow-lg text-white transition-transform active:scale-90
-     md:bg-surface md:shadow-md md:drop-shadow-none md:text-input-text"
+     md:bg-surface md:shadow-md md:drop-shadow-none md:text-text-primary"
           >
             <Share2 size={23} />
           </div>
-          <span className="text-white text-xs font-semibold leading-none drop-shadow md:text-input-text md:drop-shadow-none md:dark:text-neutral-300">
+          <span className="text-white text-xs font-semibold leading-none drop-shadow md:text-text-primary md:drop-shadow-none">
             {post.sharesCount}
           </span>
         </button>

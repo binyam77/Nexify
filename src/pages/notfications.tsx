@@ -94,8 +94,8 @@ function NotifItem({
     <div
       onClick={handleClick}
       className={cn(
-        "flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-colors hover:bg-slate-50",
-        !notif.isRead && "bg-blue-50/60 hover:bg-blue-50",
+        "flex items-start gap-3 px-4 py-3.5 cursor-pointer transition-colors hover:bg-surface-hover",
+        !notif.isRead && "bg-surface-active hover:bg-surface-hover",
       )}
     >
       {/* Avatar + icon */}
@@ -123,11 +123,11 @@ function NotifItem({
 
       {/* Content */}
       <div className="flex-1 min-w-0">
-        <p className="text-sm text-slate-800 leading-snug">
+        <p className="text-sm text-text-primary leading-snug">
           <span className="font-bold">{notif.actorUsername}</span>{" "}
           {notif.message}
         </p>
-        <p className="text-xs text-small-text mt-0.5">
+        <p className="text-xs text-text-secondary mt-0.5">
           {formatTime(notif.createdAt)}
         </p>
       </div>
@@ -196,20 +196,20 @@ export default function Notifications() {
   const unread = notifications.filter((n) => !n.isRead);
   const read = notifications.filter((n) => n.isRead);
   return (
-    <div className="h-full w-full overflow-y-auto bg-bodey-bg">
+    <div className="h-full w-full overflow-y-auto bg-bg">
       {/* Header */}
-      <div className="sticky top-0 z-10 bg-bodey-bg border-b border-slate-100 px-4 py-4 flex items-center justify-between">
+      <div className="sticky top-0 z-10 bg-bg border-b border-border px-4 py-4 flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold text-text-h1">Notifications</h1>
+          <h1 className="text-xl font-bold text-text-primary">Notifications</h1>
           {unreadCount > 0 && (
-            <p className="text-xs text-small-text mt-0.5">{unreadCount} new</p>
+            <p className="text-xs text-text-secondary mt-0.5">{unreadCount} new</p>
           )}
         </div>
       </div>
 
       {/* Empty state */}
       {notifications.length === 0 && (
-        <div className="flex flex-col items-center justify-center h-64 gap-3 text-slate-400">
+        <div className="flex flex-col items-center justify-center h-64 gap-3 text-text-muted">
           <Bell className="w-12 h-12 opacity-30" />
           <p className="font-semibold">No notifications yet</p>
           <p className="text-sm">Like, comment, or follow to see activity</p>
@@ -219,10 +219,10 @@ export default function Notifications() {
       {/* Unread */}
       {unread.length > 0 && (
         <div>
-          <p className="px-4 pt-4 pb-2 text-xs font-bold text-text uppercase tracking-wider">
+          <p className="px-4 pt-4 pb-2 text-xs font-bold text-text-primary uppercase tracking-wider">
             New
           </p>
-          <div className="divide-y divide-slate-100 bg-slate-300">
+          <div className="divide-y divide-divider bg-surface-secondary">
             {unread.map((n) => (
               <NotifItem
                 key={n.id}
@@ -238,10 +238,10 @@ export default function Notifications() {
       {/* Read */}
       {read.length > 0 && (
         <div>
-          <p className="px-4 pt-4 pb-2 text-xs font-bold text-input-text uppercase tracking-wider">
+          <p className="px-4 pt-4 pb-2 text-xs font-bold text-text-primary uppercase tracking-wider">
             Earlier
           </p>
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-divider">
             {read.map((n) => (
               <NotifItem
                 key={n.id}
@@ -257,7 +257,7 @@ export default function Notifications() {
       {hasMore && (
         <div ref={sentinelRef} className="flex justify-center py-4">
           {isLoading && (
-            <div className="w-5 h-5 border-2 border-slate-300 border-t-brand-dark rounded-full animate-spin" />
+            <div className="w-5 h-5 border-2 border-border-strong border-t-primary rounded-full animate-spin" />
           )}
         </div>
       )}

@@ -63,44 +63,44 @@ export default function FollowListModal({
 
   if (!isOpen) return null;
 
-  return (
+return (
     <div
-      className="fixed inset-0 z-[100] bg-black/60 flex items-end md:items-center justify-center"
+      className="fixed inset-0 z-[100] bg-overlay flex items-end md:items-center justify-center"
       onClick={onClose}
     >
       <div
-        className="bg-white w-full max-w-md md:rounded-2xl rounded-t-2xl max-h-[75vh] flex flex-col shadow-2xl"
+        className="bg-surface w-full max-w-md md:rounded-2xl rounded-t-2xl max-h-[75vh] flex flex-col shadow-2xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100 shrink-0">
-          <h3 className="text-base font-bold text-slate-900">
+        <div className="flex items-center justify-between px-4 py-3 border-b border-border shrink-0">
+          <h3 className="text-base font-bold text-text-primary">
             {type === "followers" ? "Followers" : "Following"}
           </h3>
           <button
             onClick={onClose}
-            className="p-1 rounded-full hover:bg-slate-100"
+            className="p-1 rounded-full hover:bg-surface-hover"
           >
-            <X className="w-5 h-5 text-slate-600" />
+            <X className="w-5 h-5 text-icon-secondary" />
           </button>
         </div>
 
         <div className="flex-1 overflow-y-auto p-2">
           {isLoading ? (
-            <div className="text-center text-slate-400 text-sm py-10">
+            <div className="text-center text-text-muted text-sm py-10">
               Loading...
             </div>
           ) : error ? (
             <div className="flex flex-col items-center gap-2 py-10">
-              <p className="text-sm text-rose-500 font-semibold">{error}</p>
+              <p className="text-sm text-error font-semibold">{error}</p>
               <button
                 onClick={load}
-                className="text-xs font-bold text-blue-600 underline"
+                className="text-xs font-bold text-link underline"
               >
                 Retry
               </button>
             </div>
           ) : items.length === 0 ? (
-            <div className="text-center text-slate-400 text-sm py-10">
+            <div className="text-center text-text-muted text-sm py-10">
               {type === "followers"
                 ? "No followers yet"
                 : "Not following anyone yet"}
@@ -114,9 +114,9 @@ export default function FollowListModal({
                     onClose();
                     navigate(`/profile/${item.username}`);
                   }}
-                  className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-slate-50 transition-colors text-left"
+                  className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface-hover transition-colors text-left"
                 >
-                  <div className="w-11 h-11 rounded-full overflow-hidden bg-blue-50 flex items-center justify-center text-blue-600 text-sm font-bold shrink-0">
+                  <div className="w-11 h-11 rounded-full overflow-hidden bg-primary-light flex items-center justify-center text-primary text-sm font-bold shrink-0">
                     {item.avatar ? (
                       <img
                         src={item.avatar}
@@ -128,10 +128,10 @@ export default function FollowListModal({
                     )}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-bold text-slate-900 truncate">
+                    <p className="text-sm font-bold text-text-primary truncate">
                       {item.displayName}
                     </p>
-                    <p className="text-xs text-slate-400 truncate">
+                    <p className="text-xs text-text-muted truncate">
                       @{item.username}
                     </p>
                   </div>
@@ -141,7 +141,7 @@ export default function FollowListModal({
                 <div className="flex justify-center py-3">
                   <button
                     onClick={loadMore}
-                    className="text-xs font-bold text-blue-600 hover:underline"
+                    className="text-xs font-bold text-link hover:underline"
                   >
                     {moreError ? "Couldn't load. Tap to retry" : "Load more"}
                   </button>

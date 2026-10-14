@@ -273,7 +273,7 @@ function ReplyCard({
        navigate(`/profile/${encodeURIComponent(reply.username)}`); 
   }
 
-  return (
+ return (
     <div className="flex items-start gap-2">
       <CommentAvatar
         username={reply.username}
@@ -286,18 +286,18 @@ function ReplyCard({
           <button
             type="button"
             onClick={goToProfile}
-            className="text-[12px] font-semibold text-white hover:underline"
+            className="text-[12px] font-semibold text-text-primary hover:underline"
           >
             @{reply.username}
           </button>
-          <span className="text-[10px] text-zinc-500">· {timeAgo}</span>
+          <span className="text-[10px] text-text-muted">· {timeAgo}</span>
         </div>
-        <p className="text-sm leading-snug text-zinc-200">{reply.text}</p>
+        <p className="text-sm leading-snug text-text-secondary">{reply.text}</p>
         {isOwner && (
           <button
             type="button"
             onClick={onDelete}
-            className="mt-1 text-[11px] font-semibold text-zinc-500 hover:text-rose-400"
+            className="mt-1 text-[11px] font-semibold text-text-muted hover:text-error"
           >
             Delete
           </button>

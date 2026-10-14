@@ -36,6 +36,15 @@
      Use for: selected navigation, selected tab, active item */
   --color-surface-active: #eaf4ff;
 
+  /* Entire chat conversation background */
+  --color-chat-bg: #f8fafc;
+
+  /* Message bubble sent by the current user */
+  --color-chat-message-sent: #d9fdd3;
+
+  /* Message bubble received from another user */
+  --color-chat-message-received: #ffffff;
+
   /* =========================================================
      TEXT COLORS
      ========================================================= */
@@ -314,6 +323,15 @@
   /* Active / selected surface
      Use for: selected navigation, selected tab, active item */
   --color-surface-active: #102a3d;
+
+  /* Entire chat conversation background */
+  --color-chat-bg: #121212;
+
+  /* Message bubble sent by the current user */
+  --color-chat-message-sent: #174d3a;
+
+  /* Message bubble received from another user */
+  --color-chat-message-received: #262626;
 
   /* =========================================================
      TEXT COLORS

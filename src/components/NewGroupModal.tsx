@@ -116,16 +116,16 @@ export default function NewGroupModal({
   const extraCount = pickedMembers.length - visibleMembers.length;
 
   return (
-    <div className="fixed inset-0 h-[100svh] bg-bodey-bg z-50 flex flex-col animate-in fade-in duration-150">
+    <div className="fixed inset-0 h-[100svh] bg-bg z-50 flex flex-col animate-in fade-in duration-150">
       <header className="relative px-4 py-4 flex items-center shrink-0">
         <button
           onClick={onBack ?? onClose}
-          className="relative z-10 p-1.5 text-gray-700 hover:bg-gray-50 rounded-xl transition-all"
+          className="relative z-10 p-1.5 text-icon-primary hover:bg-surface-hover rounded-xl transition-all"
           aria-label="Back"
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
-        <h3 className="absolute inset-x-0 text-center text-lg font-extrabold text-gray-900 tracking-tight pointer-events-none">
+        <h3 className="absolute inset-x-0 text-center text-lg font-extrabold text-text-primary tracking-tight pointer-events-none">
           New Group
         </h3>
       </header>
@@ -138,7 +138,7 @@ export default function NewGroupModal({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="w-28 h-28 rounded-full overflow-hidden flex items-center justify-center bg-blue-100 text-gray-500 hover:bg-blue-200 transition-colors"
+                className="w-28 h-28 rounded-full overflow-hidden flex items-center justify-center bg-primary-light text-icon-secondary hover:bg-surface-hover transition-colors"
                 aria-label="Add photo"
               >
                 {avatarUrl ? (
@@ -151,14 +151,14 @@ export default function NewGroupModal({
                   <Camera className="w-10 h-10" />
                 )}
               </button>
-              <span className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-white shadow-md flex items-center justify-center text-brand pointer-events-none">
+              <span className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-surface shadow-md flex items-center justify-center text-primary pointer-events-none">
                 <Camera className="w-4 h-4" />
               </span>
             </div>
             <button
               type="button"
               onClick={() => fileInputRef.current?.click()}
-              className="text-sm font-medium text-gray-500"
+              className="text-sm font-medium text-text-secondary"
             >
               {avatarUrl ? "Change Photo" : "Add Photo"}
             </button>
@@ -166,7 +166,7 @@ export default function NewGroupModal({
               <button
                 type="button"
                 onClick={handleRemoveAvatar}
-                className="text-xs font-bold text-red-500"
+                className="text-xs font-bold text-error"
               >
                 Remove
               </button>
@@ -184,7 +184,7 @@ export default function NewGroupModal({
           <div>
             <label
               htmlFor="groupName"
-              className="block text-sm font-extrabold text-gray-900 mb-2"
+              className="block text-sm font-extrabold text-text-primary mb-2"
             >
               Group Name
             </label>
@@ -196,7 +196,7 @@ export default function NewGroupModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter group name"
-              className="w-full bg-input border border-input-border rounded-2xl px-4 py-3 text-sm font-medium text-input-text placeholder-gray-400 focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all duration-200"
+              className="w-full bg-input-bg border border-input-border rounded-2xl px-4 py-3 text-sm font-medium text-input-text placeholder-input-placeholder focus:border-input-focus focus:ring-1 focus:ring-input-focus outline-none transition-all duration-200"
             />
           </div>
 
@@ -204,7 +204,7 @@ export default function NewGroupModal({
           <div>
             <label
               htmlFor="groupDesc"
-              className="block text-sm font-extrabold text-gray-900 mb-2"
+              className="block text-sm font-extrabold text-text-primary mb-2"
             >
               Description
             </label>
@@ -215,7 +215,7 @@ export default function NewGroupModal({
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Describe your group"
-              className="w-full bg-input border border-input-border rounded-2xl px-4 py-3 text-sm font-medium text-input-text placeholder-gray-400 focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all duration-200 resize-none"
+              className="w-full bg-input-bg border border-input-border rounded-2xl px-4 py-3 text-sm font-medium text-input-text placeholder-input-placeholder focus:border-input-focus focus:ring-1 focus:ring-input-focus outline-none transition-all duration-200 resize-none"
             />
           </div>
 
@@ -223,19 +223,19 @@ export default function NewGroupModal({
           <button
             type="button"
             onClick={onOpenMemberPicker}
-            className="w-full flex items-center justify-between gap-3 bg-blue-50 hover:bg-blue-100 rounded-2xl px-4 py-3.5 text-sm font-bold text-brand transition-colors"
+            className="w-full flex items-center justify-between gap-3 bg-primary-light hover:bg-surface-hover rounded-2xl px-4 py-3.5 text-sm font-bold text-primary transition-colors"
           >
             <span className="flex items-center gap-3">
               <UserPlus className="w-5 h-5" />
               Add Members
             </span>
-            <ChevronRight className="w-5 h-5 text-gray-400" />
+            <ChevronRight className="w-5 h-5 text-icon-muted" />
           </button>
 
           {/* Selected Members */}
           {pickedMembers.length > 0 && (
             <div>
-              <h4 className="text-sm font-extrabold text-gray-900 mb-3">
+              <h4 className="text-sm font-extrabold text-text-primary mb-3">
                 Selected Members
               </h4>
               <div className="flex items-start gap-4">
@@ -244,7 +244,7 @@ export default function NewGroupModal({
                     key={u.id}
                     className="flex flex-col items-center gap-1 w-14"
                   >
-                    <div className="w-12 h-12 rounded-full bg-blue-100 overflow-hidden flex items-center justify-center text-blue-600 font-bold">
+                    <div className="w-12 h-12 rounded-full bg-primary-light overflow-hidden flex items-center justify-center text-primary font-bold">
                       {u.photo ? (
                         <img
                           src={u.photo}
@@ -255,17 +255,17 @@ export default function NewGroupModal({
                         u.name.charAt(0).toUpperCase()
                       )}
                     </div>
-                    <span className="text-xs text-gray-600 truncate max-w-full">
+                    <span className="text-xs text-text-secondary truncate max-w-full">
                       {u.name}
                     </span>
                   </div>
                 ))}
                 {extraCount > 0 && (
                   <div className="flex flex-col items-center gap-1 w-14">
-                    <div className="w-12 h-12 rounded-full bg-gray-100 flex items-center justify-center text-sm font-bold text-gray-500">
+                    <div className="w-12 h-12 rounded-full bg-surface-secondary flex items-center justify-center text-sm font-bold text-text-muted">
                       +{extraCount}
                     </div>
-                    <span className="text-xs text-gray-600">More</span>
+                    <span className="text-xs text-text-secondary">More</span>
                   </div>
                 )}
               </div>
@@ -279,7 +279,7 @@ export default function NewGroupModal({
           <button
             onClick={handleSubmit}
             disabled={!name.trim() || isSubmitting}
-            className="w-full py-3.5 bg-brand hover:bg-blue-700 disabled:opacity-40 disabled:hover:bg-brand text-white text-sm font-extrabold rounded-2xl transition-all shadow-md"
+            className="w-full py-3.5 bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:hover:bg-primary text-text-on-primary text-sm font-extrabold rounded-2xl transition-all shadow-md"
           >
             Create Group
           </button>

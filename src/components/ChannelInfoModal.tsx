@@ -127,12 +127,12 @@ export default function ChannelInfoModal({
   const isOwner = !!chat.isCreatedByMe;
 
   return (
-    <div className="fixed inset-0 z-[120] bg-white flex flex-col animate-in fade-in duration-150">
+    <div className="fixed inset-0 z-[120] bg-bg flex flex-col animate-in fade-in duration-150">
       {/* ከላይ: ← ቀስት + Leave Channel (subscriber) / Delete Channel (owner) */}
       <div className="flex items-center justify-between px-4 pt-4 pb-2 shrink-0">
         <button
           onClick={onClose}
-          className="w-10 h-10 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center text-gray-900 hover:bg-gray-50 transition-colors"
+          className="w-10 h-10 rounded-full bg-surface shadow-md border border-border flex items-center justify-center text-icon-primary hover:bg-surface-hover transition-colors"
           aria-label="Back"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -141,7 +141,7 @@ export default function ChannelInfoModal({
         {isOwner ? (
           <button
             onClick={() => setConfirmAction("delete")}
-            className="flex items-center gap-1.5 text-sm font-bold text-rose-600 hover:bg-rose-50 rounded-full px-4 py-2 transition-all"
+            className="flex items-center gap-1.5 text-sm font-bold text-error hover:bg-error-light rounded-full px-4 py-2 transition-all"
           >
             <Trash2 className="w-4 h-4" />
             Delete Channel
@@ -149,7 +149,7 @@ export default function ChannelInfoModal({
         ) : (
           <button
             onClick={() => setConfirmAction("unsubscribe")}
-            className="flex items-center gap-1.5 text-sm font-bold text-orange-600 hover:bg-orange-50 rounded-full px-4 py-2 transition-all"
+            className="flex items-center gap-1.5 text-sm font-bold text-warning hover:bg-warning-light rounded-full px-4 py-2 transition-all"
           >
             <LogOut className="w-4 h-4" />
             Leave Channel
@@ -161,7 +161,7 @@ export default function ChannelInfoModal({
         <div className="px-5 pb-6 flex flex-col items-center text-center">
           {/* Avatar + ካሜራ (owner ብቻ) */}
           <div className="relative mt-2">
-            <div className="w-28 h-28 rounded-full overflow-hidden bg-gray-100 shadow-sm">
+            <div className="w-28 h-28 rounded-full overflow-hidden bg-surface-secondary shadow-sm">
               {chat.avatarUrl ? (
                 <img
                   src={chat.avatarUrl}
@@ -179,7 +179,7 @@ export default function ChannelInfoModal({
             {isOwner && (
               <button
                 onClick={() => photoInputRef.current?.click()}
-                className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-white shadow-md border border-gray-100 flex items-center justify-center text-brand hover:bg-gray-50 transition-colors"
+                className="absolute bottom-0 right-0 w-9 h-9 rounded-full bg-surface shadow-md border border-border flex items-center justify-center text-primary hover:bg-surface-hover transition-colors"
                 aria-label="Change channel photo"
               >
                 <Camera className="w-4 h-4" />
@@ -202,11 +202,11 @@ export default function ChannelInfoModal({
                 onChange={(e) => setEditName(e.target.value)}
                 maxLength={60}
                 autoFocus
-                className="flex-1 min-w-0 text-xl font-black text-gray-900 text-center border-b-2 border-blue-500 outline-none"
+                className="flex-1 min-w-0 text-xl font-black text-input-text bg-transparent text-center border-b-2 border-primary outline-none"
               />
               <button
                 onClick={handleSaveName}
-                className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-full"
+                className="p-1.5 text-success hover:bg-success-light rounded-full"
                 aria-label="Save name"
               >
                 <Check className="w-5 h-5" />
@@ -216,7 +216,7 @@ export default function ChannelInfoModal({
                   setEditName(chat.name);
                   setIsEditingName(false);
                 }}
-                className="p-1.5 text-gray-400 hover:bg-gray-50 rounded-full"
+                className="p-1.5 text-icon-muted hover:bg-surface-hover rounded-full"
                 aria-label="Cancel"
               >
                 <X className="w-5 h-5" />
@@ -224,13 +224,13 @@ export default function ChannelInfoModal({
             </div>
           ) : (
             <div className="flex items-center justify-center gap-2 mt-4 max-w-full">
-              <h3 className="text-2xl font-black text-gray-900 tracking-tight truncate">
+              <h3 className="text-2xl font-black text-text-primary tracking-tight truncate">
                 {chat.name}
               </h3>
               {isOwner && (
                 <button
                   onClick={() => setIsEditingName(true)}
-                  className="p-1.5 text-gray-400 hover:text-blue-600 shrink-0"
+                  className="p-1.5 text-icon-muted hover:text-link shrink-0"
                   aria-label="Edit channel name"
                 >
                   <Pencil className="w-4 h-4" />
@@ -239,7 +239,7 @@ export default function ChannelInfoModal({
             </div>
           )}
 
-          <p className="text-sm text-gray-500 mt-1">
+          <p className="text-sm text-text-secondary mt-1">
             {chat.membersCount} subscribers
           </p>
 
@@ -252,7 +252,7 @@ export default function ChannelInfoModal({
                 maxLength={300}
                 rows={3}
                 autoFocus
-                className="w-full text-sm text-gray-700 border border-blue-300 rounded-xl p-2.5 outline-none focus:border-blue-500 resize-none"
+                className="w-full text-sm text-input-text bg-input-bg border border-input-border rounded-xl p-2.5 outline-none focus:border-input-focus placeholder-input-placeholder resize-none"
                 placeholder="Add a bio for this channel..."
               />
               <div className="flex justify-end gap-1 mt-1">
@@ -261,14 +261,14 @@ export default function ChannelInfoModal({
                     setEditBio(chat.description || "");
                     setIsEditingBio(false);
                   }}
-                  className="p-1.5 text-gray-400 hover:bg-gray-50 rounded-full"
+                  className="p-1.5 text-icon-muted hover:bg-surface-hover rounded-full"
                   aria-label="Cancel"
                 >
                   <X className="w-5 h-5" />
                 </button>
                 <button
                   onClick={handleSaveBio}
-                  className="p-1.5 text-emerald-600 hover:bg-emerald-50 rounded-full"
+                  className="p-1.5 text-success hover:bg-success-light rounded-full"
                   aria-label="Save bio"
                 >
                   <Check className="w-5 h-5" />
@@ -280,7 +280,7 @@ export default function ChannelInfoModal({
               <div className="flex items-start justify-center gap-1.5 mt-3 max-w-sm">
                 <p
                   className={`text-sm leading-relaxed whitespace-pre-wrap break-words ${
-                    chat.description ? "text-gray-800" : "text-gray-400"
+                    chat.description ? "text-text-primary" : "text-text-muted"
                   }`}
                 >
                   {chat.description || "Add a description"}
@@ -288,7 +288,7 @@ export default function ChannelInfoModal({
                 {isOwner && (
                   <button
                     onClick={() => setIsEditingBio(true)}
-                    className="p-1 text-gray-400 hover:text-blue-600 shrink-0"
+                    className="p-1 text-icon-muted hover:text-link shrink-0"
                     aria-label="Edit bio"
                   >
                     <Pencil className="w-3.5 h-3.5" />
@@ -301,14 +301,14 @@ export default function ChannelInfoModal({
 
         {/* Media / Links */}
         <div className="px-4 pb-8">
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="flex border-b border-gray-100">
+          <div className="bg-surface rounded-2xl border border-border shadow-sm overflow-hidden">
+            <div className="flex border-b border-border">
               <button
                 onClick={() => setActiveTab("media")}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold border-b-2 transition-colors ${
                   activeTab === "media"
-                    ? "text-brand border-brand"
-                    : "text-gray-400 border-transparent hover:text-gray-600"
+                    ? "text-primary border-primary"
+                    : "text-text-muted border-transparent hover:text-text-secondary"
                 }`}
               >
                 <ImageIcon className="w-4 h-4" />
@@ -318,8 +318,8 @@ export default function ChannelInfoModal({
                 onClick={() => setActiveTab("links")}
                 className={`flex-1 flex items-center justify-center gap-2 py-3 text-sm font-bold border-b-2 transition-colors ${
                   activeTab === "links"
-                    ? "text-brand border-brand"
-                    : "text-gray-400 border-transparent hover:text-gray-600"
+                    ? "text-primary border-primary"
+                    : "text-text-muted border-transparent hover:text-text-secondary"
                 }`}
               >
                 <Link2 className="w-4 h-4" />
@@ -329,7 +329,7 @@ export default function ChannelInfoModal({
 
             {activeTab === "media" ? (
               mediaItems.length === 0 ? (
-                <p className="py-10 text-center text-sm text-gray-400 font-medium">
+                <p className="py-10 text-center text-sm text-text-muted font-medium">
                   No media yet
                 </p>
               ) : (
@@ -345,7 +345,7 @@ export default function ChannelInfoModal({
                             type: isVideo ? "video" : "image",
                           })
                         }
-                        className="relative aspect-square overflow-hidden rounded-lg bg-gray-100"
+                        className="relative aspect-square overflow-hidden rounded-lg bg-surface-secondary"
                       >
                         {isVideo ? (
                           <>
@@ -374,23 +374,23 @@ export default function ChannelInfoModal({
                 </div>
               )
             ) : linkItems.length === 0 ? (
-              <p className="py-10 text-center text-sm text-gray-400 font-medium">
+              <p className="py-10 text-center text-sm text-text-muted font-medium">
                 No links yet
               </p>
             ) : (
-              <div className="divide-y divide-gray-50">
+              <div className="divide-y divide-divider-subtle">
                 {linkItems.map((l) => (
                   <a
                     key={l.id}
                     href={l.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block px-4 py-3 hover:bg-gray-50 transition-colors"
+                    className="block px-4 py-3 hover:bg-surface-hover transition-colors"
                   >
-                    <p className="text-sm font-semibold text-blue-600 truncate">
+                    <p className="text-sm font-semibold text-link truncate">
                       {l.url}
                     </p>
-                    <p className="text-xs text-gray-400 truncate mt-0.5">
+                    <p className="text-xs text-text-muted truncate mt-0.5">
                       {l.text}
                     </p>
                   </a>
@@ -437,26 +437,26 @@ export default function ChannelInfoModal({
       {/* Leave / Delete ማረጋገጫ */}
       {confirmAction && (
         <div
-          className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-[145] p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 bg-overlay backdrop-blur-sm flex items-center justify-center z-[145] p-4 animate-in fade-in duration-150"
           onClick={() => setConfirmAction(null)}
         >
           <div
-            className="bg-white w-full max-w-xs rounded-2xl shadow-2xl p-5 text-center animate-in zoom-in-95 duration-200"
+            className="bg-surface w-full max-w-xs rounded-2xl shadow-2xl p-5 text-center animate-in zoom-in-95 duration-200"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-12 h-12 rounded-full bg-rose-50 flex items-center justify-center mx-auto mb-3 text-rose-500">
+            <div className="w-12 h-12 rounded-full bg-error-light flex items-center justify-center mx-auto mb-3 text-error">
               {confirmAction === "unsubscribe" ? (
                 <LogOut className="w-6 h-6" />
               ) : (
                 <Trash2 className="w-6 h-6" />
               )}
             </div>
-            <h3 className="text-base font-black text-slate-800 mb-1">
+            <h3 className="text-base font-black text-text-primary mb-1">
               {confirmAction === "unsubscribe"
                 ? "Leave this channel?"
                 : "Delete this channel?"}
             </h3>
-            <p className="text-xs text-slate-500 font-semibold mb-5">
+            <p className="text-xs text-text-secondary font-semibold mb-5">
               {confirmAction === "unsubscribe"
                 ? "You can rejoin anytime."
                 : "This action cannot be undone. All posts will be permanently removed for everyone."}
@@ -464,7 +464,7 @@ export default function ChannelInfoModal({
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmAction(null)}
-                className="flex-1 py-2.5 bg-slate-100 hover:bg-slate-200 rounded-xl text-xs font-black text-slate-500 transition-all"
+                className="flex-1 py-2.5 bg-surface-secondary hover:bg-surface-hover rounded-xl text-xs font-black text-text-secondary transition-all"
               >
                 Cancel
               </button>
@@ -475,7 +475,7 @@ export default function ChannelInfoModal({
                   setConfirmAction(null);
                   onClose();
                 }}
-                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black text-white shadow-md transition-all"
+                className="flex-1 py-2.5 bg-error hover:bg-error/90 rounded-xl text-xs font-black text-white shadow-md transition-all"
               >
                 {confirmAction === "unsubscribe" ? "Leave" : "Delete"}
               </button>

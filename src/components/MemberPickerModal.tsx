@@ -82,16 +82,16 @@ export default function MemberPickerModal({
   };
 
   return (
-    <div className="fixed inset-0 h-[100svh] bg-bodey-bg z-[140] flex flex-col animate-in fade-in duration-150">
+    <div className="fixed inset-0 h-[100svh] bg-bg z-[140] flex flex-col animate-in fade-in duration-150">
       <header className="relative px-4 py-4 flex items-center shrink-0">
         <button
           onClick={onClose}
-          className="relative z-10 p-1.5 text-gray-700 hover:bg-gray-50 rounded-xl transition-all"
+          className="relative z-10 p-1.5 text-icon-primary hover:bg-surface-hover rounded-xl transition-all"
           aria-label="Back"
         >
           <ArrowLeft className="w-6 h-6" />
         </button>
-        <h3 className="absolute inset-x-0 text-center text-lg font-extrabold text-gray-900 tracking-tight pointer-events-none">
+        <h3 className="absolute inset-x-0 text-center text-lg font-extrabold text-text-primary tracking-tight pointer-events-none">
           Add Members
         </h3>
       </header>
@@ -105,7 +105,7 @@ export default function MemberPickerModal({
               <button
                 type="button"
                 onClick={() => toggleSelect(u.id)}
-                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-white shadow border border-gray-100 flex items-center justify-center text-gray-500 hover:text-gray-800"
+                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-surface shadow border border-border flex items-center justify-center text-icon-secondary hover:text-icon-primary"
                 aria-label={`Remove ${u.name}`}
               >
                 <X className="w-3 h-3" />
@@ -113,7 +113,7 @@ export default function MemberPickerModal({
             </div>
           ))}
           {hiddenCount > 0 && (
-            <div className="w-12 h-12 rounded-full bg-blue-50 text-brand flex items-center justify-center text-sm font-bold shrink-0">
+            <div className="w-12 h-12 rounded-full bg-primary-light text-primary flex items-center justify-center text-sm font-bold shrink-0">
               +{hiddenCount}
             </div>
           )}
@@ -122,20 +122,20 @@ export default function MemberPickerModal({
 
       <div className="px-4 pb-3 shrink-0">
         <div className="relative">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-icon-muted" />
           <input
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search contacts..."
-            className="w-full pl-10 pr-4 py-2.5 bg-input border border-input-border rounded-xl text-sm outline-none focus:border-brand"
+            className="w-full pl-10 pr-4 py-2.5 bg-input-special-bg border border-input-special-border text-input-special-text placeholder-input-special-placeholder rounded-xl text-sm outline-none focus:border-input-special-focus"
           />
         </div>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {filtered.length === 0 ? (
-          <p className="text-center text-sm text-gray-400 py-10">
+          <p className="text-center text-sm text-text-muted py-10">
             No people found.
           </p>
         ) : (
@@ -147,26 +147,28 @@ export default function MemberPickerModal({
                 type="button"
                 onClick={() => toggleSelect(u.id)}
                 className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-                  isSelected ? "bg-blue-50/70" : "hover:bg-gray-50"
+                  isSelected ? "bg-surface-active" : "hover:bg-surface-hover"
                 }`}
               >
                 <UserAvatar user={u} size="w-12 h-12" />
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-gray-900 truncate">
+                  <p className="text-sm font-bold text-text-primary truncate">
                     {u.name}
                   </p>
-                  <p className="text-xs text-gray-400 truncate">
+                  <p className="text-xs text-text-muted truncate">
                     @{u.username}
                   </p>
                 </div>
                 <div
                   className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 ${
                     isSelected
-                      ? "bg-brand border-brand"
-                      : "border-gray-300 bg-white"
+                      ? "bg-primary border-primary"
+                      : "border-border-strong bg-surface"
                   }`}
                 >
-                  {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                  {isSelected && (
+                    <Check className="w-3.5 h-3.5 text-text-on-primary" />
+                  )}
                 </div>
               </button>
             );
@@ -177,7 +179,7 @@ export default function MemberPickerModal({
       <div className="p-4 pb-[max(1.5rem,calc(env(safe-area-inset-bottom)+1rem))] flex justify-end shrink-0">
         <button
           onClick={handleConfirm}
-          className="px-8 py-3 bg-brand hover:bg-blue-700 text-white text-sm font-extrabold rounded-xl transition-all shadow-md"
+          className="px-8 py-3 bg-primary hover:bg-primary-hover text-text-on-primary text-sm font-extrabold rounded-xl transition-all shadow-md"
         >
           {confirmLabel}
         </button>

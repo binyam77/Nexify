@@ -56,7 +56,7 @@ export default function SinglePostView() {
   };
   if (!isOnline) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center bg-surface text-slate-400 gap-3 px-6 text-center">
+      <div className="h-full w-full flex flex-col items-center justify-center bg-surface text-text-muted gap-3 px-6 text-center">
         <WifiOff className="w-10 h-10 opacity-60" />
         <p className="text-lg font-semibold">ምንም የኢንተርኔት ግንኙነት የለም</p>
         <p className="text-sm opacity-60">ግንኙነት ሲመለስ Feed ራሱ በራሱ ይመለሳል</p>
@@ -65,7 +65,7 @@ export default function SinglePostView() {
   }
   if (isLoading) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-surface text-slate-400">
+      <div className="h-full w-full flex items-center justify-center bg-surface text-text-muted">
         <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
@@ -75,12 +75,12 @@ export default function SinglePostView() {
   // an explicit retry-able state instead of a spinner that never resolves.
   if (failed || !post) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center bg-surface text-slate-400 gap-3">
+      <div className="h-full w-full flex flex-col items-center justify-center bg-surface text-text-muted gap-3">
         <WifiOff className="w-10 h-10 opacity-60" />
         <p className="text-lg font-semibold">ፖስት መጫን አልተቻለም</p>
         <button
           onClick={() => void load()}
-          className="flex items-center gap-2 px-5 py-2 rounded-full bg-brand text-white text-sm font-semibold active:scale-95 transition-transform"
+          className="flex items-center gap-2 px-5 py-2 rounded-full bg-primary text-text-on-primary text-sm font-semibold active:scale-95 transition-transform"
         >
           <RotateCw className="w-4 h-4" />
           Retry
