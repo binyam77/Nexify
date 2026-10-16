@@ -6,7 +6,6 @@ import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../lib/api-client";
 import { registerRequest } from "../api/auth.api";
 
-
 interface CreateAccountProps {
   onNavigateToLogin: () => void;
 }
@@ -58,7 +57,7 @@ export default function CreateAccount({
       await loginWithTokens(accessToken);
       navigate("/");
     } catch (err) {
-      console.log("🔍 FRONTEND CATCH:", err)
+      console.log("🔍 FRONTEND CATCH:", err);
       setError(err instanceof ApiError ? err.message : "Something went wrong.");
     } finally {
       setIsSubmitting(false);
@@ -68,19 +67,19 @@ export default function CreateAccount({
   const handleGoogleClick = () => {
     window.location.href = "http://localhost:3000/auth/google";
   };
-
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen w-full bg-bodey-bg flex flex-col items-center px-6 pt-10 pb-10"
+      className="min-h-screen w-full bg-bg flex flex-col items-center px-6 pt-10 pb-10"
     >
-      
-      <h1 className="text-3xl font-bold text-text-h2 mb-8">Create Account</h1>
+      <h1 className="text-3xl font-bold text-text-primary mb-8">
+        Create Account
+      </h1>
 
       <div className="w-full max-w-sm">
         {error && (
-          <div className="mb-5 p-3.5 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg text-sm flex items-start gap-2.5">
+          <div className="mb-5 p-3.5 bg-error-light border border-error-border text-error rounded-lg text-sm flex items-start gap-2.5">
             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
             <span>{error}</span>
           </div>
@@ -89,7 +88,7 @@ export default function CreateAccount({
         <button
           type="button"
           onClick={handleGoogleClick}
-          className="w-full py-4 px-4 bg-surface-raised border border-input-border rounded-xl text-base font-medium text-gray-700 flex items-center justify-center gap-3 hover:bg-hover-input transition-all mb-5"
+          className="w-full py-4 px-4 bg-surface border border-input-border rounded-xl text-base font-medium text-text-primary flex items-center justify-center gap-3 hover:bg-surface-hover transition-all mb-5"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -113,9 +112,9 @@ export default function CreateAccount({
         </button>
 
         <div className="flex items-center gap-3 mb-5">
-          <span className="h-px flex-1 bg-border" />
-          <span className="text-sm text-gray-400">OR</span>
-          <span className="h-px flex-1 bg-border" />
+          <span className="h-px flex-1 bg-divider" />
+          <span className="text-sm text-text-muted">OR</span>
+          <span className="h-px flex-1 bg-divider" />
         </div>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
@@ -124,7 +123,7 @@ export default function CreateAccount({
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Username"
             autoComplete="username"
-            className="w-full px-4 py-4 bg-surface-raised rounded-xl text-input-text placeholder:text-input-placeholder border-1 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-all text-base"
+            className="w-full px-4 py-4 bg-input-special-bg rounded-xl text-input-special-text placeholder:text-input-special-placeholder border-1 border-input-special-border focus:outline-none focus:ring-2 focus:ring-input-special-focus transition-all text-base"
           />
           <input
             type="email"
@@ -132,7 +131,7 @@ export default function CreateAccount({
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
             autoComplete="email"
-            className="w-full px-4 py-4 bg-surface-raised rounded-xl text-input-text placeholder:text-input-placeholder border-1 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-all text-base"
+            className="w-full px-4 py-4 bg-input-special-bg rounded-xl text-input-special-text placeholder:text-input-special-placeholder border-1 border-input-special-border focus:outline-none focus:ring-2 focus:ring-input-special-focus transition-all text-base"
           />
           <div className="relative">
             <input
@@ -141,12 +140,12 @@ export default function CreateAccount({
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
               autoComplete="new-password"
-              className="w-full px-4 py-4 pr-12 bg-surface-raised rounded-xl text-input-text placeholder:text-input-placeholder border-1 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-all text-base"
+              className="w-full px-4 py-4 pr-12 bg-input-special-bg rounded-xl text-input-special-text placeholder:text-input-special-placeholder border-1 border-input-special-border focus:outline-none focus:ring-2 focus:ring-input-special-focus transition-all text-base"
             />
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
-              className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400"
+              className="absolute inset-y-0 right-0 flex items-center pr-4 text-icon-muted"
             >
               {showPassword ? (
                 <EyeOff className="w-5 h-5" />
@@ -159,18 +158,18 @@ export default function CreateAccount({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-4 bg-brand text-white font-semibold rounded-full text-base hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-1"
+            className="w-full py-4 bg-primary text-text-on-primary font-semibold rounded-full text-base hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-1"
           >
             {isSubmitting ? "Creating account..." : "Create Account"}
           </button>
         </form>
 
-        <p className="text-center mt-6 text-sm text-gray-500">
+        <p className="text-center mt-6 text-sm text-text-secondary">
           Already have an account?{" "}
           <button
             type="button"
             onClick={onNavigateToLogin}
-            className="text-[#2563eb] font-semibold"
+            className="text-link font-semibold"
           >
             Log in
           </button>

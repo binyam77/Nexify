@@ -28,16 +28,16 @@ export default function EmojiPicker({ onSelect }: EmojiPickerProps) {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  return (
+ return (
     <div className="relative shrink-0" ref={wrapperRef}>
-      <button type="button" onClick={() => setOpen((o) => !o)} className="rounded-md p-1 text-slate-500 transition-transform hover:scale-110" aria-label="Open emoji picker">
+      <button type="button" onClick={() => setOpen((o) => !o)} className="rounded-md p-1 text-icon-secondary transition-transform hover:scale-110" aria-label="Open emoji picker">
         <Smile size={20} />
       </button>
 
       {open && (
-        <div className="animate-fade-in absolute bottom-12 left-0 z-50 grid w-[272px] grid-cols-8 gap-1 rounded-2xl border border-slate-200 bg-gradient-to-br from-emerald-500 to-blue-600 p-2.5 shadow-xl">
+        <div className="animate-fade-in absolute bottom-12 left-0 z-50 grid w-[272px] grid-cols-8 gap-1 rounded-2xl border border-border bg-surface p-2.5 shadow-xl">
           {EMOJIS.map((emoji, i) => (
-            <button key={`${emoji}-${i}`} type="button" onClick={() => { onSelect(emoji); setOpen(false); }} className="rounded-md p-1 text-lg transition-colors hover:bg-white/20">
+            <button key={`${emoji}-${i}`} type="button" onClick={() => { onSelect(emoji); setOpen(false); }} className="rounded-md p-1 text-lg transition-colors hover:bg-surface-hover">
               {emoji}
             </button>
           ))}

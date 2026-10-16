@@ -264,9 +264,8 @@ export default function MessageArea({
       longPressFiredRef.current = false;
       return;
     }
-    if (chat && chat.type === "channel" && !chat.isCreatedByMe) {
-      setSelectedOptionsMessage(msg);
-    }
+    // Channel: ልክ እንደ Group — መታ → emoji panel (ባለቤትም ተመዝጋቢም)፤ ረዘም ብሎ መያዝ → options
+    if (chat?.type === "channel") handleGroupBubbleClick(msg);
   };
   // Group: መታ → emoji panel (ረዘም ብሎ መያዝ → ነባሩ options: Copy/Edit/Delete/Pin)
   const handleGroupBubbleClick = (msg: Message) => {
@@ -274,7 +273,12 @@ export default function MessageArea({
       longPressFiredRef.current = false;
       return;
     }
-    if (chat?.type !== "group" || msg.pending || !chat.isJoined) return;
+    if (
+      (chat?.type !== "group" && chat?.type !== "channel") ||
+      msg.pending ||
+      !chat.isJoined
+    )
+      return;
     setReactionMessage(msg);
   };
   const [messageSearchQuery, setMessageSearchQuery] = useState("");
@@ -756,7 +760,7 @@ export default function MessageArea({
             // ላኪ ፎቶ/ስም/verified/ቀን/views የሉም — ጽሑፍ፣ ሚዲያ፣ ሰዓት እና emoji reactions ብቻ
             if (chat.type === "channel") {
               const reactions = msg.reactions || [];
-              const canReact = chat.isJoined && !chat.isCreatedByMe;
+              const canReact = chat.isJoined;
               return (
                 <article
                   key={msg.id}
@@ -858,7 +862,7 @@ export default function MessageArea({
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            setSelectedOptionsMessage(msg);
+                            setReactionMessage(msg);
                           }}
                           className="p-1 text-gray-400 hover:text-blue-600 rounded-full transition-colors"
                           aria-label="Add reaction"
@@ -1620,8 +1624,8 @@ export default function MessageArea({
           // Subscribe አድርጓል ግን creator ስላልሆነ መጻፍ አይችልም — emoji reaction ብቻ
           <div className="text-center py-3">
             <p className="text-xs text-gray-400 font-semibold">
-               Only the channel owner can post here. You can react to posts
-              with emoji.
+              Only the channel owner can post here. You can react to posts with
+              emoji.
             </p>
           </div>
         ) : (

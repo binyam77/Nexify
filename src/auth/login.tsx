@@ -17,11 +17,11 @@ export default function Login({ onNavigateToSignup }: LoginProps) {
     window.location.href = "http://localhost:3000/auth/google";
   };
 
-  return (
+return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
-      className="min-h-screen w-full bg-bodey-bg flex flex-col items-center justify-center px-6"
+      className="min-h-screen w-full bg-bg flex flex-col items-center justify-center px-6"
     >
       <img src={logo} alt="Logo" className="h-20 w-auto mb-10" />
 
@@ -29,7 +29,7 @@ export default function Login({ onNavigateToSignup }: LoginProps) {
         <button
           type="button"
           onClick={handleGoogleClick}
-          className="w-full py-4 px-4 bg-white border border-input-border rounded-xl text-base font-medium text-gray-700 flex items-center justify-center gap-3 hover:bg-surface-raised transition-all"
+          className="w-full py-4 px-4 bg-surface border border-input-border rounded-xl text-base font-medium text-text-primary flex items-center justify-center gap-3 hover:bg-surface-hover transition-all"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">
             <path
@@ -55,19 +55,19 @@ export default function Login({ onNavigateToSignup }: LoginProps) {
         <button
           type="button"
           onClick={() => setShowEmailCard(true)}
-          className="w-full py-4 px-4 border-1 border-[#2563be] rounded-xl text-base font-semibold text-[#2563eb] flex items-center justify-center gap-3 hover:bg-blue-50 transition-all"
+          className="w-full py-4 px-4 border-1 border-primary rounded-xl text-base font-semibold text-primary flex items-center justify-center gap-3 hover:bg-primary-light transition-all"
         >
           <Mail className="w-5 h-5" />
           Continue with Email
         </button>
 
-        <p className="text-center text-xs text-gray-400 mt-1">
+        <p className="text-center text-xs text-text-muted mt-1">
           By using Nexify, you agree to our{" "}
-          <a href="/privacy" className="text-[#2563eb]">
+          <a href="/privacy" className="text-link">
             Privacy Policy
           </a>{" "}
           and{" "}
-          <a href="/terms" className="text-[#2563eb]">
+          <a href="/terms" className="text-link">
             Terms & Services
           </a>
           .
@@ -76,7 +76,7 @@ export default function Login({ onNavigateToSignup }: LoginProps) {
         <button
           type="button"
           onClick={onNavigateToSignup}
-          className="w-full py-4 border-1 border-[#2563eb] rounded-full text-base font-semibold text-[#2563eb] hover:bg-blue-50 transition-all mt-1"
+          className="w-full py-4 border-1 border-primary rounded-full text-base font-semibold text-primary hover:bg-primary-light transition-all mt-1"
         >
           Create account
         </button>
@@ -125,7 +125,7 @@ function LoginEmailCard({ onClose }: { onClose: () => void }) {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 sm:p-4">
+ <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay sm:p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -134,22 +134,22 @@ function LoginEmailCard({ onClose }: { onClose: () => void }) {
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            className="absolute top-4 right-4 text-icon-muted hover:text-icon-secondary"
             aria-label="Close"
           >
             <X className="w-5 h-5" />
           </button>
 
-          <h2 className="text-2xl font-bold text-text-h2 mb-6">Log in</h2>
+          <h2 className="text-2xl font-bold text-text-primary mb-6">Log in</h2>
 
           {error && (
-            <div className="mb-4 p-3 bg-rose-50 border border-rose-100 text-rose-600 rounded-lg text-sm flex items-start gap-2">
+            <div className="mb-4 p-3 bg-error-light border border-error-border text-error rounded-lg text-sm flex items-start gap-2">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
           {resetSuccessMessage && (
-            <div className="mb-4 p-3 bg-emerald-50 border border-emerald-100 text-emerald-600 rounded-lg text-sm flex items-start gap-2">
+            <div className="mb-4 p-3 bg-success-light border border-success-border text-success rounded-lg text-sm flex items-start gap-2">
               <CheckCircle2 className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{resetSuccessMessage}</span>
             </div>
@@ -162,7 +162,7 @@ function LoginEmailCard({ onClose }: { onClose: () => void }) {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
               autoComplete="email"
-              className="w-full px-4 py-3.5 bg-surface-raised rounded-lg text-input-text placeholder:text-input-placeholder border-0 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-all text-base"
+              className="w-full px-4 py-3.5 bg-input-special-bg rounded-lg text-input-special-text placeholder:text-input-special-placeholder border-0 focus:outline-none focus:ring-2 focus:ring-input-special-focus transition-all text-base"
             />
             <div className="relative">
               <input
@@ -171,12 +171,12 @@ function LoginEmailCard({ onClose }: { onClose: () => void }) {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
                 autoComplete="current-password"
-                className="w-full px-4 py-3.5 pr-12 bg-surface-raised rounded-lg text-input-text placeholder:text-input-placeholder border-0 focus:outline-none focus:ring-2 focus:ring-[#2563eb] transition-all text-base"
+                className="w-full px-4 py-3.5 pr-12 bg-input-special-bg rounded-lg text-input-special-text placeholder:text-input-special-placeholder border-0 focus:outline-none focus:ring-2 focus:ring-input-special-focus transition-all text-base"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword((s) => !s)}
-                className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400"
+                className="absolute inset-y-0 right-0 flex items-center pr-4 text-icon-muted"
               >
                 {showPassword ? (
                   <EyeOff className="w-5 h-5" />
@@ -189,7 +189,7 @@ function LoginEmailCard({ onClose }: { onClose: () => void }) {
             <button
               type="button"
               onClick={() => setShowResetModal(true)}
-              className="self-start text-sm font-medium text-[#2563eb]"
+              className="self-start text-sm font-medium text-link"
             >
               Forgot password?
             </button>
@@ -197,7 +197,7 @@ function LoginEmailCard({ onClose }: { onClose: () => void }) {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-3.5 bg-gradient-to-b from-[#3b82f6] to-[#2563eb] text-white font-semibold rounded-lg text-base hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+              className="w-full py-3.5 bg-gradient-to-b from-primary to-primary-hover text-text-on-primary font-semibold rounded-lg text-base hover:brightness-110 active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {isSubmitting ? "Logging in..." : "Log in"}
             </button>

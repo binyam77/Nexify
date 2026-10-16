@@ -21,7 +21,7 @@ export default function Layout() {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-slate-100">
       <Sidebar onUploadClick={() => openUploadModal()} />
-      <main className="relative flex-1 overflow-hidden bg-bodey-bg ">
+      <main className="relative flex-1 overflow-hidden bg-bg ">
         <Outlet />
       </main>
       {!isFullscreenModalOpen &&(

@@ -192,7 +192,7 @@ export default function CommentCard({
           <div className="mt-2 flex flex-col gap-1">
             {replyFailed && (
               <p className="text-[11px] font-medium text-rose-400">
-                አልተላከም — ግንኙነት ይፈትሹ እና እንደገና ይሞክሩ
+                Failed to send. Check your connection and try again
               </p>
             )}
             {/* Emoji picker removed per product decision — reply composer

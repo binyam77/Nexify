@@ -140,8 +140,8 @@ export default function Home() {
     return (
       <div className="h-full w-full flex flex-col items-center justify-center bg-surface text-slate-400 gap-3 px-6 text-center">
         <WifiOff className="w-10 h-10 opacity-60" />
-        <p className="text-lg font-semibold">ምንም የኢንተርኔት ግንኙነት የለም</p>
-        <p className="text-sm opacity-60">ግንኙነት ሲመለስ Feed ራሱ በራሱ ይመለሳል</p>
+        <p className="text-lg font-semibold">No internet connection</p>
+        <p className="text-sm opacity-60">The feed automatically reloads when the connection is restored.</p>
       </div>
     );
   }
@@ -171,7 +171,7 @@ export default function Home() {
     return (
       <div className="h-full w-full flex flex-col items-center justify-center bg-surface text-slate-400 gap-3">
         <p className="text-lg font-semibold">No posts yet</p>
-        <p className="text-sm opacity-60">Profile ውስጥ ፖስት ጨምር!</p>
+        <p className="text-sm opacity-60">Add a post to the profile!</p>
       </div>
     );
   }

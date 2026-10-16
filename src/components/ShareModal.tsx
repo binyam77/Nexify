@@ -108,54 +108,54 @@ export default function ShareModal({ post, isOpen, onClose, onShareIncrement }: 
   };
 
   return (
-    <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fade-in">
+    <div className="fixed inset-0 bg-overlay backdrop-blur-sm flex items-center justify-center z-[100] p-4 animate-fade-in">
       <div 
-        className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-gray-100 flex flex-col p-6 relative max-sm:w-[95%] animate-scale-up"
+        className="bg-surface rounded-3xl w-full max-w-md shadow-2xl overflow-hidden border border-border-subtle flex flex-col p-6 relative max-sm:w-[95%] animate-scale-up"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header (የሼር ሞዳል ራስጌ) */}
         <div className="flex items-center justify-between mb-5">
           <div className="flex items-center gap-2">
-            <Share2 className="w-5 h-5 text-blue-600" />
-            <h3 className="text-lg font-black tracking-tight text-gray-900">Share Post</h3>
+            <Share2 className="w-5 h-5 text-primary" />
+            <h3 className="text-lg font-black tracking-tight text-text-primary">Share Post</h3>
           </div>
           <button 
             onClick={onClose}
-            className="p-1.5 hover:bg-gray-100 text-gray-400 hover:text-gray-700 rounded-xl transition-all"
+            className="p-1.5 hover:bg-surface-hover text-icon-muted hover:text-icon-primary rounded-xl transition-all"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Post Preview Snippet (የልጥፉ አጭር መግለጫ) */}
-        <div className="bg-slate-50 rounded-2xl p-3 mb-4 flex items-center gap-3 border border-slate-100">
+        <div className="bg-surface-secondary rounded-2xl p-3 mb-4 flex items-center gap-3 border border-border-subtle">
           {post.mediaUrls[0] && post.type ==="photo" ? (
-            <img src={post.mediaUrls[0]} alt="thumbnail" className="w-12 h-12 rounded-xl object-cover border" />
+            <img src={post.mediaUrls[0]} alt="thumbnail" className="w-12 h-12 rounded-xl object-cover border border-border" />
           ) : (
-            <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center text-blue-600 font-bold">
+            <div className="w-12 h-12 bg-primary-light rounded-xl flex items-center justify-center text-primary font-bold">
               {post.type === 'video' ? '🎬' : '📷'}
             </div>
           )}
           <div className="flex-1 min-w-0">
-            <p className="text-xs font-bold text-gray-400">@{post.username}</p>
-            <p className="text-xs text-gray-700 truncate font-semibold">{post.caption || 'No description'}</p>
+            <p className="text-xs font-bold text-text-muted">@{post.username}</p>
+            <p className="text-xs text-text-primary truncate font-semibold">{post.caption || 'No description'}</p>
           </div>
         </div>
 
         {/* Copy Link Input Section (ሊንኩን ኮፒ ማድረጊያ) */}
         <div className="mb-6">
-          <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wider">Post Link</label>
+          <label className="block text-xs font-bold text-text-secondary mb-2 uppercase tracking-wider">Post Link</label>
           <div className="flex gap-2">
             <input 
               type="text" 
               readOnly 
               value={shareUrl} 
-              className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 text-xs text-slate-600 outline-none select-all font-mono"
+              className="flex-1 bg-input-bg border border-input-border rounded-xl px-3.5 py-2.5 text-xs text-input-text outline-none select-all font-mono"
             />
             <button
               onClick={handleCopy}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold text-white flex items-center gap-1.5 transition-all shadow-md active:scale-95 ${
-                copied ? 'bg-emerald-500 shadow-emerald-100' : 'bg-blue-600 hover:bg-blue-700 shadow-blue-100'
+              className={`px-4 py-2.5 rounded-xl text-xs font-bold text-text-on-primary flex items-center gap-1.5 transition-all shadow-md active:scale-95 ${
+                copied ? 'bg-success' : 'bg-primary hover:bg-primary-hover'
               }`}
             >
               {copied ? (
@@ -175,7 +175,7 @@ export default function ShareModal({ post, isOpen, onClose, onShareIncrement }: 
 
         {/* Social Sharing Icons (የሶሻል ሚዲያ አማራጮች) */}
         <div>
-          <label className="block text-xs font-bold text-gray-500 mb-3 uppercase tracking-wider">Share via Social Media</label>
+          <label className="block text-xs font-bold text-text-secondary mb-3 uppercase tracking-wider">Share via Social Media</label>
           <div className="grid grid-cols-5 gap-3.5">
             {shareOptions.map((opt) => (
               <button
@@ -186,7 +186,7 @@ export default function ShareModal({ post, isOpen, onClose, onShareIncrement }: 
                 <div className={`${opt.color} w-11 h-11 rounded-full flex items-center justify-center text-white text-lg shadow-md group-hover:scale-110 active:scale-90 transition-transform duration-200`}>
                   {opt.icon}
                 </div>
-                <span className="text-[10px] font-bold text-gray-500 group-hover:text-blue-600 transition-colors truncate w-full text-center">
+                <span className="text-[10px] font-bold text-text-secondary group-hover:text-primary transition-colors truncate w-full text-center">
                   {opt.name}
                 </span>
               </button>

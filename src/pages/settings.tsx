@@ -35,7 +35,7 @@ export default function Settings() {
   const navigate = useNavigate();
 
   return (
-    <main className="w-full max-w-2xl mx-auto min-h-screen bg-bg text-text">
+    <main className="w-full max-w-2xl mx-auto min-h-screen bg-bg text-text-primary">
       {view === "main" && (
         <MainSettingsView onNavigate={setView} onBack={() => navigate(-1)} />
       )}
@@ -72,11 +72,11 @@ function SubPageHeader({
   onBack: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between px-4 py-4 sticky top-0 z-10 bg-bodey-bg border-b border-border">
+    <div className="flex items-center justify-between px-4 py-4 sticky top-0 z-10 bg-bg border-b border-border">
       <button
         onClick={onBack}
         aria-label="Back"
-        className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-raised transition-colors"
+        className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-hover transition-colors"
       >
         <ChevronLeft className="w-5 h-5" />
       </button>
@@ -84,7 +84,7 @@ function SubPageHeader({
       <button
         onClick={onBack}
         aria-label="Close"
-        className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-raised transition-colors"
+        className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-hover transition-colors"
       >
         <X className="w-5 h-5" />
       </button>
@@ -118,7 +118,7 @@ function MainSettingsView({
         <button
           onClick={onBack}
           aria-label="Back"
-          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-raised"
+          className="w-9 h-9 flex items-center justify-center rounded-full hover:bg-surface-hover"
         >
           <ChevronLeft className="w-5 h-5" />
         </button>
@@ -128,7 +128,7 @@ function MainSettingsView({
       <SectionLabel>Profile & Account</SectionLabel>
       <ListCard>
         <ListRow
-          icon={<User className="w-5 h-5 text-brand" />}
+          icon={<User className="w-5 h-5 text-primary" />}
           label="Profile & Account"
           onClick={() => onNavigate("profileAccount")}
         />
@@ -149,25 +149,25 @@ function MainSettingsView({
       <SectionLabel className="mt-8">Help & Privacy</SectionLabel>
       <ListCard>
         <ListRow
-          icon={<Info className="w-5 h-5 text-brand" />}
+          icon={<Info className="w-5 h-5 text-primary" />}
           label="About"
           onClick={() => navigate("/about")}
         />
         <Divider />
         <ListRow
-          icon={<HelpCircle className="w-5 h-5 text-brand" />}
+          icon={<HelpCircle className="w-5 h-5 text-primary" />}
           label="Help"
           onClick={() => navigate("/helps")}
         />
         <Divider />
         <ListRow
-          icon={<ShieldCheck className="w-5 h-5 text-brand" />}
+          icon={<ShieldCheck className="w-5 h-5 text-primary" />}
           label="Privacy Policy"
           onClick={() => navigate("/privacypolicy")}
         />
         <Divider />
         <ListRow
-          icon={<FileText className="w-5 h-5 text-brand" />}
+          icon={<FileText className="w-5 h-5 text-primary" />}
           label="Terms & Service"
           onClick={() => navigate("/terms")}
         />
@@ -176,9 +176,9 @@ function MainSettingsView({
       <SectionLabel className="mt-8">Logout</SectionLabel>
       <ListCard>
         <ListRow
-          icon={<LogOut className="w-5 h-5 text-danger" />}
+          icon={<LogOut className="w-5 h-5 text-error" />}
           label="Logout"
-          labelClassName="text-danger font-semibold"
+          labelClassName="text-error font-semibold"
           onClick={handleLogout}
           noChevron
         />
@@ -186,7 +186,6 @@ function MainSettingsView({
     </div>
   );
 }
-
 // ============================================================================
 // PROFILE & ACCOUNT LIST
 // ============================================================================
@@ -203,13 +202,13 @@ function ProfileAccountView({
     <div>
       <SubPageHeader title="Profile & Account" onBack={onBack} />
       <div className="px-4 py-6">
-        <p className="text-sm text-gray-500 mb-6">
+        <p className="text-sm text-text-secondary mb-6">
           Manage your profile information and account credentials.
         </p>
 
         <ListCard>
           <ListRow
-            icon={<User className="w-5 h-5 text-brand" />}
+            icon={<User className="w-5 h-5 text-primary" />}
             label="Edit Profile"
             sublabel="Update your profile photo, bio and other public info."
             onClick={() => onNavigate("editProfile")}
@@ -219,7 +218,7 @@ function ProfileAccountView({
         <div className="mt-4">
           <ListCard>
             <ListRow
-              icon={<AtSign className="w-5 h-5 text-brand" />}
+              icon={<AtSign className="w-5 h-5 text-primary" />}
               label="Username"
               sublabel="Change your unique username."
               trailingText={user?.username ? `@${user.username}` : undefined}
@@ -227,7 +226,7 @@ function ProfileAccountView({
             />
             <Divider />
             <ListRow
-              icon={<Mail className="w-5 h-5 text-brand" />}
+              icon={<Mail className="w-5 h-5 text-primary" />}
               label="Email"
               sublabel="Update your email address."
               trailingText={user?.email}
@@ -235,7 +234,7 @@ function ProfileAccountView({
             />
             <Divider />
             <ListRow
-              icon={<Lock className="w-5 h-5 text-brand" />}
+              icon={<Lock className="w-5 h-5 text-primary" />}
               label="Password"
               sublabel="Change your password."
               onClick={() => onNavigate("password")}
@@ -271,11 +270,11 @@ function EditProfileView({ onBack }: { onBack: () => void }) {
       <div className="px-4 py-6 flex flex-col gap-6">
         {/* Cover */}
         <div className="relative">
-          <div className="h-32 rounded-xl bg-surface-raised border border-border flex items-center justify-center text-xs text-gray-400">
+          <div className="h-32 rounded-xl bg-surface-secondary border border-border flex items-center justify-center text-xs text-text-muted">
             Cover photo (coming soon)
           </div>
           {/* Profile photo overlapping cover */}
-          <div className="absolute -bottom-8 left-4 w-20 h-20 rounded-full bg-surface border-4 border-bodey-bg flex items-center justify-center text-gray-400">
+          <div className="absolute -bottom-8 left-4 w-20 h-20 rounded-full bg-surface border-4 border-bg flex items-center justify-center text-icon-muted">
             <User className="w-8 h-8" />
           </div>
         </div>
@@ -295,19 +294,21 @@ function EditProfileView({ onBack }: { onBack: () => void }) {
             prefix="@"
           />
           <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-small-text">Bio</label>
+            <label className="text-sm font-medium text-text-secondary">
+              Bio
+            </label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
               rows={4}
               placeholder="Tell people about yourself"
-              className="w-full px-4 py-2.5 bg-input border border-input-border rounded-lg text-input-text placeholder:text-input-placeholder focus:outline-none focus:border-input-focus transition-all text-sm resize-none"
+              className="w-full px-4 py-2.5 bg-input-bg border border-input-border rounded-lg text-input-text placeholder:text-input-placeholder focus:outline-none focus:border-input-focus transition-all text-sm resize-none"
             />
           </div>
         </div>
 
         {saved && (
-          <div className="flex items-center gap-2 text-emerald-600 text-sm">
+          <div className="flex items-center gap-2 text-success text-sm">
             <CheckCircle2 className="w-4 h-4" /> Saved (preview only — full sync
             coming soon)
           </div>
@@ -315,7 +316,7 @@ function EditProfileView({ onBack }: { onBack: () => void }) {
 
         <button
           onClick={handleSave}
-          className="w-full py-3 bg-brand text-white font-semibold rounded-lg text-sm hover:bg-brand-dark active:scale-[0.98] transition-all"
+          className="w-full py-3 bg-primary text-text-on-primary font-semibold rounded-lg text-sm hover:bg-primary-hover active:scale-[0.98] transition-all"
         >
           Save Changes
         </button>
@@ -365,47 +366,49 @@ function UsernameView({ onBack }: { onBack: () => void }) {
       <SubPageHeader title="Change Username" onBack={onBack} />
       <div className="px-4 py-6 flex flex-col gap-5">
         <div>
-          <label className="text-sm font-medium text-small-text">
+          <label className="text-sm font-medium text-text-secondary">
             Current username
           </label>
-          <p className="text-sm text-gray-500 mt-1">@{user?.username ?? "—"}</p>
+          <p className="text-sm text-text-secondary mt-1">
+            @{user?.username ?? "—"}
+          </p>
         </div>
 
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-small-text">
+          <label className="text-sm font-medium text-text-secondary">
             New username
           </label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-3 flex items-center text-gray-400 text-sm">
+            <span className="absolute inset-y-0 left-3 flex items-center text-text-muted text-sm">
               @
             </span>
             <input
               value={newUsername}
               onChange={(e) => setNewUsername(e.target.value)}
               placeholder="new.username"
-              className="w-full pl-7 pr-10 py-2.5 bg-input border border-input-border rounded-lg text-input-text placeholder:text-input-placeholder focus:outline-none focus:border-input-focus transition-all text-sm"
+              className="w-full pl-7 pr-10 py-2.5 bg-input-bg border border-input-border rounded-lg text-input-text placeholder:text-input-placeholder focus:outline-none focus:border-input-focus transition-all text-sm"
             />
             {newUsername.length > 0 && (
               <span className="absolute inset-y-0 right-3 flex items-center">
                 {isValidFormat ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  <CheckCircle2 className="w-4 h-4 text-success" />
                 ) : null}
               </span>
             )}
           </div>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-text-muted">
             Username must be 3–30 characters and can include letters, numbers,
             dots and underscores.
           </p>
         </div>
 
-        {error && <p className="text-sm text-rose-600">{error}</p>}
-        {success && <p className="text-sm text-emerald-600">{success}</p>}
+        {error && <p className="text-sm text-error">{error}</p>}
+        {success && <p className="text-sm text-success">{success}</p>}
 
         <button
           onClick={handleSave}
           disabled={isSubmitting || !newUsername}
-          className="w-full py-3 bg-brand text-white font-semibold rounded-lg text-sm hover:bg-brand-dark active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full py-3 bg-primary text-text-on-primary font-semibold rounded-lg text-sm hover:bg-primary-hover active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed"
         >
           {isSubmitting ? "Saving..." : "Save Username"}
         </button>
@@ -424,26 +427,28 @@ function EmailView({ onBack }: { onBack: () => void }) {
     <div>
       <SubPageHeader title="Change Email" onBack={onBack} />
       <div className="px-4 py-8 flex flex-col items-center gap-4 text-center">
-        <div className="w-14 h-14 rounded-full bg-surface-raised flex items-center justify-center">
-          <Mail className="w-6 h-6 text-gray-400" />
+        <div className="w-14 h-14 rounded-full bg-surface-secondary flex items-center justify-center">
+          <Mail className="w-6 h-6 text-icon-muted" />
         </div>
-        <p className="text-sm text-gray-500 max-w-xs">
+        <p className="text-sm text-text-secondary max-w-xs">
           Email changes are not available yet. This feature is coming soon.
         </p>
         <div className="w-full mt-4">
-          <label className="text-sm font-medium text-small-text">
+          <label className="text-sm font-medium text-text-secondary">
             Current email
           </label>
-          <p className="text-sm text-gray-500 mt-1">{user?.email ?? "—"}</p>
+          <p className="text-sm text-text-secondary mt-1">
+            {user?.email ?? "—"}
+          </p>
         </div>
         <input
           disabled
           placeholder="New email"
-          className="w-full mt-2 px-4 py-2.5 bg-input border border-input-border rounded-lg text-sm opacity-60 cursor-not-allowed"
+          className="w-full mt-2 px-4 py-2.5 bg-input-bg border border-input-border rounded-lg text-sm text-input-text placeholder:text-input-placeholder opacity-60 cursor-not-allowed"
         />
         <button
           disabled
-          className="w-full py-3 bg-brand text-white font-semibold rounded-lg text-sm opacity-50 cursor-not-allowed"
+          className="w-full py-3 bg-primary text-text-on-primary font-semibold rounded-lg text-sm opacity-50 cursor-not-allowed"
         >
           Send Confirmation Link
         </button>
@@ -539,14 +544,13 @@ function PasswordView({ onBack }: { onBack: () => void }) {
           />
           <CheckItem ok={checks.match} label="Passwords match" />
         </div>
-
-        {error && <p className="text-sm text-rose-600">{error}</p>}
-        {success && <p className="text-sm text-emerald-600">{success}</p>}
+        {error && <p className="text-sm text-error">{error}</p>}
+        {success && <p className="text-sm text-success">{success}</p>}
 
         <button
           onClick={handleSubmit}
           disabled={isSubmitting || !allValid || !currentPassword}
-          className="w-full py-3 bg-brand text-white font-semibold rounded-lg text-sm hover:bg-brand-dark active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-2"
+          className="w-full py-3 bg-primary text-text-on-primary font-semibold rounded-lg text-sm hover:bg-primary-hover active:scale-[0.98] transition-all disabled:opacity-60 disabled:cursor-not-allowed mt-2"
         >
           {isSubmitting ? "Updating..." : "Update Password"}
         </button>
@@ -567,7 +571,7 @@ function SectionLabel({
 }) {
   return (
     <p
-      className={`text-xs font-semibold tracking-wide text-gray-400 uppercase mb-2 px-1 ${className}`}
+      className={`text-xs font-semibold tracking-wide text-text-muted uppercase mb-2 px-1 ${className}`}
     >
       {children}
     </p>
@@ -583,7 +587,7 @@ function ListCard({ children }: { children: React.ReactNode }) {
 }
 
 function Divider() {
-  return <div className="h-px bg-border mx-4" />;
+  return <div className="h-px bg-divider mx-4" />;
 }
 
 function ListRow({
@@ -610,20 +614,22 @@ function ListRow({
       {icon && <span className="shrink-0">{icon}</span>}
       <span className="flex-1 min-w-0">
         <span
-          className={`block text-sm font-medium text-text ${labelClassName}`}
+          className={`block text-sm font-medium text-text-primary ${labelClassName}`}
         >
           {label}
         </span>
         {sublabel && (
-          <span className="block text-xs text-gray-400 mt-0.5">{sublabel}</span>
+          <span className="block text-xs text-text-muted mt-0.5">
+            {sublabel}
+          </span>
         )}
       </span>
       {trailingText && (
-        <span className="text-sm text-brand shrink-0">{trailingText}</span>
+        <span className="text-sm text-primary shrink-0">{trailingText}</span>
       )}
       {trailing}
       {!noChevron && onClick && (
-        <ChevronRight className="w-4 h-4 text-gray-300 shrink-0" />
+        <ChevronRight className="w-4 h-4 text-icon-muted shrink-0" />
       )}
     </>
   );
@@ -642,7 +648,7 @@ function ListRow({
   return (
     <button
       onClick={onClick}
-      className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-surface-raised transition-colors"
+      className="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-surface-hover transition-colors"
     >
       {content}
     </button>
@@ -664,7 +670,7 @@ function ThemeSwitch({
       aria-checked={checked}
       aria-label="Toggle dark mode"
       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-300 cursor-pointer ${
-        checked ? "bg-brand" : "bg-slate-300"
+        checked ? "bg-primary" : "bg-border-strong"
       }`}
     >
       <span
@@ -691,10 +697,10 @@ function Field({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-small-text">{label}</label>
+      <label className="text-sm font-medium text-text-secondary">{label}</label>
       <div className="relative">
         {prefix && (
-          <span className="absolute inset-y-0 left-3 flex items-center text-gray-400 text-sm">
+          <span className="absolute inset-y-0 left-3 flex items-center text-text-muted text-sm">
             {prefix}
           </span>
         )}
@@ -702,7 +708,7 @@ function Field({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          className={`w-full ${prefix ? "pl-7" : "pl-4"} pr-4 py-2.5 bg-input border border-input-border rounded-lg text-input-text placeholder:text-input-placeholder focus:outline-none focus:border-input-focus transition-all text-sm`}
+          className={`w-full ${prefix ? "pl-7" : "pl-4"} pr-4 py-2.5 bg-input-bg border border-input-border rounded-lg text-input-text placeholder:text-input-placeholder focus:outline-none focus:border-input-focus transition-all text-sm`}
         />
       </div>
     </div>
@@ -724,18 +730,18 @@ function PasswordField({
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-small-text">{label}</label>
+      <label className="text-sm font-medium text-text-secondary">{label}</label>
       <div className="relative">
         <input
           type={show ? "text" : "password"}
           value={value}
           onChange={(e) => onChange(e.target.value)}
-          className="w-full pl-4 pr-10 py-2.5 bg-input border border-input-border rounded-lg text-input-text focus:outline-none focus:border-input-focus transition-all text-sm"
+          className="w-full pl-4 pr-10 py-2.5 bg-input-bg border border-input-border rounded-lg text-input-text focus:outline-none focus:border-input-focus transition-all text-sm"
         />
         <button
           type="button"
           onClick={onToggleShow}
-          className="absolute inset-y-0 right-3 flex items-center text-gray-400 hover:text-gray-600"
+          className="absolute inset-y-0 right-3 flex items-center text-icon-muted hover:text-icon-secondary"
         >
           {show ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
         </button>
@@ -748,9 +754,11 @@ function CheckItem({ ok, label }: { ok: boolean; label: string }) {
   return (
     <div className="flex items-center gap-2 text-sm">
       <CheckCircle2
-        className={`w-4 h-4 shrink-0 ${ok ? "text-emerald-500" : "text-gray-300"}`}
+        className={`w-4 h-4 shrink-0 ${ok ? "text-success" : "text-text-disabled"}`}
       />
-      <span className={ok ? "text-text" : "text-gray-400"}>{label}</span>
+      <span className={ok ? "text-text-primary" : "text-text-muted"}>
+        {label}
+      </span>
     </div>
   );
 }

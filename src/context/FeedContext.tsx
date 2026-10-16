@@ -96,7 +96,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       nextCursorRef.current = page.nextCursor;
       return true;
     } catch (e) {
-      setError("Feed መጫን አልተቻለም። እንደገና ይሞክሩ።");
+      setError("Failed to load feed. Please try again.");
       console.error("Feed load error:", e);
       return false;
     } finally {
@@ -148,7 +148,7 @@ export function FeedProvider({ children }: { children: ReactNode }) {
       nextCursorRef.current = page.nextCursor;
     } catch (e) {
       console.error("Feed loadMore error:", e);
-      setLoadMoreError("ተጨማሪ ፖስቶች መጫን አልተቻለም።");
+      setLoadMoreError("Failed to load more posts");
     } finally {
       setIsLoadingMore(false);
     }

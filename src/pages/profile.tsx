@@ -425,7 +425,7 @@ export default function Profile({
         setDeleteConfirmState(null);
       } catch (err) {
         console.error("Failed to delete post:", err);
-        setDeleteError("ልጥፍ ማጥፋት አልተቻለም። እንደገና ይሞክሩ።");
+        setDeleteError("Failed to delete post. Please try again.");
         // Modal ክፍት ይቀራል — user "ተሳክቷል" ብሎ እንዳያምን
       } finally {
         setIsDeletingPost(false);
@@ -511,7 +511,7 @@ export default function Profile({
       setIsEditModalOpen(false);
     } catch (e) {
       console.error("Failed to save profile:", e);
-      alert("Profile ማስቀመጥ አልተቻለም። እንደገና ይሞክሩ።");
+      alert("Failed to save profile. Please try again.");
     } finally {
       setIsSavingProfile(false);
     }
