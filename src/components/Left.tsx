@@ -7,7 +7,6 @@ import React from "react";
 import {
   Heart,
   MessageCircle,
-  Bookmark,
   Share2,
   Trash2,
   Send,
@@ -53,6 +52,7 @@ interface LeftProps {
   shares: number;
   isOwnPost: boolean;
   postAuthor: {
+    userId: string;
     name: string;
     username: string;
     photo: string;
@@ -78,7 +78,6 @@ interface LeftProps {
 
   // ተፅዕኖ ፈጣሪ ተግባራት (Interactive event handlers)
   handleToggleLikePost: (postId: string) => void;
-  handleToggleSavePost: (postId: string) => void;
   handleSharePost: (postId: string) => void;
   handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
   handleDeleteComment: (postId: string, commentId: string) => void;
@@ -119,7 +118,6 @@ export default function Left({
   replyInputText,
   setReplyInputText,
   handleToggleLikePost,
-  handleToggleSavePost,
   handleSharePost,
   handleDeletePost,
   onRetryComments,
@@ -241,20 +239,6 @@ export default function Left({
           <MessageCircle className="w-5 h-5" />
           <span>{formatCount(totalComments)}</span>
         </div>
-
-        <button
-          onClick={() => handleToggleSavePost(selectedPost.id)}
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-            selectedPost.saved
-              ? "bg-warning-light text-warning"
-              : "text-text-secondary hover:bg-surface-hover hover:text-link"
-          }`}
-        >
-          <Bookmark
-            className={`w-5 h-5 ${selectedPost.saved ? "fill-warning text-warning" : ""}`}
-          />
-          <span>{formatCount(selectedPost.savesCount)}</span>
-        </button>
 
         <button
           onClick={() => handleSharePost(selectedPost.id)}
@@ -391,7 +375,7 @@ export default function Left({
                           Reply
                         </button>
 
-                        {comment.username === profile.username &&
+                        {comment.userId === profile.userId &&
                           editingCommentId !== comment.id && (
                             <>
                               <button
@@ -417,9 +401,7 @@ export default function Left({
                     </div>
                   </div>
 
-
-
- {/* Sub-Replies list */}
+                  {/* Sub-Replies list */}
                   {comment.replies &&
                     comment.replies.map((reply) => (
                       <div
@@ -488,7 +470,7 @@ export default function Left({
                             </p>
                           )}
 
-                          {reply.username === profile.username &&
+                          {reply.userId === profile.userId &&
                             editingCommentId !== reply.id && (
                               <div className="flex items-center gap-3.5 mt-1.5">
                                 <button
@@ -624,7 +606,7 @@ export default function Left({
             {commentError}
           </p>
         )}
-                 
+
         {/* Emoji picker overlays */}
         {emojiPickerOpen && (
           <div className="absolute bottom-[72px] left-4 bg-white border border-gray-200 rounded-2xl shadow-xl p-2.5 grid grid-cols-8 gap-1.5 w-72 max-h-52 overflow-y-auto z-40 scrollbar-thin">

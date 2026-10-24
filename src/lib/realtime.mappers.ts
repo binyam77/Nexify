@@ -179,7 +179,6 @@ export function mapCommunityListItemToChat(
     isJoined: true,
     type: item.type === "CHANNEL" ? "channel" : "group",
     isCreatedByMe: item.userId === currentUserId,
-    cover: item.cover ?? undefined,
     description: item.description ?? undefined,
   };
 }
@@ -202,7 +201,6 @@ export function mapCommunitySuggestedToChat(item: CommunityResponse): Chat {
     isJoined: false,
     type: item.type === "CHANNEL" ? "channel" : "group",
     isCreatedByMe: false,
-    cover: item.cover ?? undefined,
     description: item.description ?? undefined,
   };
 }
@@ -228,7 +226,6 @@ export function mapCommunityDetailToChat(
     isJoined: item.isJoined,
     type: item.type === "CHANNEL" ? "channel" : "group",
     isCreatedByMe: item.userId === currentUserId,
-    cover: item.cover ?? undefined,
     description: item.description ?? undefined,
   };
 }

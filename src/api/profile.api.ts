@@ -6,7 +6,6 @@ interface BackendProfileResponse {
   displayName: string;
   bio: string | null;
   avatar: string | null;
-  cover: string | null;
   followersCount: number;
   followingCount: number;
   postsCount: number;
@@ -20,7 +19,6 @@ export interface ProfileData {
   name: string;
   bio: string;
   photo: string;
-  cover: string;
   followersCount: number;
   followingCount: number;
   postsCount: number;
@@ -32,7 +30,6 @@ function toProfileData(dto: BackendProfileResponse): ProfileData {
     name: dto.displayName,
     bio: dto.bio ?? "",
     photo: dto.avatar ?? "",
-    cover: dto.cover ?? "",
     followersCount: dto.followersCount,
     followingCount: dto.followingCount,
     postsCount: dto.postsCount,
@@ -49,7 +46,6 @@ export interface UpdateProfileInput {
   username?: string;
   bio?: string;
   avatar?: string;
-  cover?: string;
 }
 
 export async function updateMyProfile(

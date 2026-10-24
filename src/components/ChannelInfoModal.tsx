@@ -34,7 +34,6 @@ interface ChannelInfoModalProps {
       name?: string;
       avatarUrl?: string;
       description?: string;
-      cover?: string;
     },
   ) => void;
   onClose: () => void;

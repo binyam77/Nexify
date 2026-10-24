@@ -2,9 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
-import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../lib/api-client";
 import { registerRequest } from "../api/auth.api";
+import VerifyEmail from "../components/VerifyEmail";
 
 interface CreateAccountProps {
   onNavigateToLogin: () => void;
@@ -14,8 +14,8 @@ export default function CreateAccount({
   onNavigateToLogin,
 }: CreateAccountProps) {
   const navigate = useNavigate();
-  const { loginWithTokens } = useAuth();
 
+  const [showVerify, setShowVerify] = useState(false);
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -24,9 +24,9 @@ export default function CreateAccount({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validate = (): string | null => {
-    if (username.trim().length < 3)
-      return "Username must be at least 3 characters long.";
     if (/@/.test(username)) return "Username cannot contain an email address.";
+    if (!/^[a-z0-9_]{3,30}$/.test(username.trim()))
+      return "Username must be 3-30 characters: lowercase letters, numbers, or underscore.";
     if (!/\S+@\S+\.\S+/.test(email))
       return "Please enter a valid email address.";
     if (password.length < 8)
@@ -49,15 +49,14 @@ export default function CreateAccount({
     }
     setIsSubmitting(true);
     try {
-      const { accessToken } = await registerRequest({
+      await registerRequest({
         username: username.trim(),
         email: email.trim(),
         password,
       });
-      await loginWithTokens(accessToken);
-      navigate("/");
+      // Tokens አይመጡም፤ ኮዱ ከተረጋገጠ በኋላ VerifyEmail ራሱ login ያደርጋል
+      setShowVerify(true);
     } catch (err) {
-      console.log("🔍 FRONTEND CATCH:", err);
       setError(err instanceof ApiError ? err.message : "Something went wrong.");
     } finally {
       setIsSubmitting(false);
@@ -120,7 +119,7 @@ export default function CreateAccount({
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
             value={username}
-            onChange={(e) => setUsername(e.target.value)}
+            onChange={(e) => setUsername(e.target.value.toLowerCase())}
             placeholder="Username"
             autoComplete="username"
             className="w-full px-4 py-4 bg-input-special-bg rounded-xl text-input-special-text placeholder:text-input-special-placeholder border-1 border-input-special-border focus:outline-none focus:ring-2 focus:ring-input-special-focus transition-all text-base"
@@ -175,6 +174,16 @@ export default function CreateAccount({
           </button>
         </p>
       </div>
+
+      {showVerify && (
+        <VerifyEmail
+          email={email.trim()}
+          password={password}
+          onBack={() => setShowVerify(false)}
+          onGoToLogin={onNavigateToLogin}
+          onVerified={() => navigate("/")}
+        />
+      )}
     </motion.div>
   );
 }

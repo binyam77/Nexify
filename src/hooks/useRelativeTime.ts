@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 
-function formatRelative(iso: string): string {
-  const diffMs = Date.now() - new Date(iso).getTime();
+function formatRelative(iso: string, now: number): string {
+  const diffMs = now - new Date(iso).getTime();
   const minutes = Math.floor(diffMs / 60000);
   if (minutes < 1) return "now";
   if (minutes < 60) return `${minutes}m`;
@@ -13,16 +13,15 @@ function formatRelative(iso: string): string {
   return `${Math.floor(days / 30)}mo`;
 }
 
-// Self-updating relative time ("5h", "3d", ...) — re-computes on an
-// interval so it counts up on its own without a page refresh.
+// በራሱ የሚቆጥር ጊዜ ("5m", "3h", ...)። `now` በ interval ብቻ ይዘምናል፣ ጽሁፉ ደግሞ
+// በ render ጊዜ ይሰላል — effect ውስጥ synchronous setState የለም።
 export function useRelativeTime(iso: string): string {
-  const [label, setLabel] = useState(() => formatRelative(iso));
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    setLabel(formatRelative(iso));
-    const id = setInterval(() => setLabel(formatRelative(iso)), 30_000);
+    const id = setInterval(() => setNow(Date.now()), 30_000);
     return () => clearInterval(id);
-  }, [iso]);
+  }, []);
 
-  return label;
+  return formatRelative(iso, now);
 }

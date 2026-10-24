@@ -56,7 +56,6 @@ interface FeedContextType {
   ) => Promise<boolean>;
   deleteComment: (postId: string, commentId: string) => void;
   deleteReply: (postId: string, commentId: string, replyId: string) => void;
-  // TODO: backend ላይ PATCH /comments/:id endpoint ገና የለም — ስለዚህ ለጊዜው no-op ነው
   editComment: (postId: string, commentId: string, newText: string) => void;
 }
 

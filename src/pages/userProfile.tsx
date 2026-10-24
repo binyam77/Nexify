@@ -31,7 +31,6 @@ interface OtherProfileData {
   name: string;
   bio: string;
   photo: string;
-  cover: string;
   followersCount: number;
   followingCount: number;
   postsCount: number;
@@ -41,7 +40,7 @@ interface OtherProfileData {
 export default function UserProfile() {
   const { username } = useParams<{ username: string }>();
   const navigate = useNavigate();
-  const { user } = useAuth();
+    const { user, updateFollowCount } = useAuth();
   const {
     commentsMap,
     isLoadingComments,
@@ -51,7 +50,6 @@ export default function UserProfile() {
     hasMoreComments,
     isLoadingMoreComments,
     incrementView,
-    toggleSave,
     addComment,
     deleteComment,
     deleteReply,
@@ -194,6 +192,7 @@ export default function UserProfile() {
     try {
       if (wasFollowing) {
         await unfollowUser(otherProfile.userId);
+        updateFollowCount("following", false);
         setOtherProfile((prev) =>
           prev
             ? {
@@ -205,6 +204,7 @@ export default function UserProfile() {
         );
       } else {
         await followUser(otherProfile.userId);
+        updateFollowCount("following", true);
         setOtherProfile((prev) =>
           prev
             ? {
@@ -486,9 +486,7 @@ export default function UserProfile() {
           </button>
         </div>
         {followError && (
-          <p className="text-xs font-semibold text-error mb-3">
-            {followError}
-          </p>
+          <p className="text-xs font-semibold text-error mb-3">{followError}</p>
         )}
 
         <button
@@ -556,6 +554,7 @@ export default function UserProfile() {
           hasMoreComments={hasMoreComments[selectedPost.id] ?? false}
           isLoadingMoreComments={isLoadingMoreComments}
           profile={{
+            userId: user.id,
             name: user.name || user.username,
             username: user.username,
             photo: user.photo || "",
@@ -566,7 +565,6 @@ export default function UserProfile() {
           handleClosePlayer={handleClosePlayer}
           handleNavigatePost={handleNavigatePost}
           handleToggleLikePost={handleToggleLike}
-          handleToggleSavePost={toggleSave}
           handleSharePost={handleSharePost}
           handleDeletePost={() => {}}
           handleAddComment={addComment}

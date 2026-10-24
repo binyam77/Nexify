@@ -52,7 +52,6 @@ export interface CommunityResponse {
   name: string;
   description: string | null;
   avatar: string | null;
-  cover: string | null;
   themeColor: string | null;
   userId: string; // owner's User.id
   createdAt: string;
@@ -119,7 +118,6 @@ export function createCommunityRequest(
     name: string;
     description?: string;
     avatar?: string;
-    cover?: string;
     themeColor?: string;
     visibility?: CommunityVisibility;
     membershipPolicy?: CommunityMembershipPolicy;
@@ -172,7 +170,6 @@ export function updateCommunityRequest(
     name?: string;
     description?: string;
     avatar?: string;
-    cover?: string;
     themeColor?: string;
   },
 ): Promise<CommunityResponse> {

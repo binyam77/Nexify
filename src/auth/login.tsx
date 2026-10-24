@@ -4,6 +4,7 @@ import { Mail, Eye, EyeOff, AlertCircle, CheckCircle2, X } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import { ApiError } from "../lib/api-client";
 import ResetPasswordModal from "../components/ResetPasswordModal";
+import VerifyEmail from "../components/VerifyEmail";
 import logo from "../assets/logo.png";
 
 interface LoginProps {
@@ -17,7 +18,7 @@ export default function Login({ onNavigateToSignup }: LoginProps) {
     window.location.href = "http://localhost:3000/auth/google";
   };
 
-return (
+  return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -100,6 +101,7 @@ function LoginEmailCard({ onClose }: { onClose: () => void }) {
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showResetModal, setShowResetModal] = useState(false);
+  const [showVerify, setShowVerify] = useState(false);
   const [resetSuccessMessage, setResetSuccessMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -117,7 +119,14 @@ function LoginEmailCard({ onClose }: { onClose: () => void }) {
     try {
       await login(email, password);
     } catch (err) {
-      setError(err instanceof ApiError ? err.message : "Something went wrong.");
+      if (err instanceof ApiError && err.code === "EMAIL_NOT_VERIFIED") {
+        // Credentials ትክክል ናቸው፣ email ግን አልተረጋገጠም → ወደ ኮድ ማስገቢያ
+        setShowVerify(true);
+      } else {
+        setError(
+          err instanceof ApiError ? err.message : "Something went wrong.",
+        );
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -125,7 +134,7 @@ function LoginEmailCard({ onClose }: { onClose: () => void }) {
 
   return (
     <>
- <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay sm:p-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-overlay sm:p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -214,6 +223,16 @@ function LoginEmailCard({ onClose }: { onClose: () => void }) {
               "Password reset successfully! Please log in with your new password.",
             );
           }}
+        />
+      )}
+
+      {showVerify && (
+        <VerifyEmail
+          email={email.trim()}
+          password={password}
+          sendCodeOnMount
+          onBack={() => setShowVerify(false)}
+          onGoToLogin={() => setShowVerify(false)}
         />
       )}
     </>

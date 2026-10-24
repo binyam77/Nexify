@@ -7,7 +7,11 @@ import React, { useState, useEffect, useRef } from "react";
 import { CheckCircle } from "lucide-react";
 
 import ChatsSidebar from "../components/ChatsSidebar";
-import MessageArea from "../components/MessageArea";
+import WelcomePane from "../components/messaging/WelcomePane";
+import ChannelMessage from "../components/messaging/ChannelMessage";
+
+import GroupMessage from "../components/messaging/GroupMessage";
+import ChatMessage from "../components/messaging/ChatMessage";
 import NewChannelModal from "../components/NewChannelModal";
 import NewGroupModal from "../components/NewGroupModal";
 import Profile from "./profile";
@@ -42,6 +46,7 @@ import {
   enqueue,
   dequeue,
   getQueue,
+  setQueueOwner,
   generateClientMessageId,
 } from "../lib/offline-queue";
 import {
@@ -154,6 +159,9 @@ export default function Community() {
 
   // User profile details (Current member profile loaded dynamically from localStorage)
   const { user, accessToken } = useAuth();
+  // የ outbox ባለቤት = የገባው ተጠቃሚ። ከማንኛውም effect በፊት መቀመጥ አለበት፤ ተመሳሳይ
+  // እሴት ደጋግሞ መመደብ ጉዳት የለውም (module ተለዋዋጭ ነው፣ ማንም አይከታተለውም)
+  setQueueOwner(user?.id ?? null);
   const {
     socket,
     isConnected,
@@ -166,12 +174,7 @@ export default function Community() {
   } = useRealtime();
   // ግንኙነት ደካማ/የለም ከሆነ Community አይሰራም
   const { browserOnline } = useConnectionGate(isConnected);
-  const userProfile = {
-    name: user?.name || user?.username || "User",
-    role: user?.bio?.split(".")[0] || "Developer",
-    avatar: user?.photo || "",
-    username: user?.username || "username",
-  };
+
 
   // Chat list. The single "chat-2" entry below is Chat-domain (1:1) DEMO
   // data — untouched, out of this refactor's scope. Community entries
@@ -653,7 +656,6 @@ export default function Community() {
       name?: string;
       avatarUrl?: string;
       description?: string;
-      cover?: string;
     },
   ) => {
     const target = chats.find((c) => c.id === chatId);
@@ -665,7 +667,6 @@ export default function Community() {
           name: updates.name,
           avatar: updates.avatarUrl,
           description: updates.description,
-          cover: updates.cover,
         });
       } catch (err) {
         console.error("Failed to update community:", err);
@@ -904,15 +905,8 @@ export default function Community() {
       mediaType: backendMediaType,
       createdAt: new Date().toISOString(),
     };
-    // ሁልጊዜ መጀመሪያ ወደ ዘላቂ outbox (localStorage) — Refresh ቢደረግ እንኳ አይጠፋም
-    let savedToOutbox = true;
-    try {
-      enqueue(queued);
-    } catch (err) {
-      savedToOutbox = false;
-      console.error("Could not save message to the outbox:", err);
-    }
 
+    const savedToOutbox = enqueue(queued);
     // ግንኙነት የለም/ደካማ → "Waiting…" ሆኖ ይቆያል፤ ሲመለስ በራሱ ይላካል
     if (!isConnected) {
       if (!savedToOutbox) {
@@ -1247,7 +1241,6 @@ export default function Community() {
         name: newChat.name,
         description: newChat.description,
         avatar: newChat.avatarUrl,
-        cover: newChat.cover,
         themeColor: newChat.bgGradient,
       });
 
@@ -1291,7 +1284,6 @@ export default function Community() {
         name: newChat.name,
         description: newChat.description,
         avatar: newChat.avatarUrl,
-        cover: newChat.cover,
         themeColor: newChat.bgGradient,
       });
 
@@ -1383,14 +1375,12 @@ export default function Community() {
       };
 
       setChats((prev) => [newChat, ...prev]);
-            setMessagesDb((prev) => ({ ...prev, [newChat.id]: [] }));
+      setMessagesDb((prev) => ({ ...prev, [newChat.id]: [] }));
       setActiveChatId(newChat.id);
       setActiveTab("community");
       // ከ room ጋር መቀላቀል — ያለዚያ የሌላው ሰው live መልዕክት አይደርስም
       joinRoom("conversation", newChat.id)
-        .then(() =>
-          joinedRoomsRef.current.add(`conversation:${newChat.id}`),
-        )
+        .then(() => joinedRoomsRef.current.add(`conversation:${newChat.id}`))
         .catch((err) => console.error("Failed to join realtime room:", err));
       triggerToast(`Secure conversation started with ${otherUser.name}`);
     } catch (err) {
@@ -1478,27 +1468,56 @@ export default function Community() {
             <div
               className={`flex-1 h-full relative min-h-0 overflow-hidden ${!activeChatId ? "hidden md:block" : "block"}`}
             >
-              <MessageArea
-                chat={activeChat}
-                messages={activeMessages}
-                onSendMessage={handleSendMessage}
-                onUserTyping={handleUserTyping}
-                onInviteMembers={handleInviteMembers}
-                availableUsersForInvite={availableMembersForPicker}
-                onEditMessage={handleEditMessage}
-                onDeleteMessage={handleDeleteMessage}
-                onReactMessage={handleReactMessage}
-                onPinMessage={handlePinMessage}
-                onJoinChat={handleJoinChat}
-                onLeaveGroup={handleLeaveGroup}
-                onDeleteGroup={handleDeleteChat}
-                onUpdateGroupInfo={handleUpdateGroupInfo}
-                onUnsubscribeChannel={handleLeaveGroup}
-                onDeleteChannel={handleDeleteChat}
-                onUpdateChannelInfo={handleUpdateGroupInfo}
-                onBack={() => setActiveChatId(null)} // Handle going back on mobile
-                currentUserProfile={userProfile}
-              />
+              {activeChat?.type === "channel" ? (
+                <ChannelMessage
+                  key={activeChat.id}
+                  chat={activeChat}
+                  messages={activeMessages}
+                  onSendMessage={handleSendMessage}
+                  onEditMessage={handleEditMessage}
+                  onDeleteMessage={handleDeleteMessage}
+                  onReactMessage={handleReactMessage}
+                  onPinMessage={handlePinMessage}
+                  onJoinChat={handleJoinChat}
+                  onUnsubscribeChannel={handleLeaveGroup}
+                  onDeleteChannel={handleDeleteChat}
+                  onUpdateChannelInfo={handleUpdateGroupInfo}
+                  onBack={() => setActiveChatId(null)}
+                />
+              ) : activeChat?.type === "group" ||
+                activeChat?.type === "privateGroup" ? (
+                <GroupMessage
+                  key={activeChat.id}
+                  chat={activeChat}
+                  messages={activeMessages}
+                  onSendMessage={handleSendMessage}
+                  onEditMessage={handleEditMessage}
+                  onDeleteMessage={handleDeleteMessage}
+                  onReactMessage={handleReactMessage}
+                  onPinMessage={handlePinMessage}
+                  onJoinChat={handleJoinChat}
+                  onLeaveGroup={handleLeaveGroup}
+                  onDeleteGroup={handleDeleteChat}
+                  onUpdateGroupInfo={handleUpdateGroupInfo}
+                  onInviteMembers={handleInviteMembers}
+                  availableUsersForInvite={availableMembersForPicker}
+                  onUserTyping={handleUserTyping}
+                  onBack={() => setActiveChatId(null)}
+                />
+              ) : activeChat?.type === "chat" ? (
+                <ChatMessage
+                  key={activeChat.id}
+                  chat={activeChat}
+                  messages={activeMessages}
+                  onSendMessage={handleSendMessage}
+                  onEditMessage={handleEditMessage}
+                  onDeleteMessage={handleDeleteMessage}
+                  onUserTyping={handleUserTyping}
+                  onBack={() => setActiveChatId(null)}
+                />
+                    ) : (
+                <WelcomePane />
+              )}
             </div>
           </div>
         </main>

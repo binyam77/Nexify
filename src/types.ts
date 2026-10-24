@@ -70,10 +70,9 @@ export interface Chat {
   isCreatedByMe?: boolean; // በኔ የተፈጠረ መሆኑን ማሳያ (True if created by the current user to authorize posts)
   isOnline?: boolean; // መስመር ላይ መሆን አለመሆኑን ማሳያ - ለግል ቻት (Online status for direct private chats)
   lastSeen?: string; // በመጨረሻ የታየበት ሰዓት (Last seen timestamp)
-  cover?: string; // Channel/chat detail-view ላይ የሚታይ cover banner(Based64/URL)
   description?: string; //Channel ርእስ/ መግለጫ
   bio?: string; //1:1 only chat:speak bio(Profile identity single source of truth)
-  typingUsers?: string[]; // አሁን የሚፅፉ ሰዎች (ephemeral, persist አይደረግም) — TODO: backend ሲመጣ Socket.IO 'typing' event ይህን ይሞላል/ያራግፋል
+  typingUsers?: string[]; // አሁን የሚፅፉ ሰዎች (ephemeral, persist አይደረግም) — Socket.IO 'typing:start/stop' ይሞላዋል/ያራግፈዋል
 }
 
 export interface Message {
@@ -92,12 +91,6 @@ export interface Message {
   senderAvatar?: string; // የላኪ ፎቶ URL (Group bubble ላይ ይታያል)
   pending?: boolean; // Offline queue ውስጥ እየጠበቀ ነው ወይም እየተላከ ነው (not yet server-confirmed)
   clientMessageId?: string; // Optimistic entry ን ከ real broadcast ጋር ለማዛመድ (reconciliation) ብቻ ጥቅም ላይ ይውላል — UI ላይ አይታይም
-}
-export interface ChannelStats {
-  subscribers: number;
-  totalPosts: number;
-  totalReactions: number;
-  totalComments: number;
 }
 
 export interface FeedPost {

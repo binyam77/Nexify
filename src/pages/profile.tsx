@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { X, Camera, Trash2, ChevronLeft } from "lucide-react";
+import { Camera, Trash2, ChevronLeft } from "lucide-react";
 import ShareModal from "../components/ShareModal";
 import { useFeed } from "../context/FeedContext";
 import { useUI } from "../context/UIContext";
@@ -18,6 +18,7 @@ import {
   unlikePost,
   sharePost,
 } from "../api/posts.api";
+import { fetchMyProfile } from "../api/profile.api";
 import OfflineState from "../components/OfflineState";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
 // ንዑስ ክፍሎች ማስመጫ (Importing child components)
@@ -25,23 +26,9 @@ import UserProfile from "../components/UserProfile";
 import ProfileVideo from "../components/ProfileVideo";
 import ViewVideo from "../components/ViewVideo";
 import FollowListModal from "../components/FollowListModal";
-// የProfile component የProp መግለጫ (Props Interface for Profile.tsx)
-interface ProfileProps {
-  onBackToCommunity?: () => void;
-  triggerGlobalUpload?: boolean;
-  onClearGlobalUpload?: () => void;
-  onStartChat?: (user: {
-    name: string;
-    username: string;
-    photo: string;
-    bio?: string;
-  }) => void;
-}
 
-export default function Profile({
-  triggerGlobalUpload,
-  onClearGlobalUpload,
-}: ProfileProps) {
+
+export default function Profile() {
   // --- መለያ ፍቃድ መቆጣጠሪያ (Auth System Hooks) ---
   const {
     user,
@@ -60,7 +47,6 @@ export default function Profile({
     hasMoreComments,
     isLoadingMoreComments,
     incrementView,
-    toggleSave,
     addComment,
     deleteComment,
     deleteReply,
@@ -97,6 +83,25 @@ export default function Profile({
     void loadInitialMyPosts();
   }, [loadInitialMyPosts]);
 
+  // ገጹ ሲከፈት ቁጥሮች ከ backend ይታደሳሉ። ዝም ብሎ ነው፣ ቢወድቅ ያለው ይቀራል
+  useEffect(() => {
+    let cancelled = false;
+    fetchMyProfile()
+      .then((d) => {
+        if (cancelled) return;
+        updateUser({
+          followersCount: d.followersCount,
+          followingCount: d.followingCount,
+          postsCount: d.postsCount,
+        });
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- ገጹ ሲከፈት አንድ ጊዜ ብቻ
+  }, []);
+
   const retryAll = () => {
     void loadInitialMyPosts();
     if (profileLoadError) void retryLoadProfile();
@@ -132,17 +137,17 @@ export default function Profile({
 
   // --- የተጠቃሚ መገለጫ ሁኔታ መቆጣጠሪያ (Profile Information States) ---
   const profile: {
+    userId: string;
     name: string;
     username: string;
     bio: string;
     photo: string;
-    cover: string;
   } = {
+    userId: user?.id ?? "",
     name: user?.name || user?.username || "User",
     username: user?.username || "username",
     bio: user?.bio || "",
     photo: user?.photo || "",
-    cover: user?.cover || "",
   };
 
   // --- ተከታታይ እና የሚከታተሏቸው ቁጥር ሁኔታዎች (Followers & Following counts) ---
@@ -166,12 +171,9 @@ export default function Profile({
     return () => setFullscreenModalOpen(false);
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPost]);
-  // --- የተጠቃሚ ገፅ ሞዳሎች መቆጣጠሪያዎች (UI Dialog / Modals display togglers) ---
-  const [activeTab, setActiveTab] = useState<"posts" | "video" | "likes">(
-    "posts",
-  );
+  
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [isBioExpanded, setIsBioExpanded] = useState(false);
 
   // --- የማረጋገጫ ሞዳል ሁኔታ መቆጣጠሪያ (Custom Styled Delete Confirmation Modal state) ---
@@ -185,36 +187,22 @@ export default function Profile({
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
 
-  // --- ፎርም ሁኔታ መቆጣጠሪያዎች (Upload & Edit profile form inputs) ---
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadPreviewUrl, setUploadPreviewUrl] = useState<string>("");
-  const [uploadIsVideo, setUploadIsVideo] = useState(false);
-  const [uploadDescription, setUploadDescription] = useState("");
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  
 
   const [editName, setEditName] = useState("");
   const [editUsername, setEditUsername] = useState("");
   const [editBio, setEditBio] = useState("");
   const [editPhotoPreview, setEditPhotoPreview] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [photoNotice, setPhotoNotice] = useState<string | null>(null);
 
   // --- የማጣቀሻ ፋይል መምረጫዎች (File Picker input refs) ---
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
 
   // --- በቀጥታ የሚዲያ መጫኛ ማጣቀሻዎች (Direct profile & cover upload refs) ---
   const directPhotoInputRef = useRef<HTMLInputElement>(null);
-  const directCoverInputRef = useRef<HTMLInputElement>(null);
 
-  // --- ውጫዊ ሚዲያ መጫኛ መቆጣጠሪያ (Manage background uploads from outside) ---
-  useEffect(() => {
-    if (triggerGlobalUpload && fileInputRef.current) {
-      fileInputRef.current.click();
-      if (onClearGlobalUpload) {
-        onClearGlobalUpload();
-      }
-    }
-  }, [triggerGlobalUpload, onClearGlobalUpload]);
+
 
   // --- የቪዲዮ ማጫወቻ ገፅ ክፈት (Open media viewport modal) ---
   const handleTrackView = (postId: string) => {
@@ -311,10 +299,6 @@ export default function Profile({
     });
   };
 
-  // --- ሴቭ ተግባራት (Toggle save actions) ---
-  const handleToggleSavePost = (postId: string) => {
-    toggleSave(postId);
-  };
 
   // --- አስተያየት መጨመርያ (Delegate to FeedContext) ---
   const handleAddComment = (postId: string, text: string) =>
@@ -354,60 +338,17 @@ export default function Profile({
   ) => {
     editComment(postId, commentId, newText);
   };
-  // --- በቀጥታ መገለጫዎችን መቀየሪያ (Direct external banners upload) ---
-  const compressImage = (
-    base64Str: string,
-    quality: number,
-    maxWidth: number,
-  ): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        const scale = maxWidth / img.width;
-        canvas.width = maxWidth;
-        canvas.height = img.height * scale;
-        const ctx = canvas.getContext("2d");
-        ctx?.drawImage(img, 0, 0, canvas.width, canvas.height);
-        resolve(canvas.toDataURL("image/jpeg", quality));
-      };
-      img.src = base64Str;
-    });
-  };
+
+
+  // Storage ገና ስለሌለ ፎቶ መቀየር አይቻልም። በ memory ብቻ "ተቀየረ" ማስመሰል (refresh ላይ
+  // የሚጠፋ) ተወግዷል። Storage ሲመጣ እዚህ real upload ይገባል
   const handleDirectPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        if (ev.target?.result) {
-          const compressed = await compressImage(
-            ev.target.result as string,
-            0.6,
-            400,
-          );
-          updateUser({ photo: compressed });
-        }
-      };
-      reader.readAsDataURL(file);
-    }
+    e.target.value = "";
+    setPhotoNotice("Photo upload isn't available yet. Coming soon.");
+    setTimeout(() => setPhotoNotice(null), 4000);
   };
-  const handleDirectCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = async (ev) => {
-        if (ev.target?.result) {
-          const compressed = await compressImage(
-            ev.target.result as string,
-            0.6,
-            800,
-          );
-          updateUser({ cover: compressed });
-        }
-      };
-      reader.readAsDataURL(file);
-    }
-  };
+
+
 
   // --- ልጥፍ እና አስተያየቶችን ማጥፊያ ማረጋገጫ (Execute deletion verified in custom modal) ---
   const executeDeleteAction = async () => {
@@ -419,6 +360,9 @@ export default function Profile({
       try {
         await deletePost(postId);
         setMyPosts((prev) => prev.filter((p) => p.id !== postId));
+        updateUser({
+          postsCount: Math.max(0, (user?.postsCount ?? myPosts.length) - 1),
+        });
         if (selectedPost?.id === postId) {
           handleClosePlayer();
         }
@@ -468,21 +412,9 @@ export default function Profile({
   };
 
   const handlePhotoUploadChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const r = new FileReader();
-      r.onload = async (ev) => {
-        if (ev.target?.result) {
-          const compressed = await compressImage(
-            ev.target.result as string,
-            0.6,
-            400,
-          );
-          setEditPhotoPreview(compressed);
-        }
-      };
-      r.readAsDataURL(file);
-    }
+    e.target.value = "";
+    setPhotoNotice("Photo upload isn't available yet. Coming soon.");
+    setTimeout(() => setPhotoNotice(null), 4000);
   };
   const handleSaveProfile = async () => {
     if (!editName.trim()) {
@@ -502,12 +434,13 @@ export default function Profile({
     try {
       await updateProfile({
         displayName: editName.trim(),
-        username: sanitizedUsername,
+        // username የተቀየረ ከሆነ ብቻ ይላካል
+        ...(sanitizedUsername !== user?.username && {
+          username: sanitizedUsername,
+        }),
         bio: editBio.trim(),
       });
-      // avatar/cover ገና local-only (storage ሲዘጋጅ real persist ይሆናል)
 
-      updateUser({ photo: editPhotoPreview });
       setIsEditModalOpen(false);
     } catch (e) {
       console.error("Failed to save profile:", e);
@@ -515,33 +448,6 @@ export default function Profile({
     } finally {
       setIsSavingProfile(false);
     }
-  };
-
-  // --- አዲስ ቪዲዮ/ፎቶ ልጥፍ መጫኛ (Post Composer upload settings) ---
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const isVideo = file.type.startsWith("video/");
-    const isImage = file.type.startsWith("image/");
-
-    if (!isVideo && !isImage) {
-      alert("Please select an Image or Video file only!");
-      return;
-    }
-
-    setUploadFile(file);
-    setUploadIsVideo(isVideo);
-    setUploadPreviewUrl(URL.createObjectURL(file));
-    setUploadDescription("");
-    setIsUploadModalOpen(true);
-  };
-
-  const handlePostMedia = async () => {
-    if (!uploadFile) return;
-    setUploadError(null);
-    // TODO(object-storage): storage ሲዘጋጅ real createPost() ይተካዋል
-    setUploadError("ፎቶ/ቪዲዮ ማስቀመጫ (storage) ገና አልተዋቀረም — በቅርቡ ይሰራል።");
   };
 
   const handleDeletePost = (postId: string, e?: React.MouseEvent) => {
@@ -559,30 +465,11 @@ export default function Profile({
     return num.toString();
   };
 
-  const activePostsToRender: FeedPost[] = myPosts;
-  const filteredPosts = activePostsToRender.filter((post) => {
-    if (activeTab === "posts") return true;
-    if (activeTab === "video") return post.type === "video";
-    if (activeTab === "likes") return post.liked;
-    return true;
-  });
-
   return (
     <div
       className="flex-1 flex flex-col h-full overflow-y-auto bg-bg pb-20 md:pb-6"
       id="profile-container"
     >
-      {/* 1. Header Navigation banner */}
-      <header className="sticky top-0 left-0 right-0 h-16 bg-gradient-to-r hidden md:block bg-bg shadow-md z-40 flex items-center justify-between px-4 md:px-8 shrink-0"></header>
-
-      {/* Hidden File inputs */}
-      <input
-        type="file"
-        ref={fileInputRef}
-        onChange={handleFileSelect}
-        accept="video/*,image/*"
-        className="hidden"
-      />
       <input
         type="file"
         ref={directPhotoInputRef}
@@ -590,13 +477,7 @@ export default function Profile({
         accept="image/*"
         className="hidden"
       />
-      <input
-        type="file"
-        ref={directCoverInputRef}
-        onChange={handleDirectCoverChange}
-        accept="image/*"
-        className="hidden"
-      />
+
       {profileLoadError && (
         <div className="max-w-4xl w-full mx-auto px-4 md:px-8 pt-3">
           <div className="flex items-center justify-between bg-warning-light border border-warning-border rounded-xl px-4 py-2.5">
@@ -612,19 +493,24 @@ export default function Profile({
           </div>
         </div>
       )}
+      {photoNotice && (
+        <div className="max-w-4xl w-full mx-auto px-4 md:px-8 pt-3">
+          <p className="text-xs font-semibold text-warning bg-warning-light border border-warning-border rounded-xl px-4 py-2.5">
+            {photoNotice}
+          </p>
+        </div>
+      )}
+
       {/* 2. Top Profile Header & bio info */}
       <UserProfile
         profile={profile}
         followersCount={followersCount}
         starsCount={starsCount}
-        postsCount={myPosts.length}
+        postsCount={user?.postsCount ?? myPosts.length}
         isBioExpanded={isBioExpanded}
         setIsBioExpanded={setIsBioExpanded}
-        activeTab={activeTab}
-        setActiveTab={setActiveTab}
         handleOpenEditModal={handleOpenEditModal}
         directPhotoInputRef={directPhotoInputRef}
-        directCoverInputRef={directCoverInputRef}
         formatCount={formatCount}
         onOpenFollowers={() => setFollowListModal("followers")}
         onOpenFollowing={() => setFollowListModal("following")}
@@ -653,7 +539,7 @@ export default function Profile({
           </div>
         ) : (
           <ProfileVideo
-            filteredPosts={filteredPosts}
+                        filteredPosts={myPosts}
             handleOpenPlayer={handleOpenPlayer}
             handleDeletePost={handleDeletePost}
           />
@@ -723,6 +609,11 @@ export default function Profile({
                 >
                   Change Photo
                 </button>
+                {photoNotice && (
+                  <p className="mt-2 text-xs font-semibold text-warning text-center">
+                    {photoNotice}
+                  </p>
+                )}
                 <input
                   type="file"
                   ref={photoInputRef}
@@ -792,81 +683,6 @@ export default function Profile({
       )}
 
       {/* ========================================================
-          MODAL: UPLOAD WITH HASHTAGS & PREVIEW
-          ======================================================== */}
-      {isUploadModalOpen && (
-        <div className="fixed inset-0 bg-overlay backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg shadow-2xl max-h-[90vh] overflow-y-auto border border-border-subtle flex flex-col">
-            <div className="px-6 py-4 border-b border-border-subtle flex items-center justify-between sticky top-0 bg-white z-10">
-              <h3 className="text-lg font-black tracking-tight text-text-primary">
-                {uploadIsVideo
-                  ? "🎬 Compose New Video Post"
-                  : "🖼 Compose New Photo Post"}
-              </h3>
-              <button
-                onClick={() => setIsUploadModalOpen(false)}
-                className="p-1.5 hover:bg-surface-hover text-icon-muted rounded-xl"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-6 space-y-5">
-              <div className="w-full aspect-video bg-black rounded-2xl overflow-hidden flex items-center justify-center">
-                {uploadIsVideo ? (
-                  <video
-                    src={uploadPreviewUrl}
-                    controls
-                    className="w-full h-full object-contain"
-                  />
-                ) : (
-                  <img
-                    src={uploadPreviewUrl}
-                    alt="Upload preview"
-                    className="w-full h-full object-contain"
-                  />
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-xs font-extrabold tracking-wider text-text-muted uppercase">
-                  Write Caption Description
-                </label>
-                <textarea
-                  value={uploadDescription}
-                  onChange={(e) =>
-                    setUploadDescription(e.target.value.slice(0, 500))
-                  }
-                  placeholder="Enter a cool caption. Include #hashtags like #programming, #vlog..."
-                  rows={4}
-                  className="w-full px-4 py-3 bg-input-special-bg border border-input-special-border focus:border-input-special-focus rounded-2xl text-sm font-semibold"
-                />
-              </div>
-            </div>
-            {uploadError && (
-              <p className="text-xs font-semibold text-warning bg-warning-light border border-warning-border rounded-xl px-4 py-2.5">
-                {uploadError}
-              </p>
-            )}
-            <div className="px-6 py-4 border-t border-border-subtle flex gap-3 justify-end bg-white">
-              <button
-                onClick={() => setIsUploadModalOpen(false)}
-                className="px-4 py-2 bg-surface-secondary text-xs font-bold text-text-secondary rounded-xl"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handlePostMedia}
-                className="px-5 py-2 bg-success text-xs font-bold text-text-on-primary rounded-xl shadow-md"
-              >
-                Post Now ➤
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ========================================================
           MODAL: REDESIGNED IMMERSIVE VIDEO/PHOTO PLAYER (ViewVideo.tsx)
           ======================================================== */}
       {selectedPost && (
@@ -885,7 +701,6 @@ export default function Profile({
           handleClosePlayer={handleClosePlayer}
           handleNavigatePost={handleNavigatePost}
           handleToggleLikePost={handleToggleLikePost}
-          handleToggleSavePost={handleToggleSavePost}
           handleSharePost={handleSharePost}
           handleDeletePost={handleDeletePost}
           handleAddComment={handleAddComment}

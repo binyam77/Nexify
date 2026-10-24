@@ -182,9 +182,9 @@ export default function Home() {
       <button
         onClick={() => setIsSearchOpen(true)}
         aria-label="Search"
-        className="md:hidden absolute top-3 right-3 z-30 bg-black/40 rounded-full p-2 text-white"
+            className="md:hidden absolute top-3 right-3 z-30 p-2 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.65)]"
       >
-        <Search size={18} />
+        <Search size={28} strokeWidth={2.25} />
         {isSearchOpen && (
           <SearchOverlay
             onClose={() => setIsSearchOpen(false)}

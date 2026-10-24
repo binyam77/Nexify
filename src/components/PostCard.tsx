@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Heart,
   MessageCircle,
-  Share2,
+  Forward,
   ChevronLeft,
   ChevronRight,
   Play,
@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { useShare } from "../hooks/useShare";
 import CommentModal from "./CommentModal";
+import UserAvatar from "./UserAvatar";
 import { useFeed } from "../context/FeedContext";
 import type { FeedPost, User } from "../types";
 
@@ -32,6 +33,22 @@ interface PostCardProps {
 const DOUBLE_TAP_DELAY = 300;
 const HOLD_ACTIVATION_MS = 400;
 const HEART_SIZE = 96;
+
+// የ action icons (like/comment/share/chat/mute) ልክ — ሁሉም አንድ ዓይነት ግዝፈት
+const ACTION_ICON_SIZE = 32;
+const ACTION_ICON_STROKE = 2.25;
+// ነጭ icon በነጭ/ብርሃን ሚዲያ ላይ እንዳይጠፋ። ጥቁር ጥላ በ icon ቅርጽ ዙሪያ ይሳላል።
+const MEDIA_SHADOW = "drop-shadow-[0_1px_3px_rgba(0,0,0,0.65)]";
+
+// 6000 → "6K", 1500 → "1.5K", 2_300_000 → "2.3M"
+function formatCount(n: number): string {
+  const compact = (value: number, digits: number) =>
+    value.toFixed(digits).replace(/\.0$/, "");
+  if (n >= 1_000_000)
+    return `${compact(n / 1_000_000, n >= 10_000_000 ? 0 : 1)}M`;
+  if (n >= 1_000) return `${compact(n / 1_000, n >= 10_000 ? 0 : 1)}K`;
+  return String(n);
+}
 
 // "0:07", "1:23" style formatting
 function formatDuration(seconds: number): string {
@@ -182,6 +199,14 @@ export default function PostCard({
     return () => observer.disconnect();
   }, [onView]);
 
+// Unmount ላይ ያልተጠናቀቁ timers እንዳይቀሩ (ፖስት ሲቀየር)
+  useEffect(() => {
+    return () => {
+      if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
+      if (holdTimeoutRef.current) clearTimeout(holdTimeoutRef.current);
+    };
+  }, []);
+
   // Single tap = play/pause (video only), double tap = like + heart burst.
   function handleMediaTap(clientX: number, clientY: number, rect: DOMRect) {
     const now = Date.now();
@@ -310,7 +335,7 @@ export default function PostCard({
 
           {/* Mute/unmute toggle — volume LEVEL ራሱ device-hardware ብቻ */}
           <div
-            className="absolute top-14 right-3 md:top-3 z-30"
+            className="absolute top-16 right-3 md:top-3 z-30"
             onPointerDown={(e) => e.stopPropagation()}
             onPointerUp={(e) => e.stopPropagation()}
             onClick={(e) => e.stopPropagation()}
@@ -334,12 +359,13 @@ export default function PostCard({
                   setIsMuted(true);
                 }
               }}
-              className="bg-black/50 rounded-full p-2 backdrop-blur-sm"
+              aria-label={isMuted ? "Unmute" : "Mute"}
+              className={`rounded-full p-2 text-white ${MEDIA_SHADOW}`}
             >
               {isMuted ? (
-                <VolumeX className="w-5 h-5 text-white" />
+                <VolumeX size={28} strokeWidth={ACTION_ICON_STROKE} />
               ) : (
-                <Volume2 className="w-5 h-5 text-white" />
+                <Volume2 size={28} strokeWidth={ACTION_ICON_STROKE} />
               )}
             </button>
           </div>
@@ -484,19 +510,12 @@ export default function PostCard({
       {/* ===== User Info (bottom left) ===== */}
       <div className="absolute bottom-24 left-3 right-16 z-20 md:bottom-8">
         <div className="flex items-center gap-2.5 mb-2">
-          <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white bg-surface-secondary shrink-0">
-            {post.userAvatar ? (
-              <img
-                src={post.userAvatar}
-                alt={post.username}
-                className="w-full h-full object-cover"
-              />
-            ) : (
-              <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white text-xs font-bold">
-                {post.username[0]?.toUpperCase()}
-              </div>
-            )}
-          </div>
+                <UserAvatar
+            username={post.username}
+            src={post.userAvatar}
+            size={36}
+            className="border-2 border-white"
+          />
           <div className="flex item-center gap-2 ">
             <button
               type="button"
@@ -545,26 +564,45 @@ export default function PostCard({
 
       {/* ===== Action Buttons (right side) ===== */}
       <div
-        className="absolute bottom-24 right-3 z-20 flex flex-col items-center gap-4
+        className="absolute bottom-24 right-3 z-20 flex flex-col items-center gap-5
 md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
       >
         <ActionBtn
-          icon={<Heart size={26} fill={liked ? "currentColor" : "none"} />}
+          icon={
+            <Heart
+              size={ACTION_ICON_SIZE}
+              strokeWidth={ACTION_ICON_STROKE}
+              fill={liked ? "currentColor" : "none"}
+            />
+          }
           label={likeCount}
           active={liked}
-          activeColor="text-error"
+          activeColor="text-rose-500"
           popOnActivate
           onClick={() => toggleLikePost(post.id)}
         />
         <ActionBtn
-          icon={<MessageCircle size={25} />}
+          icon={
+            <MessageCircle
+              size={ACTION_ICON_SIZE}
+              strokeWidth={ACTION_ICON_STROKE}
+            />
+          }
           label={post.commentsCount}
           active={isCommentsOpen}
-          activeColor="text-link"
+          activeColor="text-blue-400"
           onClick={() => setIsCommentsOpen(true)}
         />
+        {/* Chat — የራስ ፖስት ላይ አይታይም */}
         {!isOwnPost && (
-          <button
+          <ActionBtn
+            icon={
+              <MessagesSquare
+                size={ACTION_ICON_SIZE - 2}
+                strokeWidth={ACTION_ICON_STROKE}
+              />
+            }
+            label="Chat"
             onClick={() =>
               onMessageUser?.({
                 name: post.username,
@@ -572,36 +610,22 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
                 photo: post.userAvatar,
               })
             }
-            className="flex flex-col items-center gap-0.5"
-            type="button"
-          >
-            <div className="w-12 h-11 rounded-full flex items-center justify-center shadow-lg drop-shadow-lg text-white transition-transform active:scale-90 md:bg-surface md:shadow-md md:drop-shadow-none md:text-text-primary">
-              <MessagesSquare size={22} />
-            </div>
-            <span className="text-white text-xs font-medium leading-none drop-shadow md:text-text-primary md:drop-shadow-none">
-              Chat
-            </span>
-          </button>
+          />
         )}
-        <button
+        {/* Share — የታጠፈ ቀስት (Forward) */}
+        <ActionBtn
+          icon={
+            <Forward
+              size={ACTION_ICON_SIZE + 2}
+              strokeWidth={ACTION_ICON_STROKE}
+            />
+          }
+          label={post.sharesCount}
           onClick={async () => {
             const success = await share();
             if (success) incrementShare(post.id);
           }}
-          className="flex flex-col items-center gap-0.5"
-          type="button"
-        >
-          <div
-            className="w-12 h-11 rounded-full flex items-center justify-center
-    shadow-lg drop-shadow-lg text-white transition-transform active:scale-90
-     md:bg-surface md:shadow-md md:drop-shadow-none md:text-text-primary"
-          >
-            <Share2 size={23} />
-          </div>
-          <span className="text-white text-xs font-semibold leading-none drop-shadow md:text-text-primary md:drop-shadow-none">
-            {post.sharesCount}
-          </span>
-        </button>
+        />
       </div>
 
       {/* ===== Comments Modal ===== */}
@@ -663,15 +687,15 @@ function FloatingHeart({ x, y }: { x: number; y: number }) {
 function ActionBtn({
   icon,
   label,
-  active,
-  activeColor,
+  active = false,
+  activeColor = "",
   onClick,
   popOnActivate = false,
 }: {
   icon: React.ReactNode;
-  label: number;
-  active: boolean;
-  activeColor: string;
+  label: number | string;
+  active?: boolean;
+  activeColor?: string;
   onClick: () => void;
   popOnActivate?: boolean;
 }) {
@@ -695,17 +719,24 @@ function ActionBtn({
   }, [active, popOnActivate]);
 
   return (
-    <button onClick={onClick} className="flex flex-col items-center gap-0.5">
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex flex-col items-center gap-1"
+    >
+      {/* Mobile: ባዶ icon + ጥቁር ጥላ። Desktop: በ surface ክብ ውስጥ (ጥላ አያስፈልግም) */}
       <div
         ref={iconRef}
-        className={`w-12 h-11 rounded-full flex items-center justify-center transition-colors
-          shadow-lg drop-shadow-lg md:bg-surface md:shadow-md
-           ${active ? activeColor : "text-white md:text-input-text"}`}
+        className={`flex h-12 w-12 items-center justify-center rounded-full transition active:scale-90 md:bg-surface md:shadow-md ${
+          active ? activeColor : "text-white md:text-input-text"
+        } ${MEDIA_SHADOW} md:drop-shadow-none`}
       >
         {icon}
       </div>
-      <span className="text-white text-xs font-medium leading-none drop-shadow md:text-input-text md:drop-shadow-none md:dark:text-neutral-300">
-        {label}
+      <span
+        className={`text-sm font-bold leading-none text-white ${MEDIA_SHADOW} md:text-input-text md:drop-shadow-none md:dark:text-neutral-300`}
+      >
+        {typeof label === "number" ? formatCount(label) : label}
       </span>
     </button>
   );

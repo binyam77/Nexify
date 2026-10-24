@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Pencil, Trash2, Send } from "lucide-react";
 import { useRelativeTime } from "../hooks/useRelativeTime";
+import UserAvatar from "./UserAvatar";
 import type { CommentItem, CommentReply } from "../types";
 
 const REPLIES_VISIBLE_LIMIT = 2;
@@ -33,20 +34,9 @@ function CommentAvatar({
     <button
       type="button"
       onClick={onClick}
-      className="shrink-0 rounded-full overflow-hidden ring-1 ring-zinc-800"
-      style={{ width: size, height: size }}
+      className="shrink-0 rounded-full ring-1 ring-zinc-800"
     >
-      {avatarUrl ? (
-        <img
-          src={avatarUrl}
-          alt={username}
-          className="h-full w-full object-cover"
-        />
-      ) : (
-        <div className="h-full w-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-purple-600 text-white text-xs font-bold">
-          {username[0]?.toUpperCase()}
-        </div>
-      )}
+      <UserAvatar username={username} src={avatarUrl} size={size} />
     </button>
   );
 }

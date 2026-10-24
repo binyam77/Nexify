@@ -20,7 +20,6 @@ interface UserProfileProps {
     name: string;
     username: string;
     photo: string;
-    cover: string;
     bio: string;
   };
   followersCount: number;
@@ -28,14 +27,11 @@ interface UserProfileProps {
   postsCount: number;
   isBioExpanded: boolean;
   setIsBioExpanded: (expanded: boolean) => void;
-  activeTab: "posts" | "video" | "likes";
-  setActiveTab: (tab: "posts" | "video" | "likes") => void;
   onOpenFollowing?: () => void;
   onOpenFollowers?: () => void;
 
   handleOpenEditModal: () => void;
   directPhotoInputRef: React.RefObject<HTMLInputElement | null>;
-  directCoverInputRef: React.RefObject<HTMLInputElement | null>;
   formatCount: (num: number) => string;
 }
 
@@ -48,11 +44,8 @@ export default function UserProfile({
   setIsBioExpanded,
   onOpenFollowers,
   onOpenFollowing,
-  activeTab,
-  setActiveTab,
   handleOpenEditModal,
   directPhotoInputRef,
-  directCoverInputRef,
   formatCount,
 }: UserProfileProps) {
   const scrollToPosts = () => {

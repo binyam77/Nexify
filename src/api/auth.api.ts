@@ -116,8 +116,8 @@ export function registerRequest(params: {
   username: string;
   email: string;
   password: string;
-}): Promise<LoginResponse> {
-  return apiClient<LoginResponse>("/auth/register", {
+}): Promise<MessageResponse> {
+  return apiClient<MessageResponse>("/auth/register", {
     method: "POST",
     body: params,
   });

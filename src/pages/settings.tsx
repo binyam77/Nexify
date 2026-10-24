@@ -289,7 +289,7 @@ function EditProfileView({ onBack }: { onBack: () => void }) {
           <Field
             label="Username"
             value={username}
-            onChange={setUsername}
+            onChange={(v) => setUsername(v.toLowerCase())}
             placeholder="username"
             prefix="@"
           />
@@ -335,14 +335,14 @@ function UsernameView({ onBack }: { onBack: () => void }) {
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const isValidFormat = /^[a-zA-Z0-9_.]{3,30}$/.test(newUsername);
+  const isValidFormat = /^[a-z0-9_]{3,30}$/.test(newUsername);
 
   const handleSave = async () => {
     setError("");
     setSuccess("");
     if (!isValidFormat) {
       setError(
-        "Username must be 3–30 characters and can include letters, numbers, dots and underscores.",
+        "Username must be 3–30 characters: lowercase letters, numbers, or underscore.",
       );
       return;
     }
@@ -384,8 +384,8 @@ function UsernameView({ onBack }: { onBack: () => void }) {
             </span>
             <input
               value={newUsername}
-              onChange={(e) => setNewUsername(e.target.value)}
-              placeholder="new.username"
+              onChange={(e) => setNewUsername(e.target.value.toLowerCase())}
+              placeholder="new_username"
               className="w-full pl-7 pr-10 py-2.5 bg-input-bg border border-input-border rounded-lg text-input-text placeholder:text-input-placeholder focus:outline-none focus:border-input-focus transition-all text-sm"
             />
             {newUsername.length > 0 && (
@@ -397,8 +397,8 @@ function UsernameView({ onBack }: { onBack: () => void }) {
             )}
           </div>
           <p className="text-xs text-text-muted">
-            Username must be 3–30 characters and can include letters, numbers,
-            dots and underscores.
+            Username must be 3–30 characters: lowercase letters, numbers, or
+            underscore.
           </p>
         </div>
 

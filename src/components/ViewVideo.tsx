@@ -61,6 +61,7 @@ interface ViewVideoProps {
   isLoadingMoreComments: boolean;
   loadComments: (postId: string) => Promise<void>;
   profile: {
+    userId: string;
     name: string;
     username: string;
     photo: string;
@@ -73,7 +74,6 @@ interface ViewVideoProps {
   handleClosePlayer: () => void;
   handleNavigatePost: (direction: "next" | "prev") => void;
   handleToggleLikePost: (postId: string) => void;
-  handleToggleSavePost: (postId: string) => void;
   handleSharePost: (postId: string) => void;
   handleDeletePost: (postId: string, e?: React.MouseEvent) => void;
   handleAddComment: (postId: string, text: string) => Promise<boolean>;
@@ -112,7 +112,6 @@ export default function ViewVideo({
   handleClosePlayer,
   handleNavigatePost,
   handleToggleLikePost,
-  handleToggleSavePost,
   handleSharePost,
   handleDeletePost,
   handleAddComment,
@@ -132,7 +131,7 @@ export default function ViewVideo({
   const shares = selectedPost.sharesCount;
 
   // የልጥፉ ባለቤት ማነው? (Detect who is the author of this post)
-  const isOwnPost = selectedPost.username === profile.username;
+  const isOwnPost = selectedPost.userId === profile.userId;
 
   const postAuthor = isOwnPost
     ? {
@@ -518,7 +517,6 @@ export default function ViewVideo({
           replyInputText={replyInputText}
           setReplyInputText={setReplyInputText}
           handleToggleLikePost={handleToggleLikePost}
-          handleToggleSavePost={handleToggleSavePost}
           handleSharePost={handleSharePost}
           handleDeletePost={handleDeletePost}
           onSubmitComment={() => void submitComment()}
@@ -781,7 +779,7 @@ export default function ViewVideo({
                               Reply
                             </button>
 
-                            {comment.username === profile.username &&
+                            {comment.userId === profile.userId &&
                               editingCommentId !== comment.id && (
                                 <>
                                   <button
@@ -849,7 +847,7 @@ export default function ViewVideo({
                               <p className="text-sm text-text-primary leading-relaxed break-words mt-0.5">
                                 {reply.text}
                               </p>
-                              {reply.username === profile.username && (
+                              {reply.userId === profile.userId && (
                                 <div className="flex items-center gap-3.5 mt-1.5">
                                   <button
                                     onClick={() =>

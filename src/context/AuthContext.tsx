@@ -1,10 +1,6 @@
-import { createContext, useContext, useState, useEffect,useRef } from "react";
+import { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
-import {
-  loginRequest,
-  logoutRequest,
-  meRequest,
-} from "../api/auth.api";
+import { loginRequest, logoutRequest, meRequest } from "../api/auth.api";
 import { refreshAccessToken } from "../lib/refresh-coordinator";
 import { fetchMyProfile, updateMyProfile } from "../api/profile.api";
 import type { UpdateProfileInput } from "../api/profile.api";
@@ -16,13 +12,13 @@ export interface User {
   email: string;
   isVerified: boolean;
   role: "user" | "moderator" | "admin";
-  // --- Backend ገና ያልሰጠን fields (Profile module ሲገነባ ይሞላሉ) ---
+  // --- Profile fields (GET /profile/me ይሞላቸዋል) ---
   name?: string;
   bio?: string;
   photo?: string;
-  cover?: string;
   followersCount?: number;
   followingCount?: number;
+  postsCount?: number;
 }
 
 interface AuthContextType {
@@ -52,6 +48,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  // ተጠቃሚ ሲወጣ (logout ወይም session ሲያልቅ) የቀድሞው ሰው "የታዩ ፖስቶች" ዝርዝር
+  // ለሚቀጥለው ሰው እንዳይተላለፍ
+  useEffect(() => {
+    if (!user) localStorage.removeItem("viewedPostIds");
+  }, [user]);
   const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
 
   // React state (for re-renders) + module-level store (for api-client.ts
@@ -88,13 +89,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-    const hasSilentRefreshRun = useRef(false);
+  const hasSilentRefreshRun = useRef(false);
 
   useEffect(() => {
     if (hasSilentRefreshRun.current) return;
     hasSilentRefreshRun.current = true;
 
-     async function silentRefresh() {
+    async function silentRefresh() {
       try {
         const newToken = await refreshAccessToken();
         setAccessToken(newToken);
@@ -151,8 +152,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // --- Profile fields (bio, photo, ...) — Backend Profile module ገና ስለሌለ
-  // ለጊዜው local state ብቻ ነው የሚቀየረው (UI optimistic update)፣ persist አያደርግም
   const updateUser = (userData: Partial<User>) => {
     setUser((prev) => (prev ? { ...prev, ...userData } : prev));
   };
