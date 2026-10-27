@@ -6,25 +6,34 @@ interface ShareData {
   url: string;
 }
 
+// Touch device (ሞባይል/ታብሌት) ላይ ብቻ native share sheet። Desktop ላይ የ OS share
+// dialog ያስቸግራል፣ ተጠቃሚዎች "Copy link" ይጠብቃሉ።
+function prefersNativeShare(): boolean {
+  return (
+    typeof navigator !== 'undefined' &&
+    typeof navigator.share === 'function' &&
+    typeof window !== 'undefined' &&
+    window.matchMedia?.('(pointer: coarse)').matches === true
+  );
+}
+
 /**
- * Native share sheet on mobile, clipboard copy fallback on desktop —
- * same two branches as the old copyLink() in home.html.
- * TODO: POST to /api/shares once a backend exists (dropped the old
- * logShareToDatabase() call since it always failed silently).
+ * Share ሲጠናቀቅ ብቻ true ይመልሳል (ጠሪው ያን ብቻ ይቆጥራል)፦
+ *  - ተጠቃሚው native sheet ን ሲሰርዝ (AbortError) → false፣ ምንም toast የለም
+ *  - native share በሌላ ምክንያት ቢወድቅ → ሊንኩን ወደ clipboard ይቀዳል
  */
 export function useShare(data: ShareData) {
   const { message, visible, showToast } = useToast();
 
   async function share(): Promise<boolean> {
-    if (navigator.share) {
+    if (prefersNativeShare()) {
       try {
         await navigator.share(data);
-        showToast('Shared successfully!');
         return true;
-      } catch {
-        // user closed the native share sheet — nothing to do
+      } catch (e) {
+        if (e instanceof DOMException && e.name === 'AbortError') return false;
+        // ሌላ ስህተት → ከታች ወደ clipboard ይወርዳል
       }
-      return false;
     }
     try {
       await navigator.clipboard.writeText(data.url);

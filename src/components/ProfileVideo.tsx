@@ -22,9 +22,9 @@ export default function ProfileVideo({
   handleDeletePost,
 }: ProfileVideoProps) {
   return (
- <div className="min-h-48">
+    <div className="min-h-48">
       {filteredPosts.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-14 text-center px-4 animate-fade-in">
+        <div className="flex flex-col items-center justify-center py-14 text-center px-4 animate-fade-in">
           <span className="text-4xl mb-3">🎬</span>
           <h3 className="text-base font-extrabold text-text-primary mb-1">
             No videos yet
@@ -36,7 +36,7 @@ export default function ProfileVideo({
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-3 gap-2.5 sm:gap-4 animate-fade-in">
+        <div className="grid grid-cols-3 gap-0.5 animate-fade-in">
           {filteredPosts.map((post) => {
             const mediaSrc = post.mediaUrls[0];
             const isVideo = post.type === "video";

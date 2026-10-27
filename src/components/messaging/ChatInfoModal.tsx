@@ -5,7 +5,7 @@
 
 import React from "react";
 import { X, Circle } from "lucide-react";
-import type { Chat } from "../types";
+import type { Chat } from "../../types";
 
 interface ChatInfoModalProps {
   chat: Chat;

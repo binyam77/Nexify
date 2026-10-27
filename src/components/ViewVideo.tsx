@@ -10,7 +10,7 @@ import {
   Play,
   Heart,
   MessageCircle,
-  Share2,
+  Forward,
   Volume2,
   VolumeX,
   Send,
@@ -42,6 +42,11 @@ function formatTime(seconds: number): string {
   const s = Math.floor(seconds % 60);
   return `${m}:${s.toString().padStart(2, "0")}`;
 }
+
+// በነጭ ቪዲዮ ላይ እንዲታዩ shadow ተጨምሯል
+const HUD_ICON = "w-9 h-9 drop-shadow-[0_2px_4px_rgba(0,0,0,0.65)]";
+const HUD_LABEL =
+  "text-xs font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)] select-none";
 
 const HEART_KEYFRAMES = `@keyframes heart-pop {
   0% { transform: scale(0.3); opacity: 0; }
@@ -379,7 +384,7 @@ export default function ViewVideo({
     setVideoPlaying(true);
     setVideoCurrentTime(0);
     setVideoDuration(0);
-  }, [selectedPost]);
+  }, [selectedPost.id]);
 
   return (
     <div className="fixed inset-0 bg-overlay backdrop-blur-md flex items-center justify-center z-50 p-0 sm:p-4 animate-fade-in">
@@ -533,43 +538,50 @@ export default function ViewVideo({
 
         {/* ===== Mobile Overlay HUD HUD (በሞባይል ብቻ የሚታይ የላይ ፈጣን መቆጣጠሪያ) ===== */}
         <div className="absolute inset-0 z-20 pointer-events-none md:hidden flex flex-col justify-between">
-          <div className="absolute right-3 bottom-32 flex flex-col gap-5 items-center pointer-events-auto z-30">
-            {/* Likes */}
+          <div className="absolute right-3 bottom-32 flex flex-col gap-6 items-center pointer-events-auto z-30">
+            {/* Like */}
             <button
               onClick={() => handleToggleLikePost(selectedPost.id)}
               className="flex flex-col items-center justify-center gap-1 active:scale-90 transition-all focus:outline-none"
+              aria-label="Like"
             >
               <Heart
-                className={`w-[26px] h-[26px] drop-shadow-md ${
+                strokeWidth={2.5}
+                className={`${HUD_ICON} ${
                   selectedPost.liked ? "fill-error text-error" : "text-white"
                 }`}
               />
-              <span className="text-[11px] font-bold text-white drop-shadow-md select-none">
+              <span className={HUD_LABEL}>
                 {formatCount(selectedPost.likesCount)}
               </span>
             </button>
 
-            {/* Comments toggle drawer */}
+            {/* Comments */}
             <button
               onClick={() => setMobileCommentsOpen(true)}
               className="flex flex-col items-center justify-center gap-1 active:scale-90 transition-all focus:outline-none"
+              aria-label="Comments"
             >
-              <MessageCircle className="w-[26px] h-[26px] text-white drop-shadow-md" />
-              <span className="text-[11px] font-bold text-white drop-shadow-md select-none">
-                {formatCount(totalComments)}
-              </span>
+              <MessageCircle
+                strokeWidth={2.5}
+                className={`${HUD_ICON} text-white`}
+              />
+              <span className={HUD_LABEL}>{formatCount(totalComments)}</span>
             </button>
 
-            {/* Shares */}
+            {/* Share */}
             <button
               onClick={() => handleSharePost(selectedPost.id)}
               className="flex flex-col items-center justify-center gap-1 active:scale-90 transition-all focus:outline-none"
+              aria-label="Share"
             >
-              <Share2 className="w-[26px] h-[26px] text-white drop-shadow-md" />
-              <span className="text-[11px] font-bold text-white drop-shadow-md select-none">
+              <Forward strokeWidth={2.5} className={`${HUD_ICON} text-white`} />
+              <span className={HUD_LABEL}>
                 {shares > 0 ? formatCount(shares) : "Share"}
               </span>
             </button>
+
+            {/* Mute */}
             {selectedPost.type === "video" && (
               <button
                 onClick={() => setIsMuted((m) => !m)}
@@ -577,9 +589,15 @@ export default function ViewVideo({
                 aria-label={isMuted ? "Unmute" : "Mute"}
               >
                 {isMuted ? (
-                  <VolumeX className="w-[26px] h-[26px] text-white drop-shadow-md" />
+                  <VolumeX
+                    strokeWidth={2.5}
+                    className={`${HUD_ICON} text-white`}
+                  />
                 ) : (
-                  <Volume2 className="w-[26px] h-[26px] text-white drop-shadow-md" />
+                  <Volume2
+                    strokeWidth={2.5}
+                    className={`${HUD_ICON} text-white`}
+                  />
                 )}
               </button>
             )}
@@ -918,13 +936,14 @@ export default function ViewVideo({
                   </p>
                 )}
                 {emojiPickerOpen && (
-                  <EmojiPicker
-                    className="absolute bottom-full left-4 mb-2"
-                    onSelect={(emoji) => {
-                      setCommentInputText(commentInputText + emoji);
-                      setEmojiPickerOpen(false);
-                    }}
-                  />
+                  <div className="absolute bottom-full left-4 mb-2 z-40">
+                    <EmojiPicker
+                      onSelect={(emoji) => {
+                        setCommentInputText(commentInputText + emoji);
+                        setEmojiPickerOpen(false);
+                      }}
+                    />
+                  </div>
                 )}
                 <form
                   onSubmit={(e) => {

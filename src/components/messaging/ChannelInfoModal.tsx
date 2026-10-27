@@ -16,7 +16,7 @@ import {
   Check,
   Play,
 } from "lucide-react";
-import type { Chat, Message } from "../types";
+import type { Chat, Message } from "../../types";
 
 // http(s) links ብቻ — javascript: ወዘተ አይታዩም
 const URL_REGEX = /https?:\/\/[^\s<>"']+/gi;

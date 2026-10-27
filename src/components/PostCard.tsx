@@ -88,10 +88,14 @@ export default function PostCard({
   const likeCount = post.likesCount;
   const comments = commentsMap[post.id] || [];
 
+  // ተቀባዩ ሊንኩን ሲከፍት የአሁኑን ገጽ (Home) ሳይሆን ይህን ፖስት እንዲያይ — ቀጥተኛ ሊንክ
   const { share, toastMessage, toastVisible } = useShare({
-    title: post.caption,
-    text: `Check out this post by ${post.username} on Nexify!`,
-    url: typeof window !== "undefined" ? window.location.href : "",
+    title: post.caption.trim().slice(0, 80) || "Nexify",
+    text: `Check out @${post.username}'s post on Nexify!`,
+    url:
+      typeof window !== "undefined"
+        ? `${window.location.origin}/post/${post.id}`
+        : "",
   });
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -199,7 +203,7 @@ export default function PostCard({
     return () => observer.disconnect();
   }, [onView]);
 
-// Unmount ላይ ያልተጠናቀቁ timers እንዳይቀሩ (ፖስት ሲቀየር)
+  // Unmount ላይ ያልተጠናቀቁ timers እንዳይቀሩ (ፖስት ሲቀየር)
   useEffect(() => {
     return () => {
       if (tapTimeoutRef.current) clearTimeout(tapTimeoutRef.current);
@@ -510,7 +514,7 @@ export default function PostCard({
       {/* ===== User Info (bottom left) ===== */}
       <div className="absolute bottom-24 left-3 right-16 z-20 md:bottom-8">
         <div className="flex items-center gap-2.5 mb-2">
-                <UserAvatar
+          <UserAvatar
             username={post.username}
             src={post.userAvatar}
             size={36}

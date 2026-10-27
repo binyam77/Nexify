@@ -116,7 +116,7 @@ return (
                   }}
                   className="w-full flex items-center gap-3 p-2.5 rounded-xl hover:bg-surface-hover transition-colors text-left"
                 >
-                  <div className="w-11 h-11 rounded-full overflow-hidden bg-primary-light flex items-center justify-center text-primary text-sm font-bold shrink-0">
+                  <div className="w-11 h-11 rounded-full overflow-hidden bg-[#198dfe] flex items-center justify-center text-white text-sm font-bold shrink-0">
                     {item.avatar ? (
                       <img
                         src={item.avatar}

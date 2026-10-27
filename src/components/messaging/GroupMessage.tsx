@@ -1,12 +1,13 @@
 import { useRef, useState } from "react";
 import { ArrowLeft, CheckCheck, Pin } from "lucide-react";
 import type { Chat, Message, SelectableUser } from "../../types";
-import GroupInfoModal from "../GroupInfoModal";
+import GroupInfoModal from "./GroupInfoModal";
 import MediaViewer from "./MediaViewer";
 import MessageActionBar, { QuickReactions } from "./MessageActionBar";
 import MessageComposer from "./MessageComposer";
 import type { ComposerMediaType } from "./MessageComposer";
 import MessageMedia from "./MessageMedia";
+import LoadOlderButton from "./LoadOlderButton";
 import { useAutoScroll } from "./useAutoScroll";
 import { useLongPress } from "./useLongPress";
 import { copyToClipboard, isSafeMediaUrl } from "./messagingUtils";
@@ -51,6 +52,9 @@ interface GroupMessageProps {
   availableUsersForInvite: SelectableUser[];
   onUserTyping?: () => void;
   onBack: () => void;
+  hasOlder?: boolean;
+  isLoadingOlder?: boolean;
+  onLoadOlder?: () => void;
 }
 
 interface GroupBubbleProps {
@@ -84,7 +88,7 @@ function GroupBubble({
   const { bind, wasLongPress } = useLongPress(onLongPress);
   const mine = msg.isSentByMe;
   const reactions = msg.reactions ?? [];
-  const myEmoji = reactions.find((r) => r.users.includes("Me"))?.emoji ?? null;
+  const myEmoji = reactions.find((r) => r.mine)?.emoji ?? null;
   const avatarUrl = isSafeMediaUrl(msg.senderAvatar)
     ? msg.senderAvatar
     : undefined;
@@ -164,7 +168,7 @@ function GroupBubble({
           {reactions.length > 0 && (
             <div className="mt-1.5 flex flex-wrap gap-1.5">
               {reactions.map((r) => {
-                const isMine = r.users.includes("Me");
+                const isMine = r.mine;
                 return (
                   <button
                     key={r.emoji}
@@ -221,6 +225,9 @@ export default function GroupMessage({
   availableUsersForInvite,
   onUserTyping,
   onBack,
+  hasOlder = false,
+  isLoadingOlder = false,
+  onLoadOlder = () => undefined,
 }: GroupMessageProps) {
   const [selected, setSelected] = useState<{
     id: string;
@@ -346,9 +353,7 @@ export default function GroupMessage({
         >
           <Pin className="h-4 w-4 shrink-0 text-icon-secondary" />
           <div className="min-w-0">
-            <p className="text-xs font-semibold text-primary">
-              Pinned message
-            </p>
+            <p className="text-xs font-semibold text-primary">Pinned message</p>
             <p className="truncate text-sm text-text-secondary">
               {latestPinned.text || "Media"}
             </p>
@@ -362,6 +367,9 @@ export default function GroupMessage({
         onClick={() => setSelected(null)}
         className="min-h-0 flex-1 overflow-y-auto px-3 py-3"
       >
+        {hasOlder && messages.length > 0 && (
+          <LoadOlderButton loading={isLoadingOlder} onClick={onLoadOlder} />
+        )}
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <p className="text-sm text-text-muted">

@@ -5,7 +5,7 @@
 
 import { useState } from "react";
 import { ArrowLeft, Check, Search, X } from "lucide-react";
-import type { SelectableUser } from "../types";
+import type { SelectableUser } from "../../types";
 
 interface MemberPickerModalProps {
   isOpen: boolean;
@@ -16,6 +16,13 @@ interface MemberPickerModalProps {
   initialSelected?: SelectableUser[];
   /** የታችኛው ቁልፍ ጽሑፍ — Create Group ፍሰት "Next"፣ Group info "Add" ሊሆን ይችላል */
   confirmLabel?: string;
+  /** ዝርዝሩ እየተጫነ ነው */
+  isLoading?: boolean;
+  /** መጫን ከወደቀ የሚታይ ጽሑፍ (ከ Retry ጋር) */
+  errorText?: string | null;
+  onRetry?: () => void;
+  /** ዝርዝሩ ባዶ ሲሆን (ፍለጋ ሳይኖር) የሚታይ ጽሑፍ */
+  emptyText?: string;
 }
 
 const MAX_VISIBLE_SELECTED = 5;
@@ -47,6 +54,10 @@ export default function MemberPickerModal({
   onConfirm,
   initialSelected,
   confirmLabel = "Next",
+  isLoading = false,
+  errorText = null,
+  onRetry,
+  emptyText = "No one to add yet. Follow people to add them here.",
 }: MemberPickerModalProps) {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(
     () => new Set((initialSelected ?? []).map((u) => u.id)),
@@ -134,9 +145,26 @@ export default function MemberPickerModal({
       </div>
 
       <div className="flex-1 overflow-y-auto">
-        {filtered.length === 0 ? (
-          <p className="text-center text-sm text-text-muted py-10">
-            No people found.
+               {isLoading ? (
+          <p className="py-10 text-center text-sm text-text-muted">
+            Loading...
+          </p>
+        ) : errorText ? (
+          <div className="flex flex-col items-center gap-3 py-10">
+            <p className="text-sm text-text-secondary">{errorText}</p>
+            {onRetry && (
+              <button
+                type="button"
+                onClick={onRetry}
+                className="rounded-xl bg-primary px-5 py-2 text-xs font-semibold text-text-on-primary hover:bg-primary-hover"
+              >
+                Retry
+              </button>
+            )}
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="px-6 py-10 text-center text-sm text-text-muted">
+            {q ? "No people found." : emptyText}
           </p>
         ) : (
           filtered.map((u) => {

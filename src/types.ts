@@ -84,7 +84,12 @@ export interface Message {
   mediaUrl?: string; // በአባሪነት የተላከ ምስል ወይም ቪዲዮ (Optional URL/Base64 string for photo, video, etc.)
   mediaType?: "image" | "video" | "audio" | "pdf"; // የአባሪው ፋይል አይነት (Type of attached media file)
   isEdited?: boolean; // መልዕክቱ የተቀየረ መሆኑን ማሳያ (Flag to indicate if the message has been edited)
-  reactions?: { emoji: string; count: number; users: string[] }[]; // ተጠቃሚዎች የሰጡት ምላሽ (List of user reactions to this message)
+  reactions?: {
+    emoji: string;
+    count: number;
+    users: string[];
+    mine: boolean;
+  }[]; // ተጠቃሚዎች የሰጡት ምላሽ (List of user reactions to this message)
   seen?: boolean; //ተቀባይ አይቶታል ወይ (Read receipt) — TODO: backend ሲመጣ Socket.IO 'message:read' event ይህን ያዘምናል
   isPinned?: boolean; // Group/Channel admin የሰካው መልዕክት
   createdAt?: string; // ISO — የ channel post "now / 5m / 2h" አንጻራዊ ሰዓት ለማስላት

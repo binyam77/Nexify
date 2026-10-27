@@ -52,7 +52,6 @@ interface LeftProps {
   shares: number;
   isOwnPost: boolean;
   postAuthor: {
-    userId: string;
     name: string;
     username: string;
     photo: string;
@@ -61,6 +60,7 @@ interface LeftProps {
     bio: string;
   };
   profile: {
+    userId: string;
     name: string;
     username: string;
     photo: string;
@@ -160,7 +160,7 @@ export default function Left({
           className="flex items-center gap-3 cursor-pointer group hover:opacity-85 transition-opacity"
           title="View Profile"
         >
-          <div className="w-11 h-11 rounded-full overflow-hidden border-2 border-primary bg-primary-light flex items-center justify-center text-primary text-sm font-bold shrink-0 group-hover:scale-105 transition-transform">
+          <div className="w-11 h-11 rounded-full overflow-hidden bg-[#198dfe] flex items-center justify-center text-white text-sm font-bold  shrink-0 group-hover:scale-105 transition-transform">
             {postAuthor.photo ? (
               <img
                 src={postAuthor.photo}
@@ -546,7 +546,7 @@ export default function Left({
       {/* 5. Add Comment Form with Emoji picker */}
       <section className="border-t border-border p-4 pb-5 shrink-0 bg-surface relative">
         <div className="flex items-center gap-2 mb-2 select-none">
-          <div className="w-7 h-7 rounded-full overflow-hidden bg-primary-light flex items-center justify-center text-primary text-[10px] font-black shrink-0 border border-border">
+          <div className="w-7 h-7 rounded-full overflow-hidden bg-[#198dfe] flex items-center justify-center text-white text-[10px] font-black shrink-0">
             {profile.photo ? (
               <img
                 src={profile.photo}

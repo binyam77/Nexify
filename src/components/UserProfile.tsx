@@ -179,7 +179,7 @@ export default function UserProfile({
         {/* Videos tab — ከታች መስመር ብቻ (ከላይ የለም)፣ ፖስቶች ከሱ ጋር ይጣበቃሉ */}
         <button
           onClick={scrollToPosts}
-          className="w-full flex items-center justify-center gap-1.5 border-b border-border py-3 text-xs font-black uppercase tracking-wider text-primary"
+          className="-mx-4 w-[calc(100%+2rem)] md:mx-0 md:w-full flex items-center justify-center gap-1.5 border-b border-border py-3 text-xs font-black uppercase tracking-wider text-primary"
         >
           <Grid className="w-3.5 h-3.5" />
           <span>Videos</span>

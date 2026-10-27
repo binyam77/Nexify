@@ -88,28 +88,27 @@ function senderLabel(
 
 /**
  * Groups individual MessageReaction rows (one per user per emoji, from the
- * backend) into the frontend's { emoji, count, users } shape. The current
- * user's own reaction is labeled "Me" — MessageArea.tsx already checks
- * `r.users.includes("Me")` to decide bubble highlighting, a convention
- * from the original demo data that this mapping preserves rather than
- * requiring a component-level change.
+ * backend) into the frontend's { emoji, count, users, mine } shape.
+ * `mine` የሚወሰነው በ User.id ነው (ጽሑፍ "Me" ሳይሆን) — ስሙ "Me" የሆነ ሌላ
+ * ተጠቃሚ ከእኔ ጋር እንዳይደባለቅ። `users` ለማሳያ ስሞች ብቻ ነው።
  */
 export function aggregateReactions(
   reactions: CommunityMessageReaction[],
   currentUserId: string,
-): { emoji: string; count: number; users: string[] }[] {
-  const byEmoji = new Map<string, string[]>();
+): { emoji: string; count: number; users: string[]; mine: boolean }[] {
+  const byEmoji = new Map<string, { users: string[]; mine: boolean }>();
   for (const r of reactions) {
-    const label =
-      r.userId === currentUserId
-        ? "Me"
-        : (r.user.profile?.username ?? "Someone");
-    byEmoji.set(r.emoji, [...(byEmoji.get(r.emoji) ?? []), label]);
+    const isMe = r.userId === currentUserId;
+    const entry = byEmoji.get(r.emoji) ?? { users: [], mine: false };
+    entry.users.push(isMe ? "Me" : (r.user.profile?.username ?? "Someone"));
+    if (isMe) entry.mine = true;
+    byEmoji.set(r.emoji, entry);
   }
-  return [...byEmoji.entries()].map(([emoji, users]) => ({
+  return [...byEmoji.entries()].map(([emoji, { users, mine }]) => ({
     emoji,
     count: users.length,
     users,
+    mine,
   }));
 }
 

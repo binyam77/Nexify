@@ -5,7 +5,7 @@
 
 import React, { useState, useRef } from "react";
 import { Search, Plus, Globe, Trash2 } from "lucide-react";
-import type { Chat } from "../types";
+import type { Chat } from "../../types";
 
 interface ChatsSidebarProps {
   chats: Chat[];
@@ -20,9 +20,38 @@ interface ChatsSidebarProps {
   onRetrySuggested?: () => void;
   suggestedSearchQuery?: string;
   onSuggestedSearchChange?: (query: string) => void;
-  listError?: string | null;
-  onRetryList?: () => void;
 }
+// ረዥም-ተጭኖ ሲደረግ የሚመጣው ማረጋገጫ — ትርጉሙ በ chat ዓይነት ይለያል
+// (action: null = ምንም ድርጊት የለም፣ መረጃ ብቻ)
+function getConfirmCopy(chat: Chat): {
+  title: string;
+  body: string;
+  action: string | null;
+} {
+  if (chat.type === "chat") {
+    return {
+      title: "Can't delete private chats yet",
+      body: "Deleting a private chat isn't available yet. Your messages are safe.",
+      action: null,
+    };
+  }
+  if (
+    (chat.type === "channel" || chat.type === "group") &&
+    chat.isCreatedByMe
+  ) {
+    return {
+      title: `Delete "${chat.name}"?`,
+      body: "This cannot be undone. It will be permanently deleted for everyone.",
+      action: "Delete",
+    };
+  }
+  return {
+    title: `Leave "${chat.name}"?`,
+    body: "You will stop receiving its messages.",
+    action: "Leave",
+  };
+}
+
 // Title: ChatsSidebar Component (Messages inbox + Communities discovery)
 export default function ChatsSidebar({
   chats,
@@ -104,6 +133,10 @@ export default function ChatsSidebar({
       !c.isJoined &&
       !c.isCreatedByMe,
   );
+  const confirmCopy = confirmDeleteChat
+    ? getConfirmCopy(confirmDeleteChat)
+    : null;
+
   return (
     <section
       className="w-full md:w-[350px] border-r border-border bg-bg flex flex-col h-full shrink-0"
@@ -151,7 +184,9 @@ export default function ChatsSidebar({
         {!isSearching && joinedChats.length === 0 && (
           <div className="flex flex-col items-center justify-center p-8 text-center h-full">
             <Globe className="w-10 h-10 text-icon-muted mb-3" />
-            <p className="text-sm font-semibold text-text-secondary">No chats yet</p>
+            <p className="text-sm font-semibold text-text-secondary">
+              No chats yet
+            </p>
             <p className="text-xs text-text-muted mt-1 max-w-[220px]">
               Search above to find public channels & groups, or tap + to create
               one.
@@ -330,12 +365,11 @@ export default function ChatsSidebar({
             <div className="w-12 h-12 rounded-full bg-error-light flex items-center justify-center mx-auto mb-3 text-error">
               <Trash2 className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-black text-text-primary mb-1">
-              Delete "{confirmDeleteChat.name}" ?
+            <h3 className="text-base font-black text-slate-800 mb-1">
+              {confirmCopy?.title}
             </h3>
-            <p className="text-xs text-text-secondary font-semibold mb-5">
-              This action cannot be undone. All messages will be permanently
-              removed.
+            <p className="text-xs text-slate-500 font-semibold mb-5">
+              {confirmCopy?.body}
             </p>
             <div className="flex gap-3">
               <button
@@ -344,15 +378,17 @@ export default function ChatsSidebar({
               >
                 Cancel
               </button>
-              <button
-                onClick={() => {
-                  onDeleteChat(confirmDeleteChat.id);
-                  setConfirmDeleteChat(null);
-                }}
-                className="flex-1 py-2.5 bg-error hover:bg-opacity-90 rounded-xl text-xs font-black text-text-on-primary shadow-md transition-all"
-              >
-                Delete
-              </button>
+              {confirmCopy?.action && (
+                <button
+                  onClick={() => {
+                    onDeleteChat(confirmDeleteChat.id);
+                    setConfirmDeleteChat(null);
+                  }}
+                  className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-700 rounded-xl text-xs font-black text-white shadow-md transition-all"
+                >
+                  {confirmCopy.action}
+                </button>
+              )}
             </div>
           </div>
         </div>

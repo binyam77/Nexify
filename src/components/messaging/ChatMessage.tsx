@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { ArrowLeft, Check, CheckCheck } from "lucide-react";
 import type { Chat, Message } from "../../types";
-import ChatInfoModal from "../ChatInfoModal";
+import ChatInfoModal from "./ChatInfoModal";
 import MediaViewer from "./MediaViewer";
 import MessageActionBar from "./MessageActionBar";
 import MessageComposer from "./MessageComposer";
 import type { ComposerMediaType } from "./MessageComposer";
 import MessageMedia from "./MessageMedia";
+import LoadOlderButton from "./LoadOlderButton";
 import { useAutoScroll } from "./useAutoScroll";
 import { useLongPress } from "./useLongPress";
 import { copyToClipboard } from "./messagingUtils";
@@ -23,6 +24,9 @@ interface ChatMessageProps {
   onDeleteMessage: (messageId: string) => void;
   onUserTyping?: () => void;
   onBack: () => void;
+  hasOlder?: boolean;
+  isLoadingOlder?: boolean;
+  onLoadOlder?: () => void;
 }
 
 interface ChatBubbleProps {
@@ -107,6 +111,9 @@ export default function ChatMessage({
   onDeleteMessage,
   onUserTyping,
   onBack,
+  hasOlder = false,
+  isLoadingOlder = false,
+  onLoadOlder = () => undefined,
 }: ChatMessageProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState<{ id: string; text: string } | null>(
@@ -208,6 +215,9 @@ export default function ChatMessage({
         onClick={() => setSelectedId(null)}
         className="min-h-0 flex-1 overflow-y-auto px-3 py-3"
       >
+        {hasOlder && messages.length > 0 && (
+          <LoadOlderButton loading={isLoadingOlder} onClick={onLoadOlder} />
+        )}
         {messages.length === 0 ? (
           <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
             <style>{`

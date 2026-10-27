@@ -5,7 +5,7 @@
 
 import React, { useState, useRef } from "react";
 import { ArrowLeft, Camera, ChevronRight, UserPlus } from "lucide-react";
-import type { Chat, SelectableUser } from "../types";
+import type { Chat, SelectableUser } from "../../types";
 
 interface NewGroupModalProps {
   isOpen: boolean;

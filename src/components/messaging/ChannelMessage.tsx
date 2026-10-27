@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Pin } from "lucide-react";
 import type { Chat, Message } from "../../types";
-import ChannelInfoModal from "../ChannelInfoModal";
+import ChannelInfoModal from "./ChannelInfoModal";
 import MediaViewer from "./MediaViewer";
 import MessageActionBar, { QuickReactions } from "./MessageActionBar";
 import MessageComposer from "./MessageComposer";
 import type { ComposerMediaType } from "./MessageComposer";
 import MessageMedia from "./MessageMedia";
+import LoadOlderButton from "./LoadOlderButton";
 import { useAutoScroll } from "./useAutoScroll";
 import { useLongPress } from "./useLongPress";
 import { copyToClipboard, formatRelativeTime } from "./messagingUtils";
@@ -31,6 +32,9 @@ interface ChannelMessageProps {
     updates: { name?: string; avatarUrl?: string; description?: string },
   ) => void;
   onBack: () => void;
+  hasOlder?: boolean;
+  isLoadingOlder?: boolean;
+  onLoadOlder?: () => void;
 }
 
 // ሰዓቱ ("now → 5m → 2h") እንዲያድግ በየ ጊዜው ይታደሳል
@@ -69,7 +73,7 @@ function ChannelPost({
 }: ChannelPostProps) {
   const { bind, wasLongPress } = useLongPress(onLongPress);
   const reactions = msg.reactions ?? [];
-  const myEmoji = reactions.find((r) => r.users.includes("Me"))?.emoji ?? null;
+  const myEmoji = reactions.find((r) => r.mine)?.emoji ?? null;
   const timeLabel = msg.pending
     ? msg.time === "Waiting…"
       ? "Waiting…"
@@ -112,7 +116,7 @@ function ChannelPost({
           {reactions.length > 0 && (
             <div className="mb-1.5 flex flex-wrap gap-1.5">
               {reactions.map((r) => {
-                const mine = r.users.includes("Me");
+                const mine = r.mine;
                 return (
                   <button
                     key={r.emoji}
@@ -161,6 +165,9 @@ export default function ChannelMessage({
   onDeleteChannel,
   onUpdateChannelInfo,
   onBack,
+  hasOlder = false,
+  isLoadingOlder = false,
+  onLoadOlder = () => undefined,
 }: ChannelMessageProps) {
   // tap → emoji ረድፍ ብቻ ("react")፣ ረዘም ብሎ መያዝ → የድርጊት መስመር + emoji ("select")
   const [selected, setSelected] = useState<{
@@ -292,6 +299,9 @@ export default function ChannelMessage({
         onClick={() => setSelected(null)}
         className="min-h-0 flex-1 overflow-y-auto px-3 py-3"
       >
+        {hasOlder && messages.length > 0 && (
+          <LoadOlderButton loading={isLoadingOlder} onClick={onLoadOlder} />
+        )}
         {messages.length === 0 ? (
           <div className="flex h-full items-center justify-center">
             <p className="text-sm text-text-muted">No messages yet</p>

@@ -519,7 +519,7 @@ export default function Profile() {
       {/* 3. Bento-Grid of Videos and Photos (የልጥፎች መደርደሪያ) */}
       <div
         id="profile-posts-grid"
-        className="max-w-4xl w-full mx-auto px-4 md:px-8 mb-6"
+        className="max-w-4xl w-full mx-auto px-0 md:px-8 mb-6"
       >
         {!isOnline ? (
           <OfflineState onRetry={retryAll} />

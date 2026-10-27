@@ -14,7 +14,7 @@ import {
   Trash2,
   Check,
 } from "lucide-react";
-import type { Chat, GroupMember, SelectableUser, Message } from "../types";
+import type { Chat, GroupMember, SelectableUser, Message } from "../../types";
 import MemberPickerModal from "./MemberPickerModal";
 
 interface GroupInfoModalProps {

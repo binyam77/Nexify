@@ -1,6 +1,6 @@
 // ⭐ ይህ ፋይል "Backend ጋር እንዴት እንገናኝ" የሚለውን 1 ቦታ ብቻ ይይዛል።
 import { getStoredToken } from "./token-store";
-import { refreshAccessToken } from "./refresh-coordinator";
+import { refreshAccessToken, RefreshError } from "./refresh-coordinator";
 import { notifySessionExpired } from "./session-events";
 
 const API_URL = import.meta.env.VITE_API_URL as string;
@@ -60,6 +60,25 @@ async function performFetch(
   }
 }
 
+// Refresh + ዳግም ሙከራ የማያደርጉ endpoints፦ credentials የሚቀበሉ ወይም ራሳቸው 401 የራሱ
+// ትርጉም ያላቸው (ለምሳሌ "የተሳሳተ password")። /auth/me እና /auth/me/* ግን በ access token
+// ስለሚሰሩ በዚህ ዝርዝር ውስጥ የሉም — ስለዚህ ጊዜው ሲያልፍ በራስ-ሰር refresh ያደርጋሉ
+const NO_REFRESH_PATH_PREFIXES = [
+  "/auth/login",
+  "/auth/register",
+  "/auth/refresh",
+  "/auth/logout",
+  "/auth/verify-email",
+  "/auth/resend-verification",
+  "/auth/request-password-reset",
+  "/auth/reset-password",
+  "/auth/google/",
+];
+
+function canRefreshFor(path: string): boolean {
+  return !NO_REFRESH_PATH_PREFIXES.some((prefix) => path.startsWith(prefix));
+}
+
 export async function apiClient<T>(
   path: string,
   options: RequestOptions = {},
@@ -77,13 +96,16 @@ export async function apiClient<T>(
   // SHARED refreshAccessToken() — never its own fetch — so it can never
   // race against AuthContext's own refresh attempt (see
   // refresh-coordinator.ts's comment for why that race mattered).
-  const isAuthEndpointCall = path.startsWith("/auth/");
-  if (result.status === 401 && !explicitAuthHeader && !isAuthEndpointCall) {
+  if (result.status === 401 && !explicitAuthHeader && canRefreshFor(path)) {
     try {
       const newToken = await refreshAccessToken();
       result = await performFetch(path, options, `Bearer ${newToken}`);
-    } catch {
-      notifySessionExpired();
+    } catch (err) {
+      // Session በእርግጥ ካለቀ (401/403) ብቻ እናስወጣለን፤ ጊዜያዊ ችግር (network፣ 5xx)
+      // ተጠቃሚውን አያስወጣም — ዋናው 401 ስህተት ለ caller ይመለሳል
+      if (err instanceof RefreshError && err.sessionInvalid) {
+        notifySessionExpired();
+      }
     }
   }
 

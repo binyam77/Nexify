@@ -5,7 +5,7 @@
 
 import React, { useState, useRef } from "react";
 import { ArrowLeft, Camera } from "lucide-react";
-import type { Chat } from "../types";
+import type { Chat } from "../../types";
 
 interface NewChannelModalProps {
   isOpen: boolean;

@@ -406,7 +406,7 @@ export default function UserProfile() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-tr from-emerald-500 to-teal-600 flex items-center justify-center text-white text-3xl font-bold">
+              <div className="w-full h-full bg-[#198dfe] flex items-center justify-center text-white text-3xl font-bold">
                 {otherProfile.name.charAt(0).toUpperCase()}
               </div>
             )}
@@ -491,7 +491,7 @@ export default function UserProfile() {
 
         <button
           onClick={scrollToPosts}
-          className="w-full flex items-center justify-center gap-1.5 border-b border-border py-3 text-xs font-black uppercase tracking-wider text-primary"
+         className="-mx-4 w-[calc(100%+2rem)] md:mx-0 md:w-full flex items-center justify-center gap-1.5 border-b  border-border py-3 text-xs font-black uppercase tracking-wider text-primary"
         >
           <Grid className="w-3.5 h-3.5" />
           <span>Videos</span>
@@ -500,7 +500,7 @@ export default function UserProfile() {
 
       <div
         id="profile-posts-grid"
-        className="max-w-4xl w-full mx-auto px-4 md:px-8 mb-6"
+        className="max-w-4xl w-full mx-auto px-0 md:px-8 mb-6"
       >
         {!isOnline ? (
           <OfflineState onRetry={retryAll} />

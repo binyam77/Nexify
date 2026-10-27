@@ -6,21 +6,20 @@
 import React, { useState, useEffect, useRef } from "react";
 import { CheckCircle } from "lucide-react";
 
-import ChatsSidebar from "../components/ChatsSidebar";
+import ChatsSidebar from "../components/messaging/ChatsSidebar";
 import WelcomePane from "../components/messaging/WelcomePane";
 import ChannelMessage from "../components/messaging/ChannelMessage";
 
 import GroupMessage from "../components/messaging/GroupMessage";
 import ChatMessage from "../components/messaging/ChatMessage";
-import NewChannelModal from "../components/NewChannelModal";
-import NewGroupModal from "../components/NewGroupModal";
-import Profile from "./profile";
+import NewChannelModal from "../components/messaging/NewChannelModal";
+import NewGroupModal from "../components/messaging/NewGroupModal";
 import { useAuth } from "../context/AuthContext";
-import type { Chat, Message, NavTab } from "../types";
+import type { Chat, Message } from "../types";
 import { useLocation } from "react-router-dom";
 import { useUI } from "../context/UIContext";
-import CreateChoiceModal from "../components/CreateChoiceModal";
-import MemberPickerModal from "../components/MemberPickerModal";
+import CreateChoiceModal from "../components/messaging/CreateChoiceModal";
+import MemberPickerModal from "../components/messaging/MemberPickerModal";
 import type { SelectableUser } from "../types";
 import {
   listMyCommunitiesRequest,
@@ -35,6 +34,7 @@ import {
   deleteMessageRequest,
   togglePinMessageRequest,
   reactToMessageRequest,
+  inviteMembersRequest,
   type MessageMediaType as BackendMessageMediaType,
 } from "../api/community.api";
 import {
@@ -55,6 +55,7 @@ import {
   listChatMessagesRequest,
   editChatMessageRequest,
   deleteChatMessageRequest,
+  leaveConversationRequest,
 } from "../api/chat.api";
 import {
   mapConversationListItemToChat,
@@ -63,6 +64,7 @@ import {
 import { useRealtime } from "../context/RealtimeContext";
 import { useConnectionGate } from "../hooks/useConnectionGate";
 import { isServerReachable } from "../lib/connection-check";
+import { fetchFollowers, fetchFollowing } from "../api/follow.api";
 
 // ስህተቱን ለተጠቃሚ (እና ለ debug) የሚታይ አጭር ጽሑፍ ማድረግ
 function describeError(err: unknown): string {
@@ -71,6 +73,43 @@ function describeError(err: unknown): string {
     return String((err as { message: unknown }).message);
   }
   return "Unknown error";
+}
+
+// ሁሉንም ገጾች (cursor) ያመጣል — ከ 20 በላይ chat ካለ የተቀሩት እንዳይጠፉ።
+// ጣሪያ: 10 ገጽ × 50 = 500 (ከዚያ በላይ ቢኖር ሌላ ንድፍ ያስፈልጋል)
+async function fetchAllPages<T>(
+  fetchPage: (
+    cursor?: string,
+  ) => Promise<{ items: T[]; nextCursor: string | null; hasMore: boolean }>,
+  maxPages = 10,
+): Promise<T[]> {
+  const all: T[] = [];
+  let cursor: string | undefined;
+  for (let page = 0; page < maxPages; page++) {
+    const result = await fetchPage(cursor);
+    all.push(...result.items);
+    if (!result.hasMore || !result.nextCursor) break;
+    cursor = result.nextCursor;
+  }
+  return all;
+}
+
+// አባላትን በ 50 እየከፈለ ይጋብዛል (backend: በአንድ ጥያቄ እስከ 50)፤ የተጨመሩትን ጠቅላላ ይመልሳል
+async function inviteInChunks(
+  token: string,
+  communityId: string,
+  userIds: string[],
+): Promise<number> {
+  let total = 0;
+  for (let i = 0; i < userIds.length; i += 50) {
+    const { invitedCount } = await inviteMembersRequest(
+      token,
+      communityId,
+      userIds.slice(i, i + 50),
+    );
+    total += invitedCount;
+  }
+  return total;
 }
 
 // በ outbox (localStorage) የቆዩ "Waiting…" መልዕክቶችን ወደ Message መቀየር
@@ -120,8 +159,6 @@ function mergeHistory(
 // Features a mobile-responsive, Telegram-style layout, and an elegant desktop dual-pane view.
 // Users can create new communities/groups and join existing ones.
 export default function Community() {
-  const [activeTab, setActiveTab] = useState<NavTab>("community");
-  const [globalUploadTrigger, setGlobalUploadTrigger] = useState(false);
   const [activeChatId, setActiveChatId] = useState<string | null>(null); // መጀመሪያ ላይ Rooms list ብቻ ይታይ፤ ምንም chat auto-select አይደረግም
 
   const [isNewChannelOpen, setIsNewChannelOpen] = useState(false);
@@ -132,12 +169,11 @@ export default function Community() {
   // ፍሰቱ ሲሰረዝ New Group ፎርም እንዲጸዳ (key ሲቀየር ዳግም ይፈጠራል)
   const [groupFlowKey, setGroupFlowKey] = useState(0);
 
-  // Group member-picker's data source — ወደፊት real follow/follower data ብቻ ይተካዋል፣ MemberPickerModal ራሱ አይቀየርም
-  // ⏳ ለጊዜው Profile's demo otherUsers — backend ሲመጣ: GET /api/users/me/following ን ይተካል
-  const availableMembersForPicker: SelectableUser[] = [
-    { id: "abel_dj", name: "Abel T.", username: "abel_dj", photo: "" },
-    { id: "betty_dev", name: "Betty Dev", username: "betty_dev", photo: "" },
-  ];
+  // Add Members ዝርዝር: የምከተላቸው + የሚከተሉኝ ሰዎች (ከ Profile ጎራ ይጫናል)
+  const [people, setPeople] = useState<SelectableUser[]>([]);
+  const [peopleStatus, setPeopleStatus] = useState<
+    "idle" | "loading" | "error"
+  >("idle");
 
   const [toastMessage, setToastMessage] = useState<string | null>(null);
   const [isLoadingSuggested, setIsLoadingSuggested] = useState(false);
@@ -147,15 +183,16 @@ export default function Community() {
   const latestSearchRef = useRef("");
   // የተቀላቀልናቸው realtime rooms — ግንኙነት ተመልሶ socket አዲስ ሲሆን ዳግም ለመቀላቀል
   const joinedRoomsRef = useRef<Set<string>>(new Set());
-  // ዝርዝር መጫን ሲወድቅ — በዝርዝሩ ላይ በቋሚነት ይታያል (ከ toast በተለየ አይጠፋም)
-  const [listErrors, setListErrors] = useState<{
-    mine?: string;
-    chats?: string;
-  }>({});
+
   // የ server መድረስ ፍተሻ ሁለቴ እንዳይጀመር
   const checkingConnectionRef = useRef(false);
   // ታሪካቸው ከ server የተጫነ chats (live መልዕክት ብቻ ያለው ግቤት "ተጭኗል" እንዳይመስል)
   const loadedChatsRef = useRef<Set<string>>(new Set());
+  // የቆዩ መልዕክቶች: ቀጣዩ cursor በ chat፣ እና የ UI ሁኔታ (ተጨማሪ አለ? / እየጫነ?)
+  const historyCursorRef = useRef<Record<string, string | null>>({});
+  const [olderByChat, setOlderByChat] = useState<
+    Record<string, { hasMore: boolean; loading: boolean }>
+  >({});
 
   // User profile details (Current member profile loaded dynamically from localStorage)
   const { user, accessToken } = useAuth();
@@ -172,23 +209,15 @@ export default function Community() {
     stopTyping,
     getOnlineUsers,
   } = useRealtime();
-  // ግንኙነት ደካማ/የለም ከሆነ Community አይሰራም
+  // browserOnline: ለ server ድርጊቶች (አጥፋ/ፍጠር/...) ግንኙነት ከሌለ አጭር መልእክት ለማሳየት
   const { browserOnline } = useConnectionGate(isConnected);
 
-
-  // Chat list. The single "chat-2" entry below is Chat-domain (1:1) DEMO
-  // data — untouched, out of this refactor's scope. Community entries
-  // (channel/group) are no longer seeded here or from localStorage; they
-  // are loaded from the real backend by the effect further down and
-  // merged into this same array once they arrive.
-  // Chat list. Community entries (channel/group) and Conversation entries
-  // (chat/privateGroup) are both loaded from the real backend — see the
-  // effects further down. No demo/local seed data remains.
+  // Chat list: Community (channel/group) እና Conversation (chat/privateGroup)
+  // ሁለቱም ከ backend ይጫናሉ — ከታች ያሉትን effects ይመልከቱ።
   const [chats, setChats] = useState<Chat[]>([]);
 
-  // Message store indexed by chat id. For Community chats this is
-  // populated from the backend (listMessagesRequest + live 'message:new'
-  // events); for the demo "chat-2" entry it stays local-only, unchanged.
+  // የመልዕክት ማከማቻ በ chat id: ከ backend (list + ቀጥታ 'message:new') እና
+  // ገና ያልተላኩ ("Waiting…") መልዕክቶች ይዋሃዱበታል።
   const [messagesDb, setMessagesDb] = useState<Record<string, Message[]>>({});
   const location = useLocation();
 
@@ -222,14 +251,61 @@ export default function Community() {
     }
   };
 
+  // ከ realtime room ጋር መቀላቀል (እና ግንኙነት ከተቋረጠ በኋላ ዳግም ለመቀላቀል መመዝገብ)
+  const joinRoomTracked = (
+    scope: "community" | "conversation",
+    targetId: string,
+  ) =>
+    joinRoom(scope, targetId)
+      .then(() => {
+        joinedRoomsRef.current.add(`${scope}:${targetId}`);
+      })
+      .catch((err) => console.error("Failed to join realtime room:", err));
+
+  // የምከተላቸው + የሚከተሉኝ (ድግግሞሽ እና ራሴ ተወግደው፣ በስም ተደርድረው)
+  const loadPeople = async () => {
+    if (!user) return;
+    setPeopleStatus("loading");
+    try {
+      const [following, followers] = await Promise.all([
+        fetchAllPages((cursor) => fetchFollowing(user.id, cursor, 50), 4),
+        fetchAllPages((cursor) => fetchFollowers(user.id, cursor, 50), 4),
+      ]);
+      const byId = new Map<string, SelectableUser>();
+      for (const p of [...following, ...followers]) {
+        if (p.userId === user.id || byId.has(p.userId)) continue;
+        byId.set(p.userId, {
+          id: p.userId,
+          name: p.displayName || p.username,
+          username: p.username,
+          photo: p.avatar ?? "",
+        });
+      }
+      setPeople(
+        [...byId.values()].sort((a, b) => a.name.localeCompare(b.name)),
+      );
+      setPeopleStatus("idle");
+    } catch (err) {
+      console.error("Failed to load people:", err);
+      setPeopleStatus("error");
+    }
+  };
+
+  useEffect(() => {
+    if (!accessToken || !user) return;
+    void loadPeople();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- loadPeople በየ render ይፈጠራል፤ የተጠቃሚ id ሲቀየር ብቻ እንጫናለን
+  }, [accessToken, user?.id]);
+
   // ================= LOAD COMMUNITIES: "Mine" (joined) =================
   const loadMine = async (token: string, currentUserId: string) => {
     try {
-      const mine = await listMyCommunitiesRequest(token);
-      const mineChats = mine.items.map((item) =>
+      const items = await fetchAllPages((cursor) =>
+        listMyCommunitiesRequest(token, { cursor, limit: 50 }),
+      );
+      const mineChats = items.map((item) =>
         mapCommunityListItemToChat(item, currentUserId),
       );
-      setListErrors((p) => ({ ...p, mine: undefined }));
       setChats((prev) => {
         // ቀድሞ የነበሩ "mine" community entries ብቻ ይተካሉ — suggested communities
         // እና ሁሉም conversation entries (chat/privateGroup) አይነኩም
@@ -240,18 +316,19 @@ export default function Community() {
       });
     } catch (err) {
       console.error("Failed to load your communities:", err);
-      setListErrors((p) => ({ ...p, mine: describeError(err) }));
+      if (browserOnline) triggerToast("Could not load your communities.");
     }
   };
 
   // ================= LOAD CONVERSATIONS (Chat domain — 1:1 + private group) =================
   const loadConversations = async (token: string, currentUserId: string) => {
     try {
-      const result = await listMyConversationsRequest(token);
-      const conversationChats = result.items.map((item) =>
+      const items = await fetchAllPages((cursor) =>
+        listMyConversationsRequest(token, { cursor, limit: 50 }),
+      );
+      const conversationChats = items.map((item) =>
         mapConversationListItemToChat(item, currentUserId),
       );
-      setListErrors((p) => ({ ...p, chats: undefined }));
       setChats((prev) => {
         const withoutConversations = prev.filter(
           (c) => c.type !== "chat" && c.type !== "privateGroup",
@@ -264,7 +341,7 @@ export default function Community() {
       });
     } catch (err) {
       console.error("Failed to load your chats:", err);
-      setListErrors((p) => ({ ...p, chats: describeError(err) }));
+      if (browserOnline) triggerToast("Could not load your chats.");
     }
   };
 
@@ -293,12 +370,6 @@ export default function Community() {
     } finally {
       setIsLoadingSuggested(false);
     }
-  };
-
-  const retryLists = () => {
-    if (!accessToken || !user) return;
-    void loadMine(accessToken, user.id);
-    void loadConversations(accessToken, user.id);
   };
 
   const handleRetrySuggested = () => {
@@ -593,12 +664,6 @@ export default function Community() {
 
     // eslint-disable-next-line react-hooks/exhaustive-deps -- sendMessage is recreated every render; flushQueue reads current values via closure each time this effect re-runs on socket identity change
   }, [socket]);
-  // Total unread messages count for active chats to display on the sidebar
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Sidebar's unreadCommunityCount prop ላይ ጥክም ላይ ይውላል
-  const unreadTotal = chats.reduce(
-    (sum, c) => sum + (c.isJoined ? c.unreadCount : 0),
-    0,
-  );
 
   // Return formatted timestamp showing date and time
   const getFormattedDateTime = () => {
@@ -625,7 +690,7 @@ export default function Community() {
     const target = chats.find((c) => c.id === chatId);
 
     if (isCommunityChat(target)) {
-      if (!accessToken) return;
+      if (!accessToken || !requireConnection()) return;
       try {
         await leaveCommunityRequest(accessToken, chatId);
       } catch (err) {
@@ -661,7 +726,7 @@ export default function Community() {
     const target = chats.find((c) => c.id === chatId);
 
     if (isCommunityChat(target)) {
-      if (!accessToken) return;
+      if (!accessToken || !requireConnection()) return;
       try {
         await updateCommunityRequest(accessToken, chatId, {
           name: updates.name,
@@ -680,18 +745,39 @@ export default function Community() {
     );
     triggerToast("✅ Group updated!");
   };
+
+  // ማጥፋት — ትርጉሙ በ chat ዓይነት ይለያል፦
+  //  • የራሴ ቻናል/ግሩፕ → ለሁሉም ይሰረዛል
+  //  • የሌላ ሰው ቻናል/ግሩፕ → መውጣት (ማጥፋት አይደለም፤ ከዚህ በፊት 403 ይመልስ ነበር)
+  //  • private group → መውጣት
+  //  • 1:1 → ገና አይቻልም ("ለእኔ ብቻ አጥፋ" backend ያስፈልገዋል)፤
+  //    ከዚህ በፊት የሐሰት "ተሰረዘ" ይል ነበር (Refresh ሲደረግ ይመለስ ነበር)
   const handleDeleteChat = async (chatId: string) => {
     const target = chats.find((c) => c.id === chatId);
+    if (!target) return;
 
-    if (isCommunityChat(target)) {
-      if (!accessToken) return;
-      try {
+    if (target.type === "chat") {
+      triggerToast("Private chats can't be deleted yet.");
+      return;
+    }
+    if (!accessToken || !requireConnection()) return;
+
+    if (isCommunityChat(target) && !target.isCreatedByMe) {
+      await handleLeaveGroup(chatId);
+      return;
+    }
+
+    try {
+      if (isCommunityChat(target)) {
         await deleteCommunityRequest(accessToken, chatId);
-      } catch (err) {
-        console.error("Failed to delete community:", err);
-        triggerToast(" Failed to delete. Please try again.");
-        return;
+      } else {
+        // private group — መውጣት (የመጨረሻው አባል ሲወጣ server ውይይቱን ያጠፋል)
+        await leaveConversationRequest(accessToken, chatId);
       }
+    } catch (err) {
+      console.error("Failed to delete/leave chat:", err);
+      triggerToast("Failed to complete this action. Please try again.");
+      return;
     }
 
     setChats((prev) => prev.filter((c) => c.id !== chatId));
@@ -700,14 +786,16 @@ export default function Community() {
       delete updated[chatId];
       return updated;
     });
-    if (activeChatId === chatId) {
-      setActiveChatId(null);
-    }
-    triggerToast("Deleted successfully!");
+    loadedChatsRef.current.delete(chatId);
+    joinedRoomsRef.current.delete(`community:${chatId}`);
+    joinedRoomsRef.current.delete(`conversation:${chatId}`);
+    if (activeChatId === chatId) setActiveChatId(null);
+    triggerToast(
+      isCommunityChat(target) ? "Deleted successfully!" : "You left the group.",
+    );
   };
 
-  // DEMO ONLY: contact "typing..." simulation — real backend ሲመጣ Socket.IO 'typing' event
-  // emit/receive ብቻ ይተካዋል፣ ይህ function ራሱ ይጠፋል
+  // "እየጻፈ ነው" ምልክት ለሌሎች ይላካል (Socket.IO)፤ ከ 2 ሰከንድ ጸጥታ በኋላ ይቆማል
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleUserTyping = () => {
     if (!activeChatId) return;
@@ -749,6 +837,11 @@ export default function Community() {
           .map((m) => mapCommunityMessageToMessage(m, user.id))
           .reverse();
         loadedChatsRef.current.add(chatId);
+        historyCursorRef.current[chatId] = result.nextCursor;
+        setOlderByChat((prev) => ({
+          ...prev,
+          [chatId]: { hasMore: result.hasMore, loading: false },
+        }));
         setMessagesDb((prev) => ({
           ...prev,
           [chatId]: mergeHistory(
@@ -787,6 +880,11 @@ export default function Community() {
           .map((m) => mapChatMessageToMessage(m, user.id))
           .reverse();
         loadedChatsRef.current.add(chatId);
+        historyCursorRef.current[chatId] = result.nextCursor;
+        setOlderByChat((prev) => ({
+          ...prev,
+          [chatId]: { hasMore: result.hasMore, loading: false },
+        }));
         setMessagesDb((prev) => ({
           ...prev,
           [chatId]: mergeHistory(
@@ -807,6 +905,65 @@ export default function Community() {
         }));
         if (browserOnline) triggerToast(" Could not load messages.");
       }
+    }
+  };
+
+  // የቆዩ መልዕክቶችን መጫን (cursor ገጽ) — "Load earlier messages" ሲነካ
+  const loadOlderMessages = async (chatId: string) => {
+    const cursor = historyCursorRef.current[chatId];
+    const target = chats.find((c) => c.id === chatId);
+    if (!accessToken || !user || !cursor || !target) return;
+    if (olderByChat[chatId]?.loading) return;
+    if (!requireConnection()) return;
+
+    setOlderByChat((prev) => ({
+      ...prev,
+      [chatId]: { hasMore: true, loading: true },
+    }));
+    try {
+      let older: Message[];
+      let nextCursor: string | null;
+      let hasMore: boolean;
+      if (isCommunityChat(target)) {
+        const result = await listMessagesRequest(accessToken, chatId, {
+          cursor,
+        });
+        older = result.items
+          .map((m) => mapCommunityMessageToMessage(m, user.id))
+          .reverse();
+        nextCursor = result.nextCursor;
+        hasMore = result.hasMore;
+      } else {
+        const result = await listChatMessagesRequest(accessToken, chatId, {
+          cursor,
+        });
+        older = result.items
+          .map((m) => mapChatMessageToMessage(m, user.id))
+          .reverse();
+        nextCursor = result.nextCursor;
+        hasMore = result.hasMore;
+      }
+
+      historyCursorRef.current[chatId] = nextCursor;
+      setMessagesDb((prev) => {
+        const existing = prev[chatId] ?? [];
+        const known = new Set(existing.map((m) => m.id));
+        return {
+          ...prev,
+          [chatId]: [...older.filter((m) => !known.has(m.id)), ...existing],
+        };
+      });
+      setOlderByChat((prev) => ({
+        ...prev,
+        [chatId]: { hasMore, loading: false },
+      }));
+    } catch (err) {
+      console.error("Failed to load older messages:", err);
+      setOlderByChat((prev) => ({
+        ...prev,
+        [chatId]: { hasMore: true, loading: false },
+      }));
+      if (browserOnline) triggerToast("Could not load earlier messages.");
     }
   };
 
@@ -1098,55 +1255,43 @@ export default function Community() {
       [activeChatId]: (prev[activeChatId] || []).map((msg) => {
         if (msg.id !== messageId) return msg;
 
-        // First remove any existing reaction by 'Me' (ensuring max 1 reaction per user)
-        let currentReactions = msg.reactions || [];
+        // አንድ ሰው በአንድ መልዕክት አንድ reaction ብቻ ነው (backend ደግሞ እንዲሁ)፤
+        // የእኔን የምንለየው በ `mine` ባንዲራ እንጂ በ "Me" ጽሑፍ አይደለም
+        const current = msg.reactions ?? [];
+        const prior = current.find((r) => r.mine);
 
-        // Find if 'Me' had a prior reaction on any emoji
-        const priorReaction = currentReactions.find((r) =>
-          r.users.includes("Me"),
-        );
-
-        // Remove 'Me' from the prior reaction
-        if (priorReaction) {
-          currentReactions = currentReactions
-            .map((r) => {
-              if (r.users.includes("Me")) {
-                const updatedUsers = r.users.filter((u) => u !== "Me");
-                return {
+        // የቀድሞውን የእኔን ማንሳት
+        let next = current
+          .map((r) =>
+            r.mine
+              ? {
                   ...r,
-                  count: updatedUsers.length,
-                  users: updatedUsers,
-                };
-              }
-              return r;
-            })
-            .filter((r) => r.count > 0);
+                  count: r.count - 1,
+                  mine: false,
+                  users: r.users.filter((u) => u !== "Me"),
+                }
+              : r,
+          )
+          .filter((r) => r.count > 0);
+
+        // ተመሳሳዩን ከመረጥኩ ማንሳት ብቻ ነው፤ ሌላ ከሆነ መጨመር
+        if (prior?.emoji !== emoji) {
+          const existing = next.find((r) => r.emoji === emoji);
+          next = existing
+            ? next.map((r) =>
+                r.emoji === emoji
+                  ? {
+                      ...r,
+                      count: r.count + 1,
+                      mine: true,
+                      users: [...r.users, "Me"],
+                    }
+                  : r,
+              )
+            : [...next, { emoji, count: 1, mine: true, users: ["Me"] }];
         }
 
-        // If the newly selected emoji is different from the prior one, add it:
-        const wasPriorThisEmoji =
-          priorReaction && priorReaction.emoji === emoji;
-
-        if (!wasPriorThisEmoji) {
-          // Check if the emoji already has a reaction block
-          const existingReaction = currentReactions.find(
-            (r) => r.emoji === emoji,
-          );
-          if (existingReaction) {
-            currentReactions = currentReactions.map((r) =>
-              r.emoji === emoji
-                ? { ...r, count: r.count + 1, users: [...r.users, "Me"] }
-                : r,
-            );
-          } else {
-            currentReactions = [
-              ...currentReactions,
-              { emoji, count: 1, users: ["Me"] },
-            ];
-          }
-        }
-
-        return { ...msg, reactions: currentReactions };
+        return { ...msg, reactions: next };
       }),
     }));
   };
@@ -1165,7 +1310,8 @@ export default function Community() {
   // Join community group room handler
   const handleJoinChat = async (chatId: string) => {
     const targetChat = chats.find((c) => c.id === chatId);
-    if (!isCommunityChat(targetChat) || !accessToken) return;
+    if (!isCommunityChat(targetChat) || !accessToken || !requireConnection())
+      return;
 
     try {
       await joinCommunityRequest(accessToken, chatId);
@@ -1190,42 +1336,41 @@ export default function Community() {
       }),
     );
 
-    setMessagesDb((prev) => (prev[chatId] ? prev : { ...prev, [chatId]: [] }));
+    // ይህ chat አሁን ክፍት ከሆነ ታሪኩ እና room ወዲያው ይጫናሉ፤ አለዚያ ሲከፈት ይጫናሉ
+    // (ከዚህ በፊት ባዶ [] ተቀምጦ ታሪኩ ሳይጫን ይቀር ነበር)
+    if (activeChatId === chatId) void handleSelectChat(chatId);
   };
-  // Existing group ላይ አዲስ members መጨመሪያ (Invite Members flow)
-  const handleInviteMembers = (
+
+  // Group ላይ አዲስ አባላት መጨመር — ባለቤት ብቻ (backend ደግሞ ያረጋግጣል)።
+  // ከዚህ በፊት በ local ብቻ ይቆጥር እና የሐሰት "ተጨመሩ" መልዕክት ያሳይ ነበር።
+  const handleInviteMembers = async (
     chatId: string,
     invitedUsers: SelectableUser[],
   ) => {
-    if (invitedUsers.length === 0) return;
-
-    setChats((prev) =>
-      prev.map((c) =>
-        c.id === chatId
-          ? { ...c, membersCount: c.membersCount + invitedUsers.length }
-          : c,
-      ),
-    );
-
-    const names = invitedUsers.map((u) => u.name).join(", ");
-    const systemMsg: Message = {
-      id: `sys-invite-${Date.now()}`,
-      senderName: "System",
-      text: `👋 ${names} ${invitedUsers.length > 1 ? "have" : "has"} been added to the group.`,
-      time: new Date().toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-      }),
-      isSentByMe: false,
-    };
-    setMessagesDb((prev) => ({
-      ...prev,
-      [chatId]: [...(prev[chatId] || []), systemMsg],
-    }));
-
-    triggerToast(
-      `✅ Added ${invitedUsers.length} member${invitedUsers.length > 1 ? "s" : ""}!`,
-    );
+    if (invitedUsers.length === 0 || !accessToken || !requireConnection())
+      return;
+    try {
+      const added = await inviteInChunks(
+        accessToken,
+        chatId,
+        invitedUsers.map((u) => u.id),
+      );
+      if (added > 0) {
+        setChats((prev) =>
+          prev.map((c) =>
+            c.id === chatId
+              ? { ...c, membersCount: c.membersCount + added }
+              : c,
+          ),
+        );
+        triggerToast(`Added ${added} member${added > 1 ? "s" : ""}.`);
+      } else {
+        triggerToast("They are already members.");
+      }
+    } catch (err) {
+      console.error("Failed to invite members:", err);
+      triggerToast("Couldn't add members. Please try again.");
+    }
   };
 
   // Create new group logic
@@ -1244,9 +1389,25 @@ export default function Community() {
         themeColor: newChat.bgGradient,
       });
 
+      // የተመረጡ አባላት በእውነተኛ ጥሪ ይጋበዛሉ (ከዚህ በፊት በ local ብቻ ይመስሉ ነበር)
+      let addedCount = 0;
+      let inviteFailed = false;
+      if (initialMembers.length > 0) {
+        try {
+          addedCount = await inviteInChunks(
+            accessToken,
+            created.id,
+            initialMembers.map((u) => u.id),
+          );
+        } catch (err) {
+          console.error("Failed to add initial members:", err);
+          inviteFailed = true;
+        }
+      }
+
       const mapped = mapCommunitySuggestedToChat({
         ...created,
-        membersCount: 1,
+        membersCount: 1 + addedCount,
       });
       const finalChat: Chat = {
         ...mapped,
@@ -1257,14 +1418,13 @@ export default function Community() {
       setChats((prev) => [finalChat, ...prev]);
       setMessagesDb((prev) => ({ ...prev, [finalChat.id]: [] }));
       setActiveChatId(finalChat.id);
+      void joinRoomTracked("community", finalChat.id);
       setPickedMembers([]);
 
-      const memberNote =
-        initialMembers.length > 0
-          ? ` (${initialMembers.length} member${initialMembers.length > 1 ? "s" : ""} selected locally — real invites need the Profile domain)`
-          : "";
       triggerToast(
-        ` Group "${finalChat.name}" created successfully${memberNote}!`,
+        inviteFailed
+          ? `Group "${finalChat.name}" created, but members couldn't be added.`
+          : `Group "${finalChat.name}" created successfully!`,
       );
       return true;
     } catch (err) {
@@ -1300,6 +1460,7 @@ export default function Community() {
       setChats((prev) => [finalChat, ...prev]);
       setMessagesDb((prev) => ({ ...prev, [finalChat.id]: [] }));
       setActiveChatId(finalChat.id);
+      void joinRoomTracked("community", finalChat.id);
       triggerToast(` Channel "${finalChat.name}" created successfully!`);
       return true;
     } catch (err) {
@@ -1327,7 +1488,6 @@ export default function Community() {
     );
     if (existingChat) {
       void handleSelectChat(existingChat.id); // ታሪክ ይጭናል፣ room ይገባል
-      setActiveTab("community");
       triggerToast(` Chat opened with ${otherUser.name}`);
       return;
     }
@@ -1377,7 +1537,6 @@ export default function Community() {
       setChats((prev) => [newChat, ...prev]);
       setMessagesDb((prev) => ({ ...prev, [newChat.id]: [] }));
       setActiveChatId(newChat.id);
-      setActiveTab("community");
       // ከ room ጋር መቀላቀል — ያለዚያ የሌላው ሰው live መልዕክት አይደርስም
       joinRoom("conversation", newChat.id)
         .then(() => joinedRoomsRef.current.add(`conversation:${newChat.id}`))
@@ -1435,102 +1594,97 @@ export default function Community() {
         </div>
       )}
 
-      {/* Dynamic Tab Switching */}
-      {activeTab === "community" && (
-        /* Workspace View (Community Workspace Card) */
-        <main className="flex-1 flex overflow-hidden h-full min-h-0">
-          <div className="flex-1 flex w-full h-full overflow-hidden relative min-h-0">
-            {/* Chats sidebar list
+      {/* Workspace View (Community Workspace Card) */}
+      <main className="flex-1 flex overflow-hidden h-full min-h-0">
+        <div className="flex-1 flex w-full h-full overflow-hidden relative min-h-0">
+          {/* Chats sidebar list
                 Hidden on mobile screen if a chat room is active (Telegram-style navigation) */}
-            <div
-              className={`w-full md:w-auto h-full shrink-0 ${activeChatId ? "hidden md:block" : "block"}`}
-            >
-              <ChatsSidebar
-                chats={chats}
-                activeChatId={activeChatId}
-                onSelectChat={handleSelectChat}
-                onCreatePlusClick={() => setIsCreateChoiceOpen(true)}
-                onDeleteChat={handleDeleteChat}
-                onJoinChat={handleJoinChat}
-                onToggleJoin={handleToggleJoin}
-                isLoadingSuggested={isLoadingSuggested}
-                suggestedError={suggestedError}
-                onRetrySuggested={handleRetrySuggested}
-                suggestedSearchQuery={suggestedSearchQuery}
-                onSuggestedSearchChange={setSuggestedSearchQuery}
-                listError={listErrors.mine ?? listErrors.chats ?? null}
-                onRetryList={retryLists}
-              />
-            </div>
-
-            {/* Active messaging workspace
-                Hidden on mobile screen if no active chat is selected */}
-            <div
-              className={`flex-1 h-full relative min-h-0 overflow-hidden ${!activeChatId ? "hidden md:block" : "block"}`}
-            >
-              {activeChat?.type === "channel" ? (
-                <ChannelMessage
-                  key={activeChat.id}
-                  chat={activeChat}
-                  messages={activeMessages}
-                  onSendMessage={handleSendMessage}
-                  onEditMessage={handleEditMessage}
-                  onDeleteMessage={handleDeleteMessage}
-                  onReactMessage={handleReactMessage}
-                  onPinMessage={handlePinMessage}
-                  onJoinChat={handleJoinChat}
-                  onUnsubscribeChannel={handleLeaveGroup}
-                  onDeleteChannel={handleDeleteChat}
-                  onUpdateChannelInfo={handleUpdateGroupInfo}
-                  onBack={() => setActiveChatId(null)}
-                />
-              ) : activeChat?.type === "group" ||
-                activeChat?.type === "privateGroup" ? (
-                <GroupMessage
-                  key={activeChat.id}
-                  chat={activeChat}
-                  messages={activeMessages}
-                  onSendMessage={handleSendMessage}
-                  onEditMessage={handleEditMessage}
-                  onDeleteMessage={handleDeleteMessage}
-                  onReactMessage={handleReactMessage}
-                  onPinMessage={handlePinMessage}
-                  onJoinChat={handleJoinChat}
-                  onLeaveGroup={handleLeaveGroup}
-                  onDeleteGroup={handleDeleteChat}
-                  onUpdateGroupInfo={handleUpdateGroupInfo}
-                  onInviteMembers={handleInviteMembers}
-                  availableUsersForInvite={availableMembersForPicker}
-                  onUserTyping={handleUserTyping}
-                  onBack={() => setActiveChatId(null)}
-                />
-              ) : activeChat?.type === "chat" ? (
-                <ChatMessage
-                  key={activeChat.id}
-                  chat={activeChat}
-                  messages={activeMessages}
-                  onSendMessage={handleSendMessage}
-                  onEditMessage={handleEditMessage}
-                  onDeleteMessage={handleDeleteMessage}
-                  onUserTyping={handleUserTyping}
-                  onBack={() => setActiveChatId(null)}
-                />
-                    ) : (
-                <WelcomePane />
-              )}
-            </div>
+          <div
+            className={`w-full md:w-auto h-full shrink-0 ${activeChatId ? "hidden md:block" : "block"}`}
+          >
+            <ChatsSidebar
+              chats={chats}
+              activeChatId={activeChatId}
+              onSelectChat={handleSelectChat}
+              onCreatePlusClick={() => setIsCreateChoiceOpen(true)}
+              onDeleteChat={handleDeleteChat}
+              onJoinChat={handleJoinChat}
+              onToggleJoin={handleToggleJoin}
+              isLoadingSuggested={isLoadingSuggested}
+              suggestedError={suggestedError}
+              onRetrySuggested={handleRetrySuggested}
+              suggestedSearchQuery={suggestedSearchQuery}
+              onSuggestedSearchChange={setSuggestedSearchQuery}
+            />
           </div>
-        </main>
-      )}
 
-      {activeTab === "profile" && (
-        <Profile
-          triggerGlobalUpload={globalUploadTrigger}
-          onClearGlobalUpload={() => setGlobalUploadTrigger(false)}
-          onBackToCommunity={() => setActiveTab("community")}
-          onStartChat={handleStartChat}
-        />
-      )}
+          {/* Active messaging workspace
+                Hidden on mobile screen if no active chat is selected */}
+          <div
+            className={`flex-1 h-full relative min-h-0 overflow-hidden ${!activeChatId ? "hidden md:block" : "block"}`}
+          >
+            {activeChat?.type === "channel" ? (
+              <ChannelMessage
+                key={activeChat.id}
+                chat={activeChat}
+                messages={activeMessages}
+                onSendMessage={handleSendMessage}
+                onEditMessage={handleEditMessage}
+                onDeleteMessage={handleDeleteMessage}
+                onReactMessage={handleReactMessage}
+                onPinMessage={handlePinMessage}
+                onJoinChat={handleJoinChat}
+                onUnsubscribeChannel={handleLeaveGroup}
+                hasOlder={olderByChat[activeChat.id]?.hasMore ?? false}
+                isLoadingOlder={olderByChat[activeChat.id]?.loading ?? false}
+                onLoadOlder={() => void loadOlderMessages(activeChat.id)}
+                onDeleteChannel={handleDeleteChat}
+                onUpdateChannelInfo={handleUpdateGroupInfo}
+                onBack={() => setActiveChatId(null)}
+              />
+            ) : activeChat?.type === "group" ||
+              activeChat?.type === "privateGroup" ? (
+              <GroupMessage
+                key={activeChat.id}
+                chat={activeChat}
+                messages={activeMessages}
+                onSendMessage={handleSendMessage}
+                onEditMessage={handleEditMessage}
+                onDeleteMessage={handleDeleteMessage}
+                onReactMessage={handleReactMessage}
+                onPinMessage={handlePinMessage}
+                onJoinChat={handleJoinChat}
+                onLeaveGroup={handleLeaveGroup}
+                onDeleteGroup={handleDeleteChat}
+                onUpdateGroupInfo={handleUpdateGroupInfo}
+                onInviteMembers={handleInviteMembers}
+                hasOlder={olderByChat[activeChat.id]?.hasMore ?? false}
+                isLoadingOlder={olderByChat[activeChat.id]?.loading ?? false}
+                onLoadOlder={() => void loadOlderMessages(activeChat.id)}
+                availableUsersForInvite={people}
+                onUserTyping={handleUserTyping}
+                onBack={() => setActiveChatId(null)}
+              />
+            ) : activeChat?.type === "chat" ? (
+              <ChatMessage
+                key={activeChat.id}
+                chat={activeChat}
+                messages={activeMessages}
+                onSendMessage={handleSendMessage}
+                onEditMessage={handleEditMessage}
+                onDeleteMessage={handleDeleteMessage}
+                onUserTyping={handleUserTyping}
+                hasOlder={olderByChat[activeChat.id]?.hasMore ?? false}
+                isLoadingOlder={olderByChat[activeChat.id]?.loading ?? false}
+                onLoadOlder={() => void loadOlderMessages(activeChat.id)}
+                onBack={() => setActiveChatId(null)}
+              />
+            ) : (
+              <WelcomePane />
+            )}
+          </div>
+        </div>
+      </main>
 
       {/* 3. CREATE CHOICE MODAL (+ ተጭኖ ሲከፈት Channel/Group ምርጫ) */}
       <CreateChoiceModal
@@ -1544,6 +1698,7 @@ export default function Community() {
         onSelectGroup={async () => {
           if (!(await ensureReachable())) return; // ካርዱ ክፍት ይቆያል
           setIsCreateChoiceOpen(false);
+          void loadPeople(); // ከዚህ በፊት የተከተሉት አዲስ ሰዎች እንዲታዩ
           setIsMemberPickerOpen(true); // ደረጃ 1: Add Members
         }}
       />
@@ -1573,7 +1728,12 @@ export default function Community() {
       <MemberPickerModal
         key={isMemberPickerOpen ? "open" : "closed"}
         isOpen={isMemberPickerOpen}
-        availableUsers={availableMembersForPicker}
+        availableUsers={people}
+        isLoading={peopleStatus === "loading"}
+        errorText={
+          peopleStatus === "error" ? "Couldn't load your people." : null
+        }
+        onRetry={() => void loadPeople()}
         initialSelected={pickedMembers}
         confirmLabel="Next"
         onClose={() => {

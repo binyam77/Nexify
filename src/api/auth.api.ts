@@ -10,7 +10,7 @@ export interface MeResponse {
   id: string;
   username: string;
   email: string;
-  role: "user" | "moderator" | "admin";
+  role: "USER" | "MODERATOR" | "ADMIN";
   isVerified: boolean;
   createdAt: string;
 }
@@ -50,13 +50,6 @@ export function resendVerificationRequest(
   });
 }
 
-// ================= REFRESH =================
-export function refreshRequest(): Promise<LoginResponse> {
-  // Body አያስፈልገውም — refresh_token cookie ራሱ (httpOnly) አውቶማቲክ ይላካል
-  // (apiClient's credentials: "include" ስላደረግን)
-  return apiClient<LoginResponse>("/auth/refresh", { method: "POST" });
-}
-
 // ================= LOGOUT =================
 export function logoutRequest(): Promise<MessageResponse> {
   return apiClient<MessageResponse>("/auth/logout", { method: "POST" });
@@ -90,25 +83,23 @@ export function resetPasswordRequest(params: {
   });
 }
 
+// Authorization ራሱ በ apiClient ከ token-store ይያያዛል (ጊዜው ካለፈ በራስ-ሰር refresh ያደርጋል)
 export function changeUsernameRequest(
   username: string,
-  accessToken: string,
 ): Promise<MessageResponse> {
   return apiClient<MessageResponse>("/auth/me/username", {
     method: "PATCH",
     body: { username },
-    headers: { Authorization: `Bearer ${accessToken}` },
   });
 }
 
-export function changePasswordRequest(
-  params: { currentPassword: string; newPassword: string },
-  accessToken: string,
-): Promise<{ message: string; accessToken?: string }> {
+export function changePasswordRequest(params: {
+  currentPassword: string;
+  newPassword: string;
+}): Promise<{ message: string; accessToken: string }> {
   return apiClient("/auth/me/password", {
     method: "PATCH",
     body: params,
-    headers: { Authorization: `Bearer ${accessToken}` },
   });
 }
 

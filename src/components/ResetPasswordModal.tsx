@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlertCircle, X, Eye, EyeOff } from "lucide-react";
 import {
@@ -34,7 +34,8 @@ export default function ResetPasswordModal({
     e.preventDefault();
     setError("");
 
-    if (!/\S+@\S+\.\S+/.test(email)) {
+    const cleanEmail = email.trim();
+    if (!/\S+@\S+\.\S+/.test(cleanEmail)) {
       setError("Please enter a valid email address.");
       return;
     }
@@ -42,10 +43,10 @@ export default function ResetPasswordModal({
     setIsSubmitting(true);
     try {
       // Backend ሁልጊዜ generic message ይመልሳል (email ቢኖርም ባይኖርም) - enumeration ይከላከላል
-      await requestPasswordResetRequest(email);
+      await requestPasswordResetRequest(cleanEmail);
+      setEmail(cleanEmail);
       setStep(2);
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
-      startCooldownTimer();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong.");
     } finally {
@@ -97,17 +98,12 @@ export default function ResetPasswordModal({
   };
 
   // ================= Resend Code =================
-  const startCooldownTimer = () => {
-    const interval = setInterval(() => {
-      setResendCooldown((prev) => {
-        if (prev <= 1) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-  };
+  // Cooldown ቆጣሪ — modal ሲዘጋ በራሱ ይጸዳል (ቀድሞ interval ይቀር ነበር)
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
   const handleResend = async () => {
     if (resendCooldown > 0) return;
@@ -116,7 +112,6 @@ export default function ResetPasswordModal({
     try {
       await requestPasswordResetRequest(email);
       setResendCooldown(RESEND_COOLDOWN_SECONDS);
-      startCooldownTimer();
     } catch (err) {
       setError(err instanceof ApiError ? err.message : "Something went wrong.");
     } finally {
@@ -205,7 +200,6 @@ export default function ResetPasswordModal({
                   value={code}
                   onChange={(e) => handleCodeChange(e.target.value)}
                   placeholder="000000"
-                  maxLength={6}
                   className="w-full text-center text-2xl tracking-[0.5em] font-mono py-3 bg-input border border-input-border rounded-lg text-input-text placeholder:text-input-placeholder focus:outline-none focus:border-input-focus transition-all"
                 />
 
@@ -230,9 +224,9 @@ export default function ResetPasswordModal({
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-gray-400">
-                  At least 8 characters, with uppercase, lowercase, a number,
-                  and a special character.
+                               <p className="text-xs text-gray-400">
+                  At least 8 characters, with an uppercase letter, a lowercase
+                  letter, and a number.
                 </p>
 
                 <button

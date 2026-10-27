@@ -1,7 +1,11 @@
 import { createContext, useContext, useState, useEffect, useRef } from "react";
 import type { ReactNode } from "react";
 import { loginRequest, logoutRequest, meRequest } from "../api/auth.api";
-import { refreshAccessToken } from "../lib/refresh-coordinator";
+import {
+  refreshAccessToken,
+  RefreshError,
+  subscribeToTokenRefreshed,
+} from "../lib/refresh-coordinator";
 import { fetchMyProfile, updateMyProfile } from "../api/profile.api";
 import type { UpdateProfileInput } from "../api/profile.api";
 import { setStoredToken } from "../lib/token-store";
@@ -11,7 +15,7 @@ export interface User {
   username: string;
   email: string;
   isVerified: boolean;
-  role: "user" | "moderator" | "admin";
+  role: "USER" | "MODERATOR" | "ADMIN";
   // --- Profile fields (GET /profile/me ይሞላቸዋል) ---
   name?: string;
   bio?: string;
@@ -29,6 +33,7 @@ interface AuthContextType {
   login: (email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   loginWithTokens: (accessToken: string) => Promise<void>;
+  replaceAccessToken: (token: string) => void;
   updateUser: (userData: Partial<User>) => void;
   updateProfile: (input: UpdateProfileInput) => Promise<void>;
   profileLoadError: string | null;
@@ -48,11 +53,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const [accessToken, setAccessTokenState] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  // ተጠቃሚ ሲወጣ (logout ወይም session ሲያልቅ) የቀድሞው ሰው "የታዩ ፖስቶች" ዝርዝር
-  // ለሚቀጥለው ሰው እንዳይተላለፍ
-  useEffect(() => {
-    if (!user) localStorage.removeItem("viewedPostIds");
-  }, [user]);
+
   const [profileLoadError, setProfileLoadError] = useState<string | null>(null);
 
   // React state (for re-renders) + module-level store (for api-client.ts
@@ -71,10 +72,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     return subscribeToSessionExpired(() => {
       setAccessTokenState(null);
+      setStoredToken(null); // የሞተ token በ store ውስጥ እንዳይቀር
       setUser(null);
+      // ለሚቀጥለው ሰው እንዳይተላለፍ
+      localStorage.removeItem("viewedPostIds");
     });
   }, []);
 
+  // api-client/coordinator አዲስ token ሲያገኝ React state ም ይዘምናል፤ ሌሎች components
+  // (ለምሳሌ ወደፊት socket) accessToken ን ከ useAuth ስለሚያነቡ ከ store ጋር መለያየት የለበትም
+  useEffect(() => {
+    return subscribeToTokenRefreshed((token) => setAccessTokenState(token));
+  }, []);
   // --- Silent Refresh on App Load ---
   // Page reload ሲደረግ accessToken (in-memory) ይጠፋል፣ ግን refresh_token
   // httpOnly cookie አሁንም አለ — ይህን ተጠቅመን በራሱ አዲስ accessToken እናገኛለን
@@ -102,9 +111,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const me = await meRequest(newToken);
         setUser(me);
         await loadProfileData();
-      } catch {
+      } catch (err) {
         setAccessToken(null);
         setUser(null);
+        // Session በእርግጥ ካለቀ ብቻ (ጊዜያዊ network ችግር ዝርዝሩን አይሰርዝም)
+        if (err instanceof RefreshError && err.sessionInvalid) {
+          localStorage.removeItem("viewedPostIds");
+        }
       } finally {
         setIsLoading(false);
       }
@@ -119,25 +132,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(me);
     await loadProfileData();
   };
-  // Complete Registration ራሱ accessToken ስለሚመልስ (refresh cookie already
-  // Backend ራሱ አዘጋጅቶታል) - loginRequest() ደግመን አንጠራም፣ /auth/me ብቻ እንጠራለን
+  // accessToken (እና refresh cookie) ቀድሞ ላለው ፍሰት (ለምሳሌ Google exchange)፦
+  // /auth/me ብቻ እንጠራለን፣ ከዚያ እንደ login() profile ን እንጭናለን
   const loginWithTokens = async (newAccessToken: string) => {
     setAccessToken(newAccessToken);
+    const me = await meRequest(newAccessToken);
+    setUser(me);
+    await loadProfileData();
+  };
 
-    // Register ካደረገ ወዲያውኑ (millisecond ውስጥ) /auth/me ስለሚጠራ፣
-    // Database's eventual-consistency window ን ለማለፍ አጭር retry
-    let lastError: unknown;
-    for (let attempt = 0; attempt < 3; attempt++) {
-      try {
-        const me = await meRequest(newAccessToken);
-        setUser(me);
-        return;
-      } catch (err) {
-        lastError = err;
-        await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
-      }
-    }
-    throw lastError;
+  // access token ብቻ ይተካል (user/profile state አይነካም)፤ ለምሳሌ password ከተቀየረ በኋላ
+  const replaceAccessToken = (token: string) => {
+    setAccessToken(token);
   };
 
   const logout = async () => {
@@ -146,9 +152,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // Logout request ቢወድቅ እንኳ (ለምሳሌ network issue)፣ local state ግን እናጸዳለን
       // ተጠቃሚው በ UI ደረጃ "logged out" ሆኖ እንዲታይ
-    } finally {
+        } finally {
       setAccessToken(null);
       setUser(null);
+      localStorage.removeItem("viewedPostIds");
     }
   };
 
@@ -192,6 +199,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         logout,
         loginWithTokens,
+          replaceAccessToken,
         updateUser,
         updateProfile,
         updateFollowCount,

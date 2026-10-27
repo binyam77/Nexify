@@ -329,7 +329,7 @@ function EditProfileView({ onBack }: { onBack: () => void }) {
 // USERNAME VIEW
 // ============================================================================
 function UsernameView({ onBack }: { onBack: () => void }) {
-  const { user, accessToken, updateUser } = useAuth();
+  const { user, updateUser } = useAuth();
   const [newUsername, setNewUsername] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -346,11 +346,9 @@ function UsernameView({ onBack }: { onBack: () => void }) {
       );
       return;
     }
-    if (!accessToken) return;
-
     setIsSubmitting(true);
     try {
-      await changeUsernameRequest(newUsername, accessToken);
+      await changeUsernameRequest(newUsername);
       updateUser({ username: newUsername });
       setSuccess("Username updated successfully.");
       setTimeout(onBack, 1200);
@@ -461,7 +459,7 @@ function EmailView({ onBack }: { onBack: () => void }) {
 // PASSWORD VIEW
 // ============================================================================
 function PasswordView({ onBack }: { onBack: () => void }) {
-  const { accessToken } = useAuth();
+  const { replaceAccessToken } = useAuth();
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -470,14 +468,15 @@ function PasswordView({ onBack }: { onBack: () => void }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
+  // ከ backend (ChangePasswordDto / RegisterDto) ደንብ ጋር ተመሳሳይ
   const checks = {
     length: newPassword.length >= 8,
-    numberOrSpecial:
-      /[0-9]/.test(newPassword) || /[^a-zA-Z0-9]/.test(newPassword),
+    upper: /[A-Z]/.test(newPassword),
+    lower: /[a-z]/.test(newPassword),
+    number: /[0-9]/.test(newPassword),
     match: newPassword.length > 0 && newPassword === confirmPassword,
   };
-  const allValid = checks.length && checks.numberOrSpecial && checks.match;
+  const allValid = Object.values(checks).every(Boolean);
 
   const handleSubmit = async () => {
     setError("");
@@ -490,14 +489,16 @@ function PasswordView({ onBack }: { onBack: () => void }) {
       setError("Please make sure your new password meets all requirements.");
       return;
     }
-    if (!accessToken) return;
 
     setIsSubmitting(true);
     try {
-      await changePasswordRequest(
-        { currentPassword, newPassword },
-        accessToken,
-      );
+      const result = await changePasswordRequest({
+        currentPassword,
+        newPassword,
+      });
+      // ከለውጡ በኋላ የድሮው access token ይሞታል፤ አዲሱን ብቻ እንይዛለን
+      // (name፣ bio፣ photo ወዘተ አይነኩም)
+      replaceAccessToken(result.accessToken);
       setSuccess("Password updated successfully.");
       setCurrentPassword("");
       setNewPassword("");
@@ -538,10 +539,9 @@ function PasswordView({ onBack }: { onBack: () => void }) {
 
         <div className="flex flex-col gap-1.5 mt-1">
           <CheckItem ok={checks.length} label="At least 8 characters" />
-          <CheckItem
-            ok={checks.numberOrSpecial}
-            label="Includes a number or special character"
-          />
+          <CheckItem ok={checks.upper} label="An uppercase letter" />
+          <CheckItem ok={checks.lower} label="A lowercase letter" />
+          <CheckItem ok={checks.number} label="A number" />
           <CheckItem ok={checks.match} label="Passwords match" />
         </div>
         {error && <p className="text-sm text-error">{error}</p>}

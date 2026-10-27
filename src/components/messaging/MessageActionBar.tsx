@@ -139,7 +139,7 @@ export default function MessageActionBar({
           aria-modal="true"
         >
           <div
-            className="w-full max-w-xs rounded-2xl bg-white p-5 text-center shadow-2xl"
+            className="w-full max-w-xs rounded-2xl bg-surface-secondary p-5 text-center shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="text-base font-bold text-text-primary mb-1">
