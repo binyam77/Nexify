@@ -1,17 +1,10 @@
 import { useEffect, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ROUTES } from "../routes";
 import PostCard from "../components/PostCard";
 import avatarImg from "../assets/user.png";
 import { useAuth } from "../context/AuthContext";
 import { useFeed } from "../context/FeedContext";
-import {
-  ChevronUp,
-  ChevronDown,
-  Loader2,
-  Search,
-  WifiOff,
-} from "lucide-react";
+import { ChevronUp, ChevronDown, Loader2, Search, WifiOff } from "lucide-react";
 import type { User } from "../types";
 import SearchOverlay from "../components/SearchOverlay";
 import { useOnlineStatus } from "../hooks/useOnlineStatus";
@@ -37,14 +30,6 @@ export default function Home() {
   const isOnline = useOnlineStatus();
   const navigate = useNavigate();
 
-  // Post ደራሲ ጋር chat ለመክፈት — Profile's handleMessageUser ጋር ተመሳሳይ pattern
-  const handleMessageUser = (creator: {
-    name: string;
-    username: string;
-    photo: string;
-  }) => {
-    navigate(ROUTES.community, { state: { openChatWith: creator } });
-  };
   const currentUser: User = {
     id: user?.id || "me",
     fullName: user?.username || "User",
@@ -141,7 +126,9 @@ export default function Home() {
       <div className="h-full w-full flex flex-col items-center justify-center bg-surface text-slate-400 gap-3 px-6 text-center">
         <WifiOff className="w-10 h-10 opacity-60" />
         <p className="text-lg font-semibold">No internet connection</p>
-        <p className="text-sm opacity-60">The feed automatically reloads when the connection is restored.</p>
+        <p className="text-sm opacity-60">
+          The feed automatically reloads when the connection is restored.
+        </p>
       </div>
     );
   }
@@ -182,7 +169,7 @@ export default function Home() {
       <button
         onClick={() => setIsSearchOpen(true)}
         aria-label="Search"
-            className="md:hidden absolute top-3 right-3 z-30 p-2 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.65)]"
+        className="md:hidden absolute top-3 right-3 z-30 p-2 text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.65)]"
       >
         <Search size={28} strokeWidth={2.25} />
         {isSearchOpen && (
@@ -205,7 +192,6 @@ export default function Home() {
             post={posts[currentIndex]}
             currentUser={currentUser}
             onView={() => incrementView(posts[currentIndex]?.id)}
-            onMessageUser={handleMessageUser}
           />
         )}
       </div>

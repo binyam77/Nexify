@@ -6,7 +6,7 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-import { Camera, Trash2, ChevronLeft } from "lucide-react";
+import { Trash2, ChevronLeft } from "lucide-react";
 import ShareModal from "../components/ShareModal";
 import { useFeed } from "../context/FeedContext";
 import { useUI } from "../context/UIContext";
@@ -26,17 +26,11 @@ import UserProfile from "../components/UserProfile";
 import ProfileVideo from "../components/ProfileVideo";
 import ViewVideo from "../components/ViewVideo";
 import FollowListModal from "../components/FollowListModal";
-
+import EditProfileForm from "../components/EditProfileForm";
 
 export default function Profile() {
   // --- መለያ ፍቃድ መቆጣጠሪያ (Auth System Hooks) ---
-  const {
-    user,
-    updateUser,
-    updateProfile,
-    profileLoadError,
-    retryLoadProfile,
-  } = useAuth();
+  const { user, updateUser, profileLoadError, retryLoadProfile } = useAuth();
   const navigate = useNavigate();
   const {
     commentsMap,
@@ -171,7 +165,6 @@ export default function Profile() {
     return () => setFullscreenModalOpen(false);
     //eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedPost]);
-  
 
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isBioExpanded, setIsBioExpanded] = useState(false);
@@ -187,22 +180,10 @@ export default function Profile() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isDeletingPost, setIsDeletingPost] = useState(false);
 
-  
-
-  const [editName, setEditName] = useState("");
-  const [editUsername, setEditUsername] = useState("");
-  const [editBio, setEditBio] = useState("");
-  const [editPhotoPreview, setEditPhotoPreview] = useState("");
-  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [photoNotice, setPhotoNotice] = useState<string | null>(null);
-
-  // --- የማጣቀሻ ፋይል መምረጫዎች (File Picker input refs) ---
-  const photoInputRef = useRef<HTMLInputElement>(null);
 
   // --- በቀጥታ የሚዲያ መጫኛ ማጣቀሻዎች (Direct profile & cover upload refs) ---
   const directPhotoInputRef = useRef<HTMLInputElement>(null);
-
-
 
   // --- የቪዲዮ ማጫወቻ ገፅ ክፈት (Open media viewport modal) ---
   const handleTrackView = (postId: string) => {
@@ -299,7 +280,6 @@ export default function Profile() {
     });
   };
 
-
   // --- አስተያየት መጨመርያ (Delegate to FeedContext) ---
   const handleAddComment = (postId: string, text: string) =>
     addComment(postId, text);
@@ -339,7 +319,6 @@ export default function Profile() {
     editComment(postId, commentId, newText);
   };
 
-
   // Storage ገና ስለሌለ ፎቶ መቀየር አይቻልም። በ memory ብቻ "ተቀየረ" ማስመሰል (refresh ላይ
   // የሚጠፋ) ተወግዷል። Storage ሲመጣ እዚህ real upload ይገባል
   const handleDirectPhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -347,8 +326,6 @@ export default function Profile() {
     setPhotoNotice("Photo upload isn't available yet. Coming soon.");
     setTimeout(() => setPhotoNotice(null), 4000);
   };
-
-
 
   // --- ልጥፍ እና አስተያየቶችን ማጥፊያ ማረጋገጫ (Execute deletion verified in custom modal) ---
   const executeDeleteAction = async () => {
@@ -402,53 +379,8 @@ export default function Profile() {
     setShareModalPost(found);
   };
 
-  // --- መገለጫ አርትዕ አድርግ (Save user profile edits) ---
-  const handleOpenEditModal = () => {
-    setEditName(profile.name);
-    setEditUsername(profile.username);
-    setEditBio(profile.bio);
-    setEditPhotoPreview(profile.photo);
-    setIsEditModalOpen(true);
-  };
-
-  const handlePhotoUploadChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    e.target.value = "";
-    setPhotoNotice("Photo upload isn't available yet. Coming soon.");
-    setTimeout(() => setPhotoNotice(null), 4000);
-  };
-  const handleSaveProfile = async () => {
-    if (!editName.trim()) {
-      alert("Name can't be empty!");
-      return;
-    }
-    const sanitizedUsername =
-      editUsername
-        .trim()
-        .toLowerCase()
-        .replace(/[^a-z0-9_]/g, "") ||
-      user?.username ||
-      "username";
-
-    setIsSavingProfile(true);
-
-    try {
-      await updateProfile({
-        displayName: editName.trim(),
-        // username የተቀየረ ከሆነ ብቻ ይላካል
-        ...(sanitizedUsername !== user?.username && {
-          username: sanitizedUsername,
-        }),
-        bio: editBio.trim(),
-      });
-
-      setIsEditModalOpen(false);
-    } catch (e) {
-      console.error("Failed to save profile:", e);
-      alert("Failed to save profile. Please try again.");
-    } finally {
-      setIsSavingProfile(false);
-    }
-  };
+  // --- መገለጫ አርትዕ (ፎርሙ በ EditProfileForm ውስጥ ነው) ---
+  const handleOpenEditModal = () => setIsEditModalOpen(true);
 
   const handleDeletePost = (postId: string, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -539,7 +471,7 @@ export default function Profile() {
           </div>
         ) : (
           <ProfileVideo
-                        filteredPosts={myPosts}
+            filteredPosts={myPosts}
             handleOpenPlayer={handleOpenPlayer}
             handleDeletePost={handleDeletePost}
           />
@@ -561,7 +493,16 @@ export default function Profile() {
         )}
       </div>
 
-      {/* ========================================================
+
+
+
+
+
+
+
+
+
+  {/* ========================================================
           MODAL: EDIT PROFILE FORM
           ======================================================== */}
       {isEditModalOpen && (
@@ -580,106 +521,25 @@ export default function Profile() {
             </h3>
           </div>
 
-          <div className="flex-1 overflow-y-auto px-5 pb-8">
-            <div className="max-w-md w-full mx-auto">
-              {/* Avatar */}
-              <div className="flex flex-col items-center mt-2 mb-6">
-                <div
-                  onClick={() => photoInputRef.current?.click()}
-                  className="relative w-36 h-36 cursor-pointer"
-                >
-                  <div className="w-full h-full rounded-full overflow-hidden bg-surface-secondary flex items-center justify-center">
-                    {editPhotoPreview ? (
-                      <img
-                        src={editPhotoPreview}
-                        alt="Avatar preview"
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Camera className="w-10 h-10 text-icon-muted" />
-                    )}
-                  </div>
-                  <div className="absolute bottom-1 right-1 w-10 h-10 rounded-full bg-white shadow-md border border-border-subtle flex items-center justify-center">
-                    <Camera className="w-5 h-5 text-icon-primary" />
-                  </div>
-                </div>
-                <button
-                  onClick={() => photoInputRef.current?.click()}
-                  className="mt-3 text-sm font-semibold text-link hover:underline"
-                >
-                  Change Photo
-                </button>
-                {photoNotice && (
-                  <p className="mt-2 text-xs font-semibold text-warning text-center">
-                    {photoNotice}
-                  </p>
-                )}
-                <input
-                  type="file"
-                  ref={photoInputRef}
-                  onChange={handlePhotoUploadChange}
-                  accept="image/*"
-                  className="hidden"
-                />
-              </div>
+         
+       
 
-              {/* Fields */}
-              <div className="space-y-5">
-                <div>
-                  <label className="block text-sm text-text-secondary mb-1.5">
-                    Display Name
-                  </label>
-                  <input
-                    type="text"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value.slice(0, 20))}
-                    className="w-full px-4 py-3 bg-input-bg border border-input-border focus:border-input-focus outline-none rounded-xl text-base text-input-text"
-                  />
-                </div>
 
-                <div>
-                  <label className="block text-sm text-text-secondary mb-1.5">
-                    Username
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-base text-text-muted select-none">
-                      @
-                    </span>
-                    <input
-                      type="text"
-                      value={editUsername}
-                      onChange={(e) =>
-                        setEditUsername(e.target.value.slice(0, 30))
-                      }
-                      className="w-full pl-9 pr-4 py-3 bg-input-bg border border-input-border focus:border-input-focus outline-none rounded-xl text-base text-input-text"
-                    />
-                  </div>
-                </div>
 
-                <div>
-                  <label className="block text-sm text-text-secondary mb-1.5">
-                    Bio
-                  </label>
-                  <textarea
-                    value={editBio}
-                    onChange={(e) => setEditBio(e.target.value.slice(0, 150))}
-                    rows={3}
-                    className="w-full px-4 py-3 bg-input-bg border border-input-border focus:border-input-focus outline-none rounded-xl text-base text-input-text resize-none"
-                  />
-                </div>
-              </div>
 
-              {/* Save */}
-              <button
-                onClick={handleSaveProfile}
-                disabled={isSavingProfile}
-                className="mt-8 w-full py-3.5 rounded-xl bg-primary hover:opacity-90 text-text-on-primary text-base font-bold transition-opacity disabled:opacity-50"
-              >
-                {isSavingProfile ? "Saving..." : "Save"}
-              </button>
+
+
+
+
+
+
+
+              <div className="flex-1 overflow-y-auto px-5 pb-8">
+            <div className="max-w-md w-full mx-auto mt-2">
+              <EditProfileForm onSaved={() => setIsEditModalOpen(false)} />
             </div>
           </div>
-        </div>
+ </div>
       )}
 
       {/* ========================================================

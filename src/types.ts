@@ -66,6 +66,7 @@ export interface Chat {
   type?: "group" | "chat" | "channel" | "privateGroup"; // የቻቱ አይነት፦ ግሩፕ፣ የግል ቻት ወይም ቻናል (Type of room: group, private direct chat, or public channel)
   participantUsername?: string; //1:1 chat ብቻ፤ ተነጋጋሪው ልዩ (unique) - ስም፟ ተኮር matching ደህንነት ችግር ስለፈጠረ
   participantUserId?: string; // 1:1 chat ብቻ — የተነጋጋሪው User.id (presence matching)
+  lastActivityAt?: string; // ISO — ዝርዝሩን በመጨረሻ እንቅስቃሴ ለመደርደር (የመጨረሻ መልዕክት ወይም የተፈጠረበት)
   avatarUrl?: string; // የአምሳያ ምስል ሊንክ (Optional image URL or Base64 data URL for avatar)
   isCreatedByMe?: boolean; // በኔ የተፈጠረ መሆኑን ማሳያ (True if created by the current user to authorize posts)
   isOnline?: boolean; // መስመር ላይ መሆን አለመሆኑን ማሳያ - ለግል ቻት (Online status for direct private chats)

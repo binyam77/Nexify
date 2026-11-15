@@ -118,13 +118,18 @@ export default function ChatsSidebar({
 
   // የራስህ chats — local, private filter (ስም ወይም የመጨረሻ መልዕክት)
   const q = trimmedQuery.toLowerCase();
-  const joinedChats = chats.filter(
-    (chat) =>
-      chat.isJoined &&
-      (!q ||
-        chat.name.toLowerCase().includes(q) ||
-        chat.lastMsgText.toLowerCase().includes(q)),
-  );
+  const joinedChats = chats
+    .filter(
+      (chat) =>
+        chat.isJoined &&
+        (!q ||
+          chat.name.toLowerCase().includes(q) ||
+          chat.lastMsgText.toLowerCase().includes(q)),
+    )
+    // አዲስ እንቅስቃሴ ያለው ከላይ (ISO ጽሑፍ በፊደል ቅደም ተከተል በትክክል ይደረደራል)
+    .sort((a, b) =>
+      (b.lastActivityAt ?? "").localeCompare(a.lastActivityAt ?? ""),
+    );
 
   // Public search ውጤቶች — backend የመለሳቸው፣ ገና ያልተቀላቀልካቸው community ብቻ
   const publicResults = chats.filter(

@@ -1,4 +1,5 @@
 // src/App.tsx
+import { useEffect } from "react";
 import { useAuth } from "./context/AuthContext";
 import { UIProvider } from "./context/UIContext";
 import { AnimatePresence } from "framer-motion";
@@ -27,6 +28,8 @@ import Notifications from "./pages/notfications";
 import SinglePostView from "./pages/singlePostView";
 import FirstEntry from "./auth/firstEntry";
 import AuthCallback from "./components/AuthCallback";
+import RedirectAfterLogin from "./components/RedirectAfterLogin";
+import { savePostLoginRedirect } from "./lib/post-login-redirect";
 export default function App() {
   const navigate = useNavigate();
   const { isLoggedIn, isLoading } = useAuth();
@@ -100,12 +103,19 @@ export default function App() {
                 </main>
               </div>
             ) : (
-              <Navigate to={ROUTES.home} replace />
+              <RedirectAfterLogin />
             )
           }
         />
         <Route path={ROUTES.authCallback} element={<AuthCallback />} />
-        <Route path="/post/:id" element={<SinglePostView />} />
+        <Route
+          path="/post/:id"
+          element={
+            <RequireAuth>
+              <SinglePostView />
+            </RequireAuth>
+          }
+        />
         <Route
           path="/login"
           element={
@@ -121,7 +131,7 @@ export default function App() {
                 </main>
               </div>
             ) : (
-              <Navigate to={ROUTES.home} replace />
+              <RedirectAfterLogin />
             )
           }
         />
@@ -132,12 +142,21 @@ export default function App() {
   );
 }
 
+
 function RequireAuth({ children }: { children: React.ReactNode }) {
   const { isLoggedIn } = useAuth();
   const location = useLocation();
+  const target = location.pathname + location.search + location.hash;
+
+  // የመጣበትን path እናስታውሳለን። `location.state` ሙሉ ገጽ redirect (ለምሳሌ Google OAuth)
+  // ሲደረግ ስለሚጠፋ በቂ አይደለም፤ sessionStorage ግን በተመሳሳይ tab ውስጥ ይቆያል።
+  // (isLoading ን App ቀድሞ ይይዛል፣ ስለዚህ እዚህ የምንደርሰው session ከተረጋገጠ በኋላ ነው)
+  useEffect(() => {
+    if (!isLoggedIn) savePostLoginRedirect(target);
+  }, [isLoggedIn, target]);
 
   if (!isLoggedIn) {
-    return <Navigate to="/login" state={{ from: location }} replace />;
+    return <Navigate to="/login" replace />;
   }
 
   return <>{children}</>;

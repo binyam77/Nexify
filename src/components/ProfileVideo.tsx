@@ -45,7 +45,7 @@ export default function ProfileVideo({
               <div
                 key={post.id}
                 onClick={() => handleOpenPlayer(post)}
-                className="aspect-[9/16] bg-surface-secondary overflow-hidden relative cursor-pointer group transition-all duration-300"
+                className="aspect-[3/4] bg-surface-secondary overflow-hidden relative cursor-pointer group transition-all duration-300"
               >
                 {/* 1. Media Preview Grid Block */}
                 {mediaSrc ? (

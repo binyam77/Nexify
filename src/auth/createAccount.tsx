@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Eye, EyeOff, AlertCircle } from "lucide-react";
 import { ApiError } from "../lib/api-client";
@@ -13,7 +12,7 @@ interface CreateAccountProps {
 export default function CreateAccount({
   onNavigateToLogin,
 }: CreateAccountProps) {
-  const navigate = useNavigate();
+  
 
   const [showVerify, setShowVerify] = useState(false);
   const [username, setUsername] = useState("");
@@ -180,8 +179,7 @@ export default function CreateAccount({
           email={email.trim()}
           password={password}
           onBack={() => setShowVerify(false)}
-          onGoToLogin={onNavigateToLogin}
-          onVerified={() => navigate("/")}
+                  onGoToLogin={onNavigateToLogin}
         />
       )}
     </motion.div>

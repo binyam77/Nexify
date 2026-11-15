@@ -20,6 +20,8 @@ import {
 import type { FeedPost, CommentItem } from "../types";
 import Left from "./Left";
 import EmojiPicker from "./EmojiPicker";
+import { useKeyboardInset } from "../hooks/useKeyboardInset";
+
 function formatRelativeTime(timestamp: string): string {
   const diffMs = Date.now() - new Date(timestamp).getTime();
   const diffMin = Math.floor(diffMs / 60000);
@@ -47,6 +49,9 @@ function formatTime(seconds: number): string {
 const HUD_ICON = "w-9 h-9 drop-shadow-[0_2px_4px_rgba(0,0,0,0.65)]";
 const HUD_LABEL =
   "text-xs font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)] select-none";
+// ረጅም (9:16 ዓይነት) ሚዲያ ስክሪኑን ይሞላል፣ ሌሎቹ አይቆረጡም
+const fitFor = (w: number, h: number): "cover" | "contain" =>
+  w > 0 && h / w >= 1.6 ? "cover" : "contain";
 
 const HEART_KEYFRAMES = `@keyframes heart-pop {
   0% { transform: scale(0.3); opacity: 0; }
@@ -160,10 +165,12 @@ export default function ViewVideo({
   const [videoPlaying, setVideoPlaying] = useState(true);
   const [videoDuration, setVideoDuration] = useState(0);
   const [videoCurrentTime, setVideoCurrentTime] = useState(0);
+  const [mediaFit, setMediaFit] = useState<"cover" | "contain">("contain");
 
   const [commentInputText, setCommentInputText] = useState("");
   const [emojiPickerOpen, setEmojiPickerOpen] = useState(false);
   const [mobileCommentsOpen, setMobileCommentsOpen] = useState(false);
+  const { inset, viewportHeight } = useKeyboardInset();
 
   const [activeReplyTo, setActiveReplyTo] = useState<string | null>(null);
   const [replyInputText, setReplyInputText] = useState("");
@@ -384,6 +391,7 @@ export default function ViewVideo({
     setVideoPlaying(true);
     setVideoCurrentTime(0);
     setVideoDuration(0);
+    setMediaFit("contain");
   }, [selectedPost.id]);
 
   return (
@@ -438,7 +446,11 @@ export default function ViewVideo({
                 <video
                   ref={videoRef}
                   src={selectedMediaSrc || undefined}
-                  className="w-full h-full object-contain block bg-black"
+                  className={`w-full h-full block bg-black ${
+                    mediaFit === "cover"
+                      ? "object-cover md:object-contain"
+                      : "object-contain"
+                  }`}
                   playsInline
                   loop
                   autoPlay
@@ -447,9 +459,15 @@ export default function ViewVideo({
                   onTimeUpdate={(e) =>
                     setVideoCurrentTime(e.currentTarget.currentTime)
                   }
-                  onLoadedMetadata={(e) =>
-                    setVideoDuration(e.currentTarget.duration)
-                  }
+                  onLoadedMetadata={(e) => {
+                    setVideoDuration(e.currentTarget.duration);
+                    setMediaFit(
+                      fitFor(
+                        e.currentTarget.videoWidth,
+                        e.currentTarget.videoHeight,
+                      ),
+                    );
+                  }}
                 />
 
                 {/* Play/Pause center overlay indicator */}
@@ -483,7 +501,19 @@ export default function ViewVideo({
                 <img
                   src={selectedMediaSrc || undefined}
                   alt="Post photo content"
-                  className="w-full h-full object-contain block bg-black"
+                  onLoad={(e) =>
+                    setMediaFit(
+                      fitFor(
+                        e.currentTarget.naturalWidth,
+                        e.currentTarget.naturalHeight,
+                      ),
+                    )
+                  }
+                  className={`w-full h-full block bg-black ${
+                    mediaFit === "cover"
+                      ? "object-cover md:object-contain"
+                      : "object-contain"
+                  }`}
                 />
                 {heartsLayer}
               </div>
@@ -538,7 +568,7 @@ export default function ViewVideo({
 
         {/* ===== Mobile Overlay HUD HUD (በሞባይል ብቻ የሚታይ የላይ ፈጣን መቆጣጠሪያ) ===== */}
         <div className="absolute inset-0 z-20 pointer-events-none md:hidden flex flex-col justify-between">
-          <div className="absolute right-3 bottom-32 flex flex-col gap-6 items-center pointer-events-auto z-30">
+          <div className="absolute right-3 bottom-15 flex flex-col gap-6 items-center pointer-events-auto z-30">
             {/* Like */}
             <button
               onClick={() => handleToggleLikePost(selectedPost.id)}
@@ -580,88 +610,81 @@ export default function ViewVideo({
                 {shares > 0 ? formatCount(shares) : "Share"}
               </span>
             </button>
+          </div>
 
-            {/* Mute */}
-            {selectedPost.type === "video" && (
-              <button
-                onClick={() => setIsMuted((m) => !m)}
-                className="flex flex-col items-center justify-center active:scale-90 transition-all focus:outline-none"
-                aria-label={isMuted ? "Unmute" : "Mute"}
-              >
-                {isMuted ? (
-                  <VolumeX
-                    strokeWidth={2.5}
-                    className={`${HUD_ICON} text-white`}
+          {/* Bottom info: author + caption + time/mute */}
+          <div className="absolute bottom-0 left-0 right-0 px-4 pt-12 pb-[max(1rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-black/55 via-black/15 to-transparent pointer-events-none z-20 flex flex-col gap-2.5">
+            <div
+              onClick={() => handleNavigateToUserProfile(postAuthor.username)}
+              className="pointer-events-auto flex items-center gap-2.5 cursor-pointer active:opacity-80 transition-opacity max-w-[80%]"
+            >
+              <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white bg-[#198dfe] flex items-center justify-center text-white text-xs font-bold shrink-0">
+                {postAuthor.photo ? (
+                  <img
+                    src={postAuthor.photo}
+                    alt={postAuthor.name}
+                    className="w-full h-full object-cover"
                   />
                 ) : (
-                  <Volume2
-                    strokeWidth={2.5}
-                    className={`${HUD_ICON} text-white`}
-                  />
+                  postAuthor.name.charAt(0).toUpperCase()
                 )}
-              </button>
-            )}
-          </div>
-
-          {/* Bottom user details & caption overlays */}
-          <div className="absolute bottom-0 left-0 right-0 p-4 pb-5 bg-gradient-to-t from-black/90 via-black/55 to-transparent pointer-events-auto z-20 flex flex-col gap-2.5">
-            <div className="flex items-center justify-between">
-              <div
-                onClick={() => handleNavigateToUserProfile(postAuthor.username)}
-                className="flex items-center gap-2.5 cursor-pointer hover:opacity-85 active:scale-95 transition-all max-w-[85%]"
-              >
-                <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-white bg-surface-secondary flex items-center justify-center text-white text-xs font-bold shrink-0">
-                  {postAuthor.photo ? (
-                    <img
-                      src={postAuthor.photo}
-                      alt={postAuthor.name}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    postAuthor.name.charAt(0).toUpperCase()
-                  )}
-                </div>
-                <div className="flex flex-col min-w-0">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="text-[13px] font-bold text-white drop-shadow-md truncate">
-                      @{postAuthor.username}
-                    </span>
-                  </div>
-                </div>
               </div>
+              <span className="text-sm font-bold text-white drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)] truncate">
+                @{postAuthor.username}
+              </span>
             </div>
 
-            <p className="text-[12px] text-white/95 leading-relaxed break-words line-clamp-2 max-h-16 overflow-y-auto pr-2">
-              {selectedPost.caption.split(/(\s+)/).map((word, i) => {
-                if (word.startsWith("#")) {
-                  return (
-                    <span
-                      key={i}
-                      className="text-link font-bold hover:underline cursor-pointer"
-                    >
-                      {word}
-                    </span>
-                  );
-                }
-                return <span key={i}>{word}</span>;
-              })}
+            <p className="text-[13px] text-white leading-snug break-words line-clamp-2 pr-2 drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]">
+              {selectedPost.caption.split(/(\s+)/).map((word, i) =>
+                word.startsWith("#") ? (
+                  <span key={i} className="text-link font-bold">
+                    {word}
+                  </span>
+                ) : (
+                  <span key={i}>{word}</span>
+                ),
+              )}
             </p>
-            {selectedPost.type === "video" && videoDuration > 0 && (
-              <div className="flex items-center gap-3">
-                <div className="flex-1 h-[3px] bg-white/30 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-white rounded-full"
-                    style={{
-                      width: `${(videoCurrentTime / videoDuration) * 100}%`,
-                    }}
-                  />
-                </div>
-                <span className="text-[11px] font-semibold text-white/90 tabular-nums shrink-0">
-                  {formatTime(videoCurrentTime)} / {formatTime(videoDuration)}
+
+            {selectedPost.type === "video" && (
+              <div className="flex items-center justify-between">
+                <span className="text-[15px] font-bold text-white tabular-nums drop-shadow-[0_1px_3px_rgba(0,0,0,0.85)]">
+                  {videoDuration > 0
+                    ? `${formatTime(videoCurrentTime)} / ${formatTime(videoDuration)}`
+                    : "\u00A0"}
                 </span>
+                <button
+                  onClick={() => setIsMuted((m) => !m)}
+                  className="pointer-events-auto active:scale-90 transition-all focus:outline-none"
+                  aria-label={isMuted ? "Unmute" : "Mute"}
+                >
+                  {isMuted ? (
+                    <VolumeX
+                      strokeWidth={2.5}
+                      className="w-7 h-7 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.65)]"
+                    />
+                  ) : (
+                    <Volume2
+                      strokeWidth={2.5}
+                      className="w-7 h-7 text-white drop-shadow-[0_2px_4px_rgba(0,0,0,0.65)]"
+                    />
+                  )}
+                </button>
               </div>
             )}
           </div>
+
+          {/* የሂደት መስመር፦ ከጠርዝ እስከ ጠርዝ፣ ከስክሪኑ ታች */}
+          {selectedPost.type === "video" && videoDuration > 0 && (
+            <div className="absolute bottom-0 left-0 right-0 h-[3px] bg-white/30 z-30">
+              <div
+                className="h-full bg-white"
+                style={{
+                  width: `${(videoCurrentTime / videoDuration) * 100}%`,
+                }}
+              />
+            </div>
+          )}
         </div>
 
         {/* ===== Mobile Comments Drawer Sheet ===== */}
@@ -671,7 +694,14 @@ export default function ViewVideo({
               className="fixed inset-0 bg-black/60 z-40 md:hidden"
               onClick={() => setMobileCommentsOpen(false)}
             />
-            <div className="fixed inset-x-0 bottom-0 h-[82vh] max-h-[82vh] bg-surface rounded-t-[32px] shadow-2xl z-50 flex flex-col transition-all duration-300 md:hidden overflow-hidden pointer-events-auto">
+            <div
+              style={{
+                bottom: inset,
+                // keyboard ሲከፈት ከሚታየው ቦታ አይበልጥም፤ ሲዘጋ undefined → ነባሩ 82vh ይሠራል
+                maxHeight: viewportHeight ?? undefined,
+              }}
+              className="fixed inset-x-0 bottom-0 h-[82vh] max-h-[82vh] bg-surface rounded-t-[32px] shadow-2xl z-50 flex flex-col md:hidden overflow-hidden pointer-events-auto"
+            >
               <div className="p-4 border-b border-border flex items-center justify-between shrink-0 bg-surface">
                 <h3 className="text-sm font-bold text-text-primary">
                   {totalComments} comments
@@ -929,7 +959,10 @@ export default function ViewVideo({
               </div>
 
               {/* Main Comment Box inside drawer */}
-              <div className="relative border-t border-border bg-surface shrink-0 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+              <div
+                style={inset > 0 ? { paddingBottom: "0.75rem" } : undefined}
+                className="relative border-t border-border bg-surface shrink-0 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
+              >
                 {commentError && (
                   <p className="text-xs font-semibold text-error mb-2">
                     {commentError}

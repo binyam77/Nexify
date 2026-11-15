@@ -303,9 +303,10 @@ export default function Community() {
       const items = await fetchAllPages((cursor) =>
         listMyCommunitiesRequest(token, { cursor, limit: 50 }),
       );
-      const mineChats = items.map((item) =>
-        mapCommunityListItemToChat(item, currentUserId),
-      );
+      const mineChats = items.map((item) => ({
+        ...mapCommunityListItemToChat(item, currentUserId),
+        lastActivityAt: item.lastMessage?.createdAt ?? item.createdAt,
+      }));
       setChats((prev) => {
         // ቀድሞ የነበሩ "mine" community entries ብቻ ይተካሉ — suggested communities
         // እና ሁሉም conversation entries (chat/privateGroup) አይነኩም
@@ -326,9 +327,10 @@ export default function Community() {
       const items = await fetchAllPages((cursor) =>
         listMyConversationsRequest(token, { cursor, limit: 50 }),
       );
-      const conversationChats = items.map((item) =>
-        mapConversationListItemToChat(item, currentUserId),
-      );
+      const conversationChats = items.map((item) => ({
+        ...mapConversationListItemToChat(item, currentUserId),
+        lastActivityAt: item.lastMessage?.createdAt ?? item.createdAt,
+      }));
       setChats((prev) => {
         const withoutConversations = prev.filter(
           (c) => c.type !== "chat" && c.type !== "privateGroup",
@@ -467,6 +469,7 @@ export default function Community() {
               : mapped.text,
             lastMsgSender: mapped.senderName,
             lastMsgTime: mapped.time,
+            lastActivityAt: mapped.createdAt ?? c.lastActivityAt,
             unreadCount:
               isViewingThisChat || mapped.isSentByMe ? 0 : c.unreadCount + 1,
           };
@@ -1008,7 +1011,8 @@ export default function Community() {
                 ? mapped.text || "📷 Media"
                 : mapped.text,
               lastMsgSender: mapped.senderName,
-              lastMsgTime: mapped.time,
+                            lastMsgTime: mapped.time,
+              lastActivityAt: mapped.createdAt ?? c.lastActivityAt,
             }
           : c,
       ),

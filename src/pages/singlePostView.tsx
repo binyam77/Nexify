@@ -49,23 +49,25 @@ export default function SinglePostView() {
   const post = posts.find((p) => p.id === id);
 
   const currentUser: User = {
-        id: user?.id || "me",
+    id: user?.id || "me",
     fullName: user?.username || "User",
     email: user?.email || "",
     avatarUrl: user?.photo || avatarImg,
   };
   if (!isOnline) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center bg-surface text-text-muted gap-3 px-6 text-center">
+      <div className="h-dvh w-full flex flex-col items-center justify-center bg-surface text-text-muted gap-3 px-6 text-center">
         <WifiOff className="w-10 h-10 opacity-60" />
         <p className="text-lg font-semibold">No internet connection</p>
-        <p className="text-sm opacity-60">The feed automatically refreshes when the connection is restored.</p>
+        <p className="text-sm opacity-60">
+          The feed automatically refreshes when the connection is restored.
+        </p>
       </div>
     );
   }
   if (isLoading) {
     return (
-      <div className="h-full w-full flex items-center justify-center bg-surface text-text-muted">
+      <div className="h-dvh w-full flex items-center justify-center bg-surface text-text-muted">
         <Loader2 className="w-8 h-8 animate-spin" />
       </div>
     );
@@ -75,7 +77,7 @@ export default function SinglePostView() {
   // an explicit retry-able state instead of a spinner that never resolves.
   if (failed || !post) {
     return (
-      <div className="h-full w-full flex flex-col items-center justify-center bg-surface text-text-muted gap-3">
+      <div className="h-dvh w-full flex flex-col items-center justify-center bg-surface text-text-muted gap-3">
         <WifiOff className="w-10 h-10 opacity-60" />
         <p className="text-lg font-semibold">Failed to upload post.</p>
         <button
@@ -90,7 +92,7 @@ export default function SinglePostView() {
   }
 
   return (
-    <div className="relative h-full w-full bg-surface overflow-hidden">
+        <div className="relative h-dvh w-full bg-surface overflow-hidden">
       <button
         onClick={() => navigate(-1)}
         aria-label="Back"

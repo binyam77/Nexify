@@ -2,6 +2,7 @@ import { useState } from "react";
 import { X, Send, WifiOff, RotateCw, Loader2 } from "lucide-react";
 import EmojiPicker from "./EmojiPicker";
 import CommentCard from "./CommentCard";
+import { useKeyboardInset } from "../hooks/useKeyboardInset";
 import type { CommentItem, CommentSort } from "../types";
 
 interface CommentModalProps {
@@ -40,6 +41,7 @@ export default function CommentModal({
   onDeleteReply,
 }: CommentModalProps) {
   const [sort, setSort] = useState<CommentSort>("newest");
+  const { inset, viewportHeight } = useKeyboardInset();
   const [newCommentText, setNewCommentText] = useState("");
   const [postFailed, setPostFailed] = useState(false);
 
@@ -77,7 +79,17 @@ export default function CommentModal({
         onClick={onClose}
       />
 
-      <div className="animate-slide-up fixed inset-x-0 bottom-0 z-[9999] flex h-[80vh] w-full flex-col overflow-hidden rounded-t-[20px] bg-surface shadow-2xl md:inset-x-auto md:inset-y-4 md:bottom-auto md:right-4 md:h-[calc(100vh-2rem)] md:max-h-none md:w-[420px] md:rounded-[18px]">
+      <div
+        // Keyboard ሲከፈት sheet ከ keyboard በላይ ይነሳል፣ ቁመቱም ከሚታየው ቦታ አይበልጥም።
+        // Desktop ላይ `md:bottom-auto` እና `md:max-h-none` ስለሚሽሩት ምንም አይለወጥም።
+        style={
+          {
+            "--kb-inset": `${inset}px`,
+            ...(viewportHeight ? { "--kb-height": `${viewportHeight}px` } : {}),
+          } as React.CSSProperties
+        }
+        className="animate-slide-up fixed inset-x-0 bottom-[var(--kb-inset,0px)] z-[9999] flex h-[80vh] max-h-[calc(var(--kb-height,100vh)_-_0.75rem)] w-full flex-col overflow-hidden rounded-t-[20px] bg-surface shadow-2xl transition-[bottom,max-height] duration-150 md:inset-x-auto md:inset-y-4 md:bottom-auto md:right-4 md:h-[calc(100vh-2rem)] md:max-h-none md:w-[420px] md:rounded-[18px]"
+      >
         <div className="flex shrink-0 items-center justify-between border-b border-border bg-surface px-4 py-3.5">
           <div className="w-8" />
           <h3 className="text-[15px] font-semibold text-text-primary">

@@ -9,11 +9,10 @@ import {
   Play,
   Volume2,
   VolumeX,
-  MessagesSquare,
   WifiOff,
   RotateCw,
 } from "lucide-react";
-import { useShare } from "../hooks/useShare";
+import ShareModal from "./ShareModal";
 import CommentModal from "./CommentModal";
 import UserAvatar from "./UserAvatar";
 import { useFeed } from "../context/FeedContext";
@@ -23,11 +22,6 @@ interface PostCardProps {
   post: FeedPost;
   currentUser: User;
   onView?: () => void;
-  onMessageUser?: (user: {
-    name: string;
-    username: string;
-    photo: string;
-  }) => void;
 }
 
 const DOUBLE_TAP_DELAY = 300;
@@ -59,12 +53,7 @@ function formatDuration(seconds: number): string {
   return `${mins}:${secs}`;
 }
 
-export default function PostCard({
-  post,
-  currentUser,
-  onView,
-  onMessageUser,
-}: PostCardProps) {
+export default function PostCard({ post, currentUser, onView }: PostCardProps) {
   const navigate = useNavigate();
   const {
     toggleLike: toggleLikePost,
@@ -88,18 +77,9 @@ export default function PostCard({
   const likeCount = post.likesCount;
   const comments = commentsMap[post.id] || [];
 
-  // ተቀባዩ ሊንኩን ሲከፍት የአሁኑን ገጽ (Home) ሳይሆን ይህን ፖስት እንዲያይ — ቀጥተኛ ሊንክ
-  const { share, toastMessage, toastVisible } = useShare({
-    title: post.caption.trim().slice(0, 80) || "Nexify",
-    text: `Check out @${post.username}'s post on Nexify!`,
-    url:
-      typeof window !== "undefined"
-        ? `${window.location.origin}/post/${post.id}`
-        : "",
-  });
-
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isCommentsOpen, setIsCommentsOpen] = useState(false);
+  const [isShareOpen, setIsShareOpen] = useState(false);
   const [isVertical, setIsVertical] = useState(true);
   const [imgIsVertical, setImgVertical] = useState<boolean>(true);
   const [isMuted, setIsMuted] = useState<boolean>(true);
@@ -282,16 +262,6 @@ export default function PostCard({
       ref={containerRef}
       className="relative h-full w-full bg-black md:bg-surface  flex items-center justify-center md:justify-center"
     >
-      {toastVisible && (
-        <div
-          className="absolute top-4 left-1/2 transform -translate-x-1/2 z-30 bg-black/80 text-white text-xs
-        font-medium py-2 px-4 rounded-full backdrop-blur-sm shadow-lg animate-fade-in
-        pointer-events-none"
-        >
-          {toastMessage}
-        </div>
-      )}
-
       {/* ===== Media Area ===== */}
       {post.type === "video" ? (
         <div
@@ -597,25 +567,7 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
           activeColor="text-blue-400"
           onClick={() => setIsCommentsOpen(true)}
         />
-        {/* Chat — የራስ ፖስት ላይ አይታይም */}
-        {!isOwnPost && (
-          <ActionBtn
-            icon={
-              <MessagesSquare
-                size={ACTION_ICON_SIZE - 2}
-                strokeWidth={ACTION_ICON_STROKE}
-              />
-            }
-            label="Chat"
-            onClick={() =>
-              onMessageUser?.({
-                name: post.username,
-                username: post.username,
-                photo: post.userAvatar,
-              })
-            }
-          />
-        )}
+
         {/* Share — የታጠፈ ቀስት (Forward) */}
         <ActionBtn
           icon={
@@ -625,13 +577,16 @@ md:static md:ml-5 md:bottom-auto md:right-auto md:pb-10"
             />
           }
           label={post.sharesCount}
-          onClick={async () => {
-            const success = await share();
-            if (success) incrementShare(post.id);
-          }}
+          onClick={() => setIsShareOpen(true)}
         />
       </div>
-
+      {/* ===== Share Modal ===== */}
+      <ShareModal
+        post={post}
+        isOpen={isShareOpen}
+        onClose={() => setIsShareOpen(false)}
+        onShareIncrement={incrementShare}
+      />
       {/* ===== Comments Modal ===== */}
       {isCommentsOpen && (
         <CommentModal
@@ -726,12 +681,12 @@ function ActionBtn({
     <button
       type="button"
       onClick={onClick}
-      className="flex flex-col items-center gap-1"
+      className="flex flex-col items-center gap-0.5 md:gap-1"
     >
       {/* Mobile: ባዶ icon + ጥቁር ጥላ። Desktop: በ surface ክብ ውስጥ (ጥላ አያስፈልግም) */}
       <div
         ref={iconRef}
-        className={`flex h-12 w-12 items-center justify-center rounded-full transition active:scale-90 md:bg-surface md:shadow-md ${
+        className={`flex h-9 w-12 items-center justify-center rounded-full transition active:scale-90 md:h-12 md:bg-surface md:shadow-md ${
           active ? activeColor : "text-white md:text-input-text"
         } ${MEDIA_SHADOW} md:drop-shadow-none`}
       >

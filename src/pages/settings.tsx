@@ -20,6 +20,7 @@ import {
   CheckCircle2,
 } from "lucide-react";
 import { changeUsernameRequest, changePasswordRequest } from "../api/auth.api";
+import EditProfileForm from "../components/EditProfileForm";
 import { ApiError } from "../lib/api-client";
 
 type View =
@@ -247,84 +248,18 @@ function ProfileAccountView({
 }
 
 // ============================================================================
-// EDIT PROFILE (UI-only — Backend Profile module ገና ስላልተገነባ)
+// EDIT PROFILE — የ Profile module ን EditProfileForm ይጠቀማል
 // ============================================================================
 function EditProfileView({ onBack }: { onBack: () => void }) {
-  const { user, updateUser } = useAuth();
-  const [name, setName] = useState(user?.name ?? "");
-  const [username, setUsername] = useState(user?.username ?? "");
-  const [bio, setBio] = useState(user?.bio ?? "");
-  const [saved, setSaved] = useState(false);
-
-  const handleSave = () => {
-    // ⚠️ ለአሁን local-only (UI preview) - Profile module (avatar/cover/bio
-    // persist) ገና ስላልተገነባ backend ጋር አልተገናኘም
-    updateUser({ name, username, bio });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2500);
-  };
-
   return (
     <div>
       <SubPageHeader title="Edit Profile" onBack={onBack} />
-      <div className="px-4 py-6 flex flex-col gap-6">
-        {/* Cover */}
-        <div className="relative">
-          <div className="h-32 rounded-xl bg-surface-secondary border border-border flex items-center justify-center text-xs text-text-muted">
-            Cover photo (coming soon)
-          </div>
-          {/* Profile photo overlapping cover */}
-          <div className="absolute -bottom-8 left-4 w-20 h-20 rounded-full bg-surface border-4 border-bg flex items-center justify-center text-icon-muted">
-            <User className="w-8 h-8" />
-          </div>
-        </div>
-
-        <div className="mt-8 flex flex-col gap-4">
-          <Field
-            label="Name"
-            value={name}
-            onChange={setName}
-            placeholder="Your name"
-          />
-          <Field
-            label="Username"
-            value={username}
-            onChange={(v) => setUsername(v.toLowerCase())}
-            placeholder="username"
-            prefix="@"
-          />
-          <div className="flex flex-col gap-1.5">
-            <label className="text-sm font-medium text-text-secondary">
-              Bio
-            </label>
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              rows={4}
-              placeholder="Tell people about yourself"
-              className="w-full px-4 py-2.5 bg-input-bg border border-input-border rounded-lg text-input-text placeholder:text-input-placeholder focus:outline-none focus:border-input-focus transition-all text-sm resize-none"
-            />
-          </div>
-        </div>
-
-        {saved && (
-          <div className="flex items-center gap-2 text-success text-sm">
-            <CheckCircle2 className="w-4 h-4" /> Saved (preview only — full sync
-            coming soon)
-          </div>
-        )}
-
-        <button
-          onClick={handleSave}
-          className="w-full py-3 bg-primary text-text-on-primary font-semibold rounded-lg text-sm hover:bg-primary-hover active:scale-[0.98] transition-all"
-        >
-          Save Changes
-        </button>
+      <div className="px-4 py-6">
+        <EditProfileForm />
       </div>
     </div>
   );
 }
-
 // ============================================================================
 // USERNAME VIEW
 // ============================================================================
@@ -682,38 +617,7 @@ function ThemeSwitch({
   );
 }
 
-function Field({
-  label,
-  value,
-  onChange,
-  placeholder,
-  prefix,
-}: {
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  placeholder?: string;
-  prefix?: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1.5">
-      <label className="text-sm font-medium text-text-secondary">{label}</label>
-      <div className="relative">
-        {prefix && (
-          <span className="absolute inset-y-0 left-3 flex items-center text-text-muted text-sm">
-            {prefix}
-          </span>
-        )}
-        <input
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          placeholder={placeholder}
-          className={`w-full ${prefix ? "pl-7" : "pl-4"} pr-4 py-2.5 bg-input-bg border border-input-border rounded-lg text-input-text placeholder:text-input-placeholder focus:outline-none focus:border-input-focus transition-all text-sm`}
-        />
-      </div>
-    </div>
-  );
-}
+
 
 function PasswordField({
   label,

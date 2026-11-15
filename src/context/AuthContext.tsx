@@ -10,6 +10,10 @@ import { fetchMyProfile, updateMyProfile } from "../api/profile.api";
 import type { UpdateProfileInput } from "../api/profile.api";
 import { setStoredToken } from "../lib/token-store";
 import { subscribeToSessionExpired } from "../lib/session-events";
+import {
+  clearPostLoginRedirect,
+  suppressRedirectSave,
+} from "../lib/post-login-redirect";
 export interface User {
   id: string;
   username: string;
@@ -146,7 +150,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setAccessToken(token);
   };
 
-  const logout = async () => {
+    const logout = async () => {
+    // ሆን ብሎ የወጣ ሰው ቀጥሎ ሲገባ ወደ ቀድሞው ገጽ እንዳይመለስ (session ሲያልቅ ግን ይመለሳል)
+    suppressRedirectSave();
+    clearPostLoginRedirect();
     try {
       await logoutRequest();
     } catch {
